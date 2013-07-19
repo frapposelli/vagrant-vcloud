@@ -1,4 +1,6 @@
 vagrant-vcloud
 ==============
 
-Vagrant provider for VMware vCloud [STILL IN DEVELOPMENT]
+Vagrant provider for VMware vCloud
+
+Please note that this is NOT WORKING yet.
