@@ -1,3 +1,4 @@
+[![Stories in Ready](http://badge.waffle.io/frapposelli/vagrant-vcloud.png)](http://waffle.io/frapposelli/vagrant-vcloud)  
 # vagrant-vcloud #
 
 Vagrant provider for VMware vCloud Director
