@@ -63,20 +63,24 @@ module VagrantPlugins
       # @return [Hash]
       attr_reader :port_forwarding_rules
 
+      def initialize
+        env[:ui].info "vagrant-vcloud initialize"
+      end
+      
       def validate(machine)
         errors = _detected_errors
 
         #TODO: add blank?
-        errors << I18n.t('vagrant_vcloud.config.host') if host.nil?
-        errors << I18n.t('vagrant_vcloud.config.orgname') if orgname.nil?
-        errors << I18n.t('vagrant_vcloud.config.user') if user.nil?
-        errors << I18n.t('vagrant_vcloud.config.password') if password.nil?
+        errors << I18n.t('config.host') if host.nil?
+        errors << I18n.t('config.orgname') if orgname.nil?
+        errors << I18n.t('config.user') if user.nil?
+        errors << I18n.t('config.password') if password.nil?
 
-        errors << I18n.t('vagrant_vcloud.config.api_version') if api_version.nil?
+        errors << I18n.t('config.api_version') if api_version.nil?
         
-        errors << I18n.t('vagrant_vcloud.config.catalog_name') if catalog_name.nil?
-        errors << I18n.t('vagrant_vcloud.config.catalog_item') if compute_resource_name.nil?
-        errors << I18n.t('vagrant_vcloud.config.vdc_name') if vdc_name.nil?
+        errors << I18n.t('config.catalog_name') if catalog_name.nil?
+        errors << I18n.t('config.catalog_item') if compute_resource_name.nil?
+        errors << I18n.t('config.vdc_name') if vdc_name.nil?
 
         { 'vCloud Provider' => errors }
       end
