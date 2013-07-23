@@ -113,6 +113,7 @@ module VagrantPlugins
       # The autoload farm
       action_root = Pathname.new(File.expand_path("../action", __FILE__))
       autoload :ConnectVCloud, action_root.join("connect_vcloud")
+      autoload :CloseVCloud, action_root.join("close_vcloud")
       autoload :IsCreated, action_root.join("is_created")
       autoload :MessageAlreadyCreated, action_root.join("message_already_created")
       autoload :MessageNotCreated, action_root.join("message_not_created")
