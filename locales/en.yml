@@ -21,11 +21,19 @@ en:
       Configured resource pool not found
   config:
     host: |-
-      Configuration must specify a vCloud host
+      Configuration must specify a vCloud Director hostname
     user: |-
-      Configuration must specify a vCloud user
+      Configuration must specify a vCloud Director username
     password: |-
-      Configuration must specify a vCloud password
+      Configuration must specify a vCloud Director password
+    orgname: |-
+      Configuration must specify a vCloud Director organization
+    api_version: |-
+      Configuration must specify a vCloud API version (default=5.1)
+    catalog_name: |-
+      Configuration must specify a vCloud Director Catalog (for the VM templates images)
+    vdc_name: |-
+      Configuration must specify a vCloud Director Virtual Datacenter (Target Organization VDC)
     name: |-
       Configuration must specify a VM name
     template: |-
