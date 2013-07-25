@@ -20,9 +20,9 @@ en:
     missing_resource_pool: |-
       Configured resource pool not found
   config:
-    host: |-
+    hostname: |-
       Configuration must specify a vCloud Director hostname
-    user: |-
+    username: |-
       Configuration must specify a vCloud Director username
     password: |-
       Configuration must specify a vCloud Director password
