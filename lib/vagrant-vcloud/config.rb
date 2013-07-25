@@ -6,10 +6,10 @@ module VagrantPlugins
 
       # login attributes
 
-      # The vCloud hostname
+      # The vCloud Director hostname
       #
       # @return [String]
-      attr_accessor :host
+      attr_accessor :hostname
 
       # The Organization Name to log in to
       #
@@ -19,7 +19,7 @@ module VagrantPlugins
       # The username used to log in
       #
       # @return [String]
-      attr_accessor :user
+      attr_accessor :username
 
       # The password used to log in
       #
@@ -62,24 +62,21 @@ module VagrantPlugins
       #
       # @return [Hash]
       attr_reader :port_forwarding_rules
-
-      def initialize
-        env[:ui].info "vagrant-vcloud initialize"
-      end
       
       def validate(machine)
         errors = _detected_errors
 
-        #TODO: add blank?
-        errors << I18n.t('config.host') if host.nil?
+
+        # TODO: add blank?
+        errors << I18n.t('config.hostname') if hostname.nil?
         errors << I18n.t('config.orgname') if orgname.nil?
-        errors << I18n.t('config.user') if user.nil?
+        errors << I18n.t('config.username') if username.nil?
         errors << I18n.t('config.password') if password.nil?
 
         errors << I18n.t('config.api_version') if api_version.nil?
         
         errors << I18n.t('config.catalog_name') if catalog_name.nil?
-        errors << I18n.t('config.catalog_item') if compute_resource_name.nil?
+        errors << I18n.t('config.catalog_item') if catalog_item.nil?
         errors << I18n.t('config.vdc_name') if vdc_name.nil?
 
         { 'vCloud Provider' => errors }
