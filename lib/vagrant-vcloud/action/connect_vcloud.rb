@@ -13,12 +13,30 @@ module VagrantPlugins
         def call(env)
           config = env[:machine].provider_config
 
-
           begin
 
+            puts "===> Connecting to vCloud Director"
+            puts "hostname:    #{config.hostname}"
+            puts "username:    #{config.username}"
+            puts "password:    #{config.password}"
+            puts "orgname:     #{config.orgname}"
+            puts "api_version: #{config.api_version}"
+            puts "---<"
+
             # FIXME: Verify changes
-            env[:vcloud_connection] = VCloudClient::Connection.new(config.host, config.user, config.password, config.orgname, config.api_version)
-            env[:vcloud_connection].login
+            env[:vcloud_connection] = VCloudClient::Connection.new(
+              config.hostname, 
+              config.username, 
+              config.password, 
+              config.orgname, 
+              config.api_version
+            )
+
+            puts "==============> Login into vCloud Director"
+            test = env[:vcloud_connection].login
+            puts "===>>>"
+            puts test
+            puts "---"
             @app.call env
 
           rescue Exception => e
