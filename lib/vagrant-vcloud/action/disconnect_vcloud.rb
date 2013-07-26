@@ -1,11 +1,12 @@
-require 'vcloud-rest/connection'
+require "vcloud-rest/connection"
 
 module VagrantPlugins
   module VCloud
     module Action
-      class CloseVCloud
+      class DisconnectVCloud
         def initialize(app, env)
           @app = app
+          @logger = Log4r::Logger.new("vagrant_vcloud::action::disconnect_vcloud")
         end
 
         def call(env)

@@ -1,14 +1,12 @@
-# require "pathname"
-
-require 'vagrant'
-require 'vagrant/action/builder'
+require "vagrant"
+require "vagrant/action/builder"
 
 module VagrantPlugins
   module VCloud
     module Action
       include Vagrant::Action::Builtin
 
-      #Vagrant commands
+      # Vagrant commands
       def self.action_destroy
         Vagrant::Action::Builder.new.tap do |b|
           b.use Call, DestroyConfirm do |env, b2|
@@ -101,19 +99,19 @@ module VagrantPlugins
             end
 
             b2.use Clone
-            #TODO: provision
+            # TODO: provision
             b2.use TimedProvision
-            #TODO: sync folders
+            # TODO: sync folders
             b2.use SyncFolders
           end
-          b.use CloseVCloud
+          b.use DisconnectVCloud
         end
       end
 
       # The autoload farm
       action_root = Pathname.new(File.expand_path("../action", __FILE__))
       autoload :ConnectVCloud, action_root.join("connect_vcloud")
-      autoload :CloseVCloud, action_root.join("close_vcloud")
+      autoload :DisconnectVCloud, action_root.join("disconnect_vcloud")
       autoload :IsCreated, action_root.join("is_created")
       autoload :MessageAlreadyCreated, action_root.join("message_already_created")
       autoload :MessageNotCreated, action_root.join("message_not_created")

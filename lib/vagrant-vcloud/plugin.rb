@@ -31,7 +31,7 @@ module VagrantPlugins
 
 
       def self.setup_i18n
-        I18n.load_path << File.expand_path('locales/en.yml', VCloud.source_root)
+        I18n.load_path << File.expand_path("locales/en.yml", VCloud.source_root)
         I18n.reload!
       end
 

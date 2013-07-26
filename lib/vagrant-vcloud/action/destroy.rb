@@ -1,12 +1,9 @@
-require 'rbvmomi'
-require 'i18n'
-require 'vSphere/action/vim_helpers'
+require "i18n"
 
 module VagrantPlugins
   module VCloud
     module Action
       class Destroy
-        include VimHelpers
 
         # FIXME: Probably a lot of logic to change to cope with vCloud.
 
@@ -26,7 +23,7 @@ module VagrantPlugins
           return if vm.nil?
 
           begin
-            env[:ui].info I18n.t('vcloud.destroy_vm')
+            env[:ui].info I18n.t("vcloud.destroy_vm")
             vm.Destroy_Task.wait_for_completion
           rescue Exception => e
             raise Errors::VCloudError, :message => e.message

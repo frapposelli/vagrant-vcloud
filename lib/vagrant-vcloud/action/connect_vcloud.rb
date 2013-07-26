@@ -1,4 +1,4 @@
-require 'vcloud-rest/connection'
+require "vcloud-rest/connection"
 require "log4r"
 
 module VagrantPlugins
@@ -13,12 +13,18 @@ module VagrantPlugins
         def call(env)
           config = env[:machine].provider_config
 
-
           begin
+            env[:vcloud_connection] = VCloudClient::Connection.new(
+              config.hostname,
+              config.username,
+              config.password, 
+              config.orgname,
+              config.api_version
+            )
 
-            # FIXME: Verify changes
-            env[:vcloud_connection] = VCloudClient::Connection.new(config.host, config.user, config.password, config.orgname, config.api_version)
             env[:vcloud_connection].login
+            
+
             @app.call env
 
           rescue Exception => e

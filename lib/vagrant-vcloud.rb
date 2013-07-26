@@ -1,5 +1,4 @@
 require 'pathname'
-
 require 'vagrant-vcloud/plugin'
 
 module VagrantPlugins

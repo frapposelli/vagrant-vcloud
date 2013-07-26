@@ -1,27 +1,20 @@
-require 'rbvmomi'
-require 'i18n'
-require 'vSphere/action/vim_helpers'
+require "i18n"
 
 module VagrantPlugins
   module VCloud
     module Action
       class PowerOff
-        include VimHelpers
 
         def initialize(app, env)
           @app = app
+          @logger = Log4r::Logger.new("vagrant_vcloud::action::PowerOff")
         end
 
-        # FIXME: vCloud Abstraction layer/logic (vApp)
-
         def call(env)
-          vm = get_vm_by_uuid env[:vcloud_connection], env[:machine]
+          # Simple idea
+          # env[:vcloud_connection].delete_vapp(env[:machine])
 
-          unless vm.nil?
-            env[:ui].info I18n.t('vcloud.power_off_vm')
-            vm.PowerOffVM_Task.wait_for_completion
-          end
-
+          # What does this do ?
           @app.call env
         end
       end

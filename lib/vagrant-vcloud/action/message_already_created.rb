@@ -7,7 +7,7 @@ module VagrantPlugins
         end
 
         def call(env)
-          env[:ui].info(I18n.t('vcloud.vm_already_created'))
+          env[:ui].info(I18n.t("vcloud.vm_already_created"))
           @app.call(env)
         end
       end

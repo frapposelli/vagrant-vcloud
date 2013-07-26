@@ -4,7 +4,7 @@ module VagrantPlugins
   module VCloud
     module Errors
       class VCloudError < Vagrant::Errors::VagrantError
-        error_namespace('vcloud.errors')
+        error_namespace("vcloud.errors")
       end
       class RestError < VCloudError
       	error_key(:rest_error)

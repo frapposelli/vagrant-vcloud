@@ -68,18 +68,18 @@ module VagrantPlugins
 
 
         # TODO: add blank?
-        errors << I18n.t('config.hostname') if hostname.nil?
-        errors << I18n.t('config.orgname') if orgname.nil?
-        errors << I18n.t('config.username') if username.nil?
-        errors << I18n.t('config.password') if password.nil?
+        errors << I18n.t("config.hostname") if hostname.nil?
+        errors << I18n.t("config.orgname") if orgname.nil?
+        errors << I18n.t("config.username") if username.nil?
+        errors << I18n.t("config.password") if password.nil?
 
-        errors << I18n.t('config.api_version') if api_version.nil?
+        errors << I18n.t("config.api_version") if api_version.nil?
         
-        errors << I18n.t('config.catalog_name') if catalog_name.nil?
-        errors << I18n.t('config.catalog_item') if catalog_item.nil?
-        errors << I18n.t('config.vdc_name') if vdc_name.nil?
+        errors << I18n.t("config.catalog_name") if catalog_name.nil?
+        errors << I18n.t("config.catalog_item") if catalog_item.nil?
+        errors << I18n.t("config.vdc_name") if vdc_name.nil?
 
-        { 'vCloud Provider' => errors }
+        { "vCloud Provider" => errors }
       end
     end
   end

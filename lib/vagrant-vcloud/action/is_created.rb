@@ -4,6 +4,7 @@ module VagrantPlugins
       class IsCreated
         def initialize(app, env)
           @app = app
+          @logger = Log4r::Logger.new("vagrant_vcloud::action::IsCreated")
         end
 
         def call(env)

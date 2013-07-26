@@ -1,5 +1,5 @@
-require 'log4r'
-require 'vcloud-rest/connection'
+require "log4r"
+require "vcloud-rest/connection"
 
 module VagrantPlugins
   module VCloud
@@ -10,10 +10,10 @@ module VagrantPlugins
 
         # the three possible values of a vSphere VM's power state
 	      # FIXME: We have a bit more states on vCloud Director vApp/VMs.
-        POWERED_ON = 'running'
-        POWERED_OFF = 'stopped'
-        SUSPENDED = 'suspended'
-        MIXED = 'mixed'
+        POWERED_ON = "running"
+        POWERED_OFF = "stopped"
+        SUSPENDED = "suspended"
+        MIXED = "mixed"
 
         def initialize(app, env)
           @app = app

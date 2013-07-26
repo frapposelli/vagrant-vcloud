@@ -1,4 +1,4 @@
-require 'vcloud-rest/connection'
+require "vcloud-rest/connection"
 
 module VagrantPlugins
   module VCloud

@@ -15,12 +15,12 @@ module VagrantPlugins
       end
 
       def ssh_info
-        env = @machine.action('read_ssh_info')
+        env = @machine.action("read_ssh_info")
         env[:machine_ssh_info]
       end
 
       def state
-        env = @machine.action('read_state')
+        env = @machine.action("read_state")
 
         state_id = env[:machine_state_id]
 
@@ -32,7 +32,7 @@ module VagrantPlugins
       end
 
       def to_s
-        id = @machine.id.nil? ? 'new' : @machine.id
+        id = @machine.id.nil? ? "new" : @machine.id
         "vCloud (#{id})"
       end
     end

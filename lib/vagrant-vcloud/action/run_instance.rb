@@ -1,6 +1,6 @@
-require 'log4r'
-require 'vagrant/util/retryable'
-require 'vcloud-rest/connection'
+require "log4r"
+require "vagrant/util/retryable"
+require "vcloud-rest/connection"
 
 # FIXME: Change vSphere logic to vCloud clone logic (vApp, etc...)
 
@@ -21,11 +21,17 @@ module VagrantPlugins
 
 
           begin
-            build = env[:vcloud_connection].create_vapp_from_template(config[:vdc], config[:name], config[:description], config[:catalog_item], false)
+            build = env[:vcloud_connection].create_vapp_from_template(
+              config[:vdc],
+              config[:name],
+              config[:description],
+              config[:catalog_item],
+              false
+            )
           rescue Exception => e
             raise Errors::VCloudError, :message => e.message
           else
-            env[:ui].info(I18n.t('vcloud.creating_cloned_vm'))
+            env[:ui].info(I18n.t("vcloud.creating_cloned_vm"))
             env[:ui].info " -- Template VM: #{config.catalog_item}"
             env[:vcloud_connection].wait_task_completion(build[:task_id])
           end
