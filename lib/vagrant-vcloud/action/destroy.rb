@@ -18,6 +18,13 @@ module VagrantPlugins
           @app.call env
         end
 
+        def destroy_vapp(env)
+
+          # Simple idea
+          # env[:vcloud_connection].delete_vapp(vAppId)
+
+        end
+
         def destroy_vm(env)
           vm = get_vm_by_uuid env[:vcloud_connection], env[:machine]
           return if vm.nil?
