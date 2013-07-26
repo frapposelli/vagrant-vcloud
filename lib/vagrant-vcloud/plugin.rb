@@ -12,7 +12,7 @@ module VagrantPlugins
   module VCloud
     class Plugin < Vagrant.plugin('2')
       name "vCloud"
-      description "Allows Vagrant to manage machines with VMware vCloud Director"
+      description "Allows Vagrant to manage machines with VMware vCloud Director®"
 
       config(:vcloud, :provider) do
         require_relative "config"

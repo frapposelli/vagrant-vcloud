@@ -1,6 +1,6 @@
 # vagrant-vcloud [![Stories in Ready](http://badge.waffle.io/frapposelli/vagrant-vcloud.png)](http://waffle.io/frapposelli/vagrant-vcloud)  
 
-Vagrant provider for VMware vCloud Director
+Vagrant provider for VMware vCloud Director®
 
 Please note that this is NOT WORKING yet.
 
@@ -11,10 +11,16 @@ vCloud Director with vagrant, at a high level.
 
 ### Vagrant Actions ###
 
+*   Missing methods in vcloud-rest
+
+    We're still missing methods to handle element search properly, ideally, 
+    current get_* methods should have a get_*_from_name counterpart that
+    can accept names instead of GUID.
+
 *   Box
 
     We should provide a vCloud Director-ready OVF inside the box file, and give the ability to upload the box to a Catalog (if the user has catalog author permission) or leverage a pre-existing box already in a catalog.
-    *Upload API method still missing from vcloud-rest*
+    *upload_ovf now available in vcloud-rest ~> 0.3.0*
 
 *   Destroy
     
