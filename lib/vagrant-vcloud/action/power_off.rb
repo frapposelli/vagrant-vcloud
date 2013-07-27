@@ -12,7 +12,7 @@ module VagrantPlugins
 
         def call(env)
           # Simple idea
-          # env[:vcloud_connection].delete_vapp(env[:machine])
+          # env[:vcloud_connection].poweroff_vapp(env[:machine])
 
           # What does this do ?
           @app.call env

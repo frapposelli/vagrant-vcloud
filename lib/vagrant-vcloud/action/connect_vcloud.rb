@@ -32,11 +32,11 @@ module VagrantPlugins
               config.api_version
             )
 
-            @logger.info("Loggued into vCloud Director...")
+            @logger.info("Logging into vCloud Director...")
             env[:vcloud_connection].login
 
             if env[:vcloud_connection].auth_key
-              @logger.info("Login success!")
+              @logger.info("Logged in successfully!")
               @logger.debug(
                 "x-vcloud-authorization=#{env[:vcloud_connection].auth_key}"
               )

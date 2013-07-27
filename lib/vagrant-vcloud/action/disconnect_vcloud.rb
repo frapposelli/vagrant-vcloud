@@ -11,7 +11,18 @@ module VagrantPlugins
 
         def call(env)
           begin
+
+            @logger.info("Disconnecting from vCloud Director...")
+
             env[:vcloud_connection].logout
+
+            if !env[:vcloud_connection].auth_key
+              @logger.info("Disconnected from vCloud Director successfully!")
+              @logger.debug(
+                "x-vcloud-authorization=#{env[:vcloud_connection].auth_key}"
+              )
+            end
+
           rescue Exception => e
             #raise a properly namespaced error for Vagrant
             raise Errors::VCloudError, :message => e.message
