@@ -13,9 +13,7 @@ vCloud Director with vagrant, at a high level.
 
 *   Missing methods in vcloud-rest
 
-    We're still missing methods to handle element search properly, ideally, 
-    current get_* methods should have a get_*_from_name counterpart that
-    can accept names instead of GUID.
+    Everything looks good for now.
 
 *   Box
 
