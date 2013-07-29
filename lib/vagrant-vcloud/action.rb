@@ -91,6 +91,7 @@ module VagrantPlugins
       def self.action_up
         Vagrant::Action::Builder.new.tap do |b|
           b.use ConfigValidate
+          b.use HandleBoxUrl #### THIS IS A BUILTIN FUNCTION TO HANDLE THE BOX DOWNLOAD, MUST BE USED!!!
           b.use ConnectVCloud
           b.use Call, IsCreated do |env, b2|
             if env[:result]
