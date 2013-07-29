@@ -26,18 +26,27 @@ module VagrantPlugins
           cfg = env[:machine].provider_config
           cnx = cfg.vcloud_cnx
 
-          # testing with hardcoded value
-          boxOVF = "/Users/tsugliani/.vagrant.d/boxes/precise32/vcloud/precise32.ovf"
+          boxDir = env[:machine].box.directory.to_s
+          boxFile = env[:machine].box.name.to_s
 
-          # Send the box to the vCloud Director catalog
+          boxOVF = "#{boxDir}/#{boxFile}.ovf"
+
+          @logger.debug("OVF File: #{boxOVF}")
           cnx.upload_ovf(
             cfg.vdc_id,
             cfg.catalog_item_name,
             "Vagrant Box",
             boxOVF,
             cfg.catalog_id,
-            {}
+            {
+              :progressbar_enable => true,
+              :chunksize => 524288
+            }
           )
+          ### FIXME: Doesn't work properly, method needs to be refactored.
+          #          ) do |progress|
+          #            env[:ui].info progress
+          #          end
 
         end
 
@@ -61,13 +70,15 @@ module VagrantPlugins
           # Checking Catalog mandatory requirements
           if !cfg.catalog
             @logger.info("Catalog [#{cfg.catalog_name}] does not exist!")
+          else
+            @logger.info("Catalog [#{cfg.catalog_name}] exists")
           end
 
           if !cfg.catalog_item
             @logger.info("Catalog item [#{cfg.catalog_item_name}] does not exist!")
             # Disabled for now, not working as expected ;-)
             # Need to handle OVF with & without Manifest files (.mf)
-            # vcloud_upload_box(env)
+            vcloud_upload_box(env)
           end
 
         end
