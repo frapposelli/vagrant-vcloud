@@ -39,8 +39,7 @@ module VagrantPlugins
             boxOVF,
             cfg.catalog_id,
             {
-              :progressbar_enable => true,
-              :chunksize => 524288
+              :progressbar_enable => true
             }
           )
           ### FIXME: Doesn't work properly, method needs to be refactored.
@@ -65,7 +64,7 @@ module VagrantPlugins
           cfg.catalog = cnx.get_catalog_by_name(cfg.org, cfg.catalog_name)
           cfg.catalog_id = cnx.get_catalog_id_by_name(cfg.org, cfg.catalog_name)
 
-          cfg.catalog_item = cnx.get_catalog_item_by_name(cfg.catalog_id, cfg.catalog_item)
+          cfg.catalog_item = cnx.get_catalog_item_by_name(cfg.catalog_id, cfg.catalog_item_name)
 
           # Checking Catalog mandatory requirements
           if !cfg.catalog
@@ -78,7 +77,10 @@ module VagrantPlugins
             @logger.info("Catalog item [#{cfg.catalog_item_name}] does not exist!")
             # Disabled for now, not working as expected ;-)
             # Need to handle OVF with & without Manifest files (.mf)
-            vcloud_upload_box(env)
+            @logger.debug("UPLOAD DISABLED!")
+            #vcloud_upload_box(env)
+          else
+            @logger.info("Catalog item [#{cfg.catalog_item_name}] exists")
           end
 
         end

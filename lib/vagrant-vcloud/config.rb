@@ -26,11 +26,6 @@ module VagrantPlugins
       # @return [String]
       attr_accessor :password
 
-      # API version to be used
-      #
-      # @return [String]
-      attr_accessor :api_version
-
       # WIP on these
 
       # Catalog Name where the item resides
@@ -105,8 +100,6 @@ module VagrantPlugins
         errors << I18n.t("config.org_name") if org_name.nil?
         errors << I18n.t("config.username") if username.nil?
         errors << I18n.t("config.password") if password.nil?
-
-        errors << I18n.t("config.api_version") if api_version.nil?
         
         errors << I18n.t("config.catalog_name") if catalog_name.nil?
         errors << I18n.t("config.catalog_item_name") if catalog_item_name.nil?

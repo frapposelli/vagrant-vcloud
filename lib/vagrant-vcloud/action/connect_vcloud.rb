@@ -1,4 +1,4 @@
-require "vcloud-rest/connection"
+#require "vcloud-rest/connection"
 require "log4r"
 
 module VagrantPlugins
@@ -23,38 +23,48 @@ module VagrantPlugins
               @logger.debug("config.username    : #{config.username}")
               @logger.debug("config.password    : #{config.password}")
               @logger.debug("config.org_name    : #{config.org_name}")
-              @logger.debug("config.api_version : #{config.api_version}")
 
               # Create the vcloud-rest connection object with the configuration 
               # information.
-              config.vcloud_cnx = VCloudClient::Connection.new(
+
+
+
+              ## config.vcloud_cnx = VCloudClient::Connection.new(
+
+              # Switching to Driver Meta
+
+              config.vcloud_cnx = Driver::Meta.new(
                 config.hostname,
                 config.username,
                 config.password, 
-                config.org_name,
-                config.api_version
+                config.org_name
               )
 
               @logger.info("Logging into vCloud Director...")
               config.vcloud_cnx.login
 
               # Check for the vCloud Director authentication token
-              if config.vcloud_cnx.auth_key
+              if config.vcloud_cnx.driver.auth_key
                 @logger.info("Logged in successfully!")
                 @logger.debug(
-                  "x-vcloud-authorization=#{config.vcloud_cnx.auth_key}"
+                  "x-vcloud-authorization=#{config.vcloud_cnx.driver.auth_key}"
                 )
+              else
+                @logger.info("DID NOT LOG IN!")
+                raise "MOTHERFUCKER"
               end
             else
               @logger.info("Already logged in, using current session")
               @logger.debug(
-                  "x-vcloud-authorization=#{config.vcloud_cnx.auth_key}"
+                  "x-vcloud-authorization=#{config.vcloud_cnx.driver.auth_key}"
               )
             end
 
             @app.call env
 
           rescue Exception => e
+            ### RAISED HERE!!! WHY?!?!?!
+            @logger.debug("FAILING BADLY: #{e.inspect}")
             raise VagrantPlugins::VCloud::Errors::VCloudError, :message => e.message
           end
 

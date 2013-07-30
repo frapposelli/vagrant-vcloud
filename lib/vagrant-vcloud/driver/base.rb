@@ -16,10 +16,13 @@
 # limitations under the License.
 #
 
-require 'rest-client'
-require 'nokogiri'
-require 'httpclient'
-require 'ruby-progressbar'
+require "log4r"
+
+require 'vagrant/util/busy'
+require 'vagrant/util/platform'
+require 'vagrant/util/retryable'
+require 'vagrant/util/subprocess'
+
 
 module VagrantPlugins
   module VCloud
@@ -33,22 +36,10 @@ module VagrantPlugins
 
       # Main class to access vCloud rest APIs
       class Base
-        attr_reader :api_url, :auth_key
+        include Vagrant::Util::Retryable
 
-        def initialize(host, username, password, org_name, api_version)
-
-          # <SupportedVersions xmlns="http://www.vmware.com/vcloud/versions" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.vmware.com/vcloud/versions http://cloud.tsugliani.fr/api/versions/schema/versions.xsd">
-          #  <VersionInfo>
-          #   <Version>1.5</Version>
-
-
-          @host = host
-          @api_url = "#{host}/api"
-          @host_url = "#{host}"
-          @username = username
-          @password = password
-          @org_name = org_name
-          @api_version = (api_version || "5.1")
+        def initialize
+          @logger = Log4r::Logger.new("vagrant::provider::vcloud::base")
         end
 
         ##
@@ -285,31 +276,174 @@ module VagrantPlugins
         def get_vm(vmId)
         end
 
-        def get_api_version(host_url)
-
-          request = RestClient::Request.new(:method => "GET",
-                                           :url => "#{host_url}/api/versions")
-          begin
-            response = request.execute
-            if ![200, 201, 202, 204].include?(response.code)
-              puts "Warning: unattended code #{response.code}"
+        private
+          ##
+          # Sends a synchronous request to the vCloud API and returns the response as parsed XML + headers.
+          def send_request(params, payload=nil, content_type=nil)
+            headers = {:accept => "application/*+xml;version=#{@api_version}"}
+            if @auth_key
+              headers.merge!({:x_vcloud_authorization => @auth_key})
             end
 
-          # <SupportedVersions xmlns="http://www.vmware.com/vcloud/versions" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.vmware.com/vcloud/versions http://cloud.tsugliani.fr/api/versions/schema/versions.xsd">
-          #  <VersionInfo>
-          #   <Version>1.5</Version>
+            if content_type
+              headers.merge!({:content_type => content_type})
+            end
+
+            request = RestClient::Request.new(:method => params['method'],
+                                             :user => "#{@username}@#{@org_name}",
+                                             :password => @password,
+                                             :headers => headers,
+                                             :url => "#{@api_url}#{params['command']}",
+                                             :payload => payload)
 
 
-          versionInfo = Nokogiri.parse(response)
-          apiVersion = versionInfo.css("VersionInfo Version").first.to_s
+            begin
+              response = request.execute
+              if ![200, 201, 202, 204].include?(response.code)
+                puts "Warning: unattended code #{response.code}"
+              end
 
-          [apiVersion]
-          rescue
-            ## FIXME: Raise a realistic error, like host not found or url not found.
-            raise
+              # TODO: handle asynch properly, see TasksList
+              [Nokogiri.parse(response), response.headers]
+            rescue RestClient::Unauthorized => e
+              raise UnauthorizedAccess, "Client not authorized. Please check your credentials."
+            rescue RestClient::BadRequest => e
+              body = Nokogiri.parse(e.http_body)
+              message = body.css("Error").first["message"]
+
+              case message
+              when /The request has invalid accept header/
+                raise WrongAPIVersion, "Invalid accept header. Please verify that the server supports v.#{@api_version} or specify a different API Version."
+              when /validation error on field 'id': String value has invalid format or length/
+                raise WrongItemIDError, "Invalid ID specified. Please verify that the item exists and correctly typed."
+              when /The requested operation could not be executed on vApp "(.*)". Stop the vApp and try again/
+                raise InvalidStateError, "Invalid request because vApp is running. Stop vApp '#{$1}' and try again."
+              when /The requested operation could not be executed since vApp "(.*)" is not running/
+                raise InvalidStateError, "Invalid request because vApp is stopped. Start vApp '#{$1}' and try again."
+              else
+                raise UnhandledError, "BadRequest - unhandled error: #{message}.\nPlease report this issue."
+              end
+            rescue RestClient::Forbidden => e
+              body = Nokogiri.parse(e.http_body)
+              message = body.css("Error").first["message"]
+              raise UnauthorizedAccess, "Operation not permitted: #{message}."
+            rescue RestClient::InternalServerError => e
+              body = Nokogiri.parse(e.http_body)
+              message = body.css("Error").first["message"]
+              raise InternalServerError, "Internal Server Error: #{message}."
+            end
           end
-        end
 
+          ##
+          # Upload a large file in configurable chunks, output an optional progressbar
+          def upload_file(uploadURL, uploadFile, vAppTemplate, config={})
+
+            # Set chunksize to 10M if not specified otherwise
+            chunkSize = (config[:chunksize] || 10485760)
+
+            # Set progress bar to default format if not specified otherwise
+            progressBarFormat = (config[:progressbar_format] || "%e <%B> %p%% %t")
+
+            # Set progress bar length to 120 if not specified otherwise
+            progressBarLength = (config[:progressbar_length] || 120)
+
+            # Open our file for upload
+            uploadFileHandle = File.new(uploadFile, "rb" )
+            fileName = File.basename(uploadFileHandle)
+
+            progressBarTitle = "Uploading: " + uploadFile.to_s
+
+            # Create a progressbar object if progress bar is enabled
+            if config[:progressbar_enable] == true && uploadFileHandle.size.to_i > chunkSize
+              progressbar = ProgressBar.create(
+                :title => progressBarTitle,
+                :starting_at => 0,
+                :total => uploadFileHandle.size.to_i,
+                :length => progressBarLength,
+                :format => progressBarFormat
+              )
+            else
+              puts progressBarTitle
+            end
+            # Create a new HTTP client
+            clnt = HTTPClient.new
+
+            # Disable SSL cert verification
+            clnt.ssl_config.verify_mode=(OpenSSL::SSL::VERIFY_NONE)
+
+            # Suppress SSL depth message
+            clnt.ssl_config.verify_callback=proc{ |ok, ctx|; true };
+
+            # Perform ranged upload until the file reaches its end
+            until uploadFileHandle.eof?
+
+              # Create ranges for this chunk upload
+              rangeStart = uploadFileHandle.pos
+              rangeStop = uploadFileHandle.pos.to_i + chunkSize
+
+              # Read current chunk
+              fileContent = uploadFileHandle.read(chunkSize)
+
+              # If statement to handle last chunk transfer if is > than filesize
+              if rangeStop.to_i > uploadFileHandle.size.to_i
+                contentRange = "bytes #{rangeStart.to_s}-#{uploadFileHandle.size.to_s}/#{uploadFileHandle.size.to_s}"
+                rangeLen = uploadFileHandle.size.to_i - rangeStart.to_i
+              else
+                contentRange = "bytes #{rangeStart.to_s}-#{rangeStop.to_s}/#{uploadFileHandle.size.to_s}"
+                rangeLen = rangeStop.to_i - rangeStart.to_i
+              end
+
+              # Build headers
+              extheader = {
+                'x-vcloud-authorization' => @auth_key,
+                'Content-Range' => contentRange,
+                'Content-Length' => rangeLen.to_s
+              }
+
+              begin
+                uploadRequest = "#{@host_url}#{uploadURL}"
+                connection = clnt.request('PUT', uploadRequest, nil, fileContent, extheader)
+
+                if config[:progressbar_enable] == true && uploadFileHandle.size.to_i > chunkSize
+                  params = {
+                    'method' => :get,
+                    'command' => "/vAppTemplate/vappTemplate-#{vAppTemplate}"
+                  }
+                  response, headers = send_request(params)
+
+                  response.css("Files File [name='#{fileName}']").each do |file|
+                    progressbar.progress=file[:bytesTransferred].to_i
+                  end
+                end
+              rescue
+                retryTime = (config[:retry_time] || 5)
+                puts "Range #{contentRange} failed to upload, retrying the chunk in #{retryTime.to_s} seconds, to stop the action press CTRL+C."
+                sleep retryTime.to_i
+                retry
+              end
+            end
+            uploadFileHandle.close
+          end
+
+
+          ##
+          # Convert vApp status codes into human readable description
+          def convert_vapp_status(status_code)
+            case status_code.to_i
+              when 0
+                'suspended'
+              when 3
+                'paused'
+              when 4
+                'running'
+              when 8
+                'stopped'
+              when 10
+                'mixed'
+              else
+                "Unknown #{status_code}"
+            end
+          end
 
       end # class
     end

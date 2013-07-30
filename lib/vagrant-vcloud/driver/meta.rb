@@ -1,45 +1,57 @@
 require "forwardable"
-
 require "log4r"
+require "rest-client"
+require "nokogiri"
+
 
 require File.expand_path("../base", __FILE__)
 
 module VagrantPlugins
   module VCloud
     module Driver
+
       class Meta < Base
-        # This is raised if the VM is not found when initializing a driver
-        # with a UUID.
-        class VMNotFound < StandardError; end
+
+        class UnauthorizedAccess < StandardError; end
+        class WrongAPIVersion < StandardError; end
+        class WrongItemIDError < StandardError; end
+        class InvalidStateError < StandardError; end
+        class InternalServerError < StandardError; end
+        class UnhandledError < StandardError; end
+
 
         # We use forwardable to do all our driver forwarding
         extend Forwardable
+        attr_reader :driver
+        
 
-        # The UUID of the virtual machine we represent
-        attr_reader :uuid
+        def initialize(host, username, password, org_name)
 
-        # The version of virtualbox that is running.
-        attr_reader :version
-
-        def initialize(uuid=nil)
           # Setup the base
           super()
 
-          @logger = Log4r::Logger.new("vagrant::provider::vcloud::meta")
-          @uuid = uuid
 
-          # Read and assign the version of VirtualBox we know which
+          @logger = Log4r::Logger.new("vagrant::provider::vcloud::meta")
+          @logger.debug("LOOK AT ME, I'M IN META!")
+          @host = host
+          @username = username
+          @password = password
+          @org_name = org_name
+#          @api_version = (api_version || "5.1")
+
+
+          # Read and assign the version of vCloud we know which
           # specific driver to instantiate.
           begin
-            @version = read_version || ""
+            @version = get_api_version(@host) || ""
           rescue Vagrant::Errors::CommandUnavailable,
             Vagrant::Errors::CommandUnavailableWindows
-            # This means that VirtualBox was not found, so we raise this
+            # This means that vCloud was not found, so we raise this
             # error here.
-            raise Vagrant::Errors::VirtualBoxNotDetected
+            raise Vagrant::Errors::VCloudNotDetected
           end
 
-          # Instantiate the proper version driver for VirtualBox
+          # Instantiate the proper version driver for vCloud
           @logger.debug("Finding driver for vCloud version: #{@version}")
           driver_map   = {
             # API 1.5 maps to vCloud Director 5.1 - don't ask me why we're not on par with the release number...
@@ -61,86 +73,87 @@ module VagrantPlugins
 
           if !driver_klass
             supported_versions = driver_map.keys.sort.join(", ")
-            raise Vagrant::Errors::VirtualBoxInvalidVersion, :supported_versions => supported_versions
+            raise Vagrant::Errors::VCloudInvalidVersion, :supported_versions => supported_versions
           end
 
-          @logger.info("Using VirtualBox driver: #{driver_klass}")
-          @driver = driver_klass.new(@uuid)
+          @logger.info("Using vCloud driver: #{driver_klass}")
+          # @driver = driver_klass.new(@uuid)
 
-          if @uuid
-            # Verify the VM exists, and if it doesn't, then don't worry
-            # about it (mark the UUID as nil)
-            raise VMNotFound if !@driver.vm_exists?(@uuid)
-          end
+          # FIXME: fix the hardcoded 5.1 value
+          @driver = driver_klass.new(@host, @username, @password, @org_name)
+
         end
 
-        def_delegators :@driver, :clear_forwarded_ports,
-          :clear_shared_folders,
-          :create_dhcp_server,
-          :create_host_only_network,
-          :delete,
-          :delete_unused_host_only_networks,
-          :discard_saved_state,
-          :enable_adapters,
-          :execute_command,
-          :export,
-          :forward_ports,
-          :halt,
-          :import,
-          :read_forwarded_ports,
-          :read_bridged_interfaces,
-          :read_guest_additions_version,
-          :read_host_only_interfaces,
-          :read_mac_address,
-          :read_mac_addresses,
-          :read_machine_folder,
-          :read_network_interfaces,
-          :read_state,
-          :read_used_ports,
-          :read_vms,
-          :resume,
-          :set_mac_address,
-          :set_name,
-          :share_folders,
-          :ssh_port,
-          :start,
-          :suspend,
-          :verify!,
-          :verify_image,
-          :vm_exists?
+        def_delegators :@driver,
+          :login,
+          :logout,
+          :get_organizations,
+          :get_organization_id_by_name,
+          :get_organization_by_name,
+          :get_organization,
+          :get_catalog,
+          :get_catalog_id_by_name,
+          :get_catalog_by_name,
+          :get_vdc,
+          :get_vdc_id_by_name,
+          :get_vdc_by_name,
+          :get_catalog_item,
+          :get_catalog_item_by_name,
+          :get_vapp,
+          :delete_vapp,
+          :poweroff_vapp,
+          :suspend_vapp,
+          :reboot_vapp,
+          :reset_vapp,
+          :poweron_vapp,
+          :create_vapp_from_template,
+          :compose_vapp_from_vm,
+          :get_vapp_template,
+          :set_vapp_port_forwarding_rules,
+          :get_vapp_port_forwarding_rules,
+          :get_vapp_edge_public_ip,
+          :upload_ovf,
+          :get_task,
+          :wait_task_completion,
+          :set_vapp_network_config,
+          :set_vm_network_config,
+          :set_vm_guest_customization,
+          :get_vm,
+          :send_request,
+          :upload_file,
+          :convert_vapp_status
+
 
         protected
 
-        # This returns the version of VirtualBox that is running.
-        #
-        # @return [String]
-        def read_version
-          # The version string is usually in one of the following formats:
-          #
-          # * 4.1.8r1234
-          # * 4.1.8r1234_OSE
-          # * 4.1.8_MacPortsr1234
-          #
-          # Below accounts for all of these.
 
-          # Note: We split this into multiple lines because apparently "".split("_")
-          # is [], so we have to check for an empty array in between.
-          output = execute("--version")
-          if output =~ /vboxdrv kernel module is not loaded/ ||
-            output =~ /VirtualBox kernel modules are not loaded/i
-            raise Vagrant::Errors::VirtualBoxKernelModuleNotLoaded
-          elsif output =~ /Please install/
-            # Check for installation incomplete warnings, for example:
-            # "WARNING: The character device /dev/vboxdrv does not
-            # exist. Please install the virtualbox-ose-dkms package and
-            # the appropriate headers, most likely linux-headers-generic."
-            raise Vagrant::Errors::VirtualBoxInstallIncomplete
+        def get_api_version(host_url)
+
+          request = RestClient::Request.new(:method => "GET",
+                                           :url => "#{host_url}/api/versions")
+          begin
+            response = request.execute
+            if ![200, 201, 202, 204].include?(response.code)
+              puts "Warning: unattended code #{response.code}"
+            end
+
+          versionInfo = Nokogiri.parse(response)
+          apiVersion = versionInfo.css("VersionInfo Version").first.text
+
+          apiVersion
+          rescue
+            ## FIXME: Raise a realistic error, like host not found or url not found.
+            raise
           end
-
-          parts = output.split("_")
-          return nil if parts.empty?
-          parts[0].split("r")[0]
         end
+
+
+
+
+
+
+
+
       end
     end
   end

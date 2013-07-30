@@ -13,8 +13,8 @@ module VagrantPlugins
           begin
            @logger.info("Disconnecting from vCloud Director...")
 
-            # Fetch the global vCloud Director connection handle
-            cnx = env[:machine].provider_config.vcloud_cnx
+            # Fetch the global vCloud Director connection handle            
+            cnx = env[:machine].provider_config.vcloud_cnx.driver
 
             # Delete the current vCloud Director Session
             cnx.logout
