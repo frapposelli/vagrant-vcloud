@@ -24,21 +24,16 @@ module VagrantPlugins
         extend Forwardable
         attr_reader :driver
         
-
         def initialize(host, username, password, org_name)
 
           # Setup the base
           super()
 
-
           @logger = Log4r::Logger.new("vagrant::provider::vcloud::meta")
-          @logger.debug("LOOK AT ME, I'M IN META!")
           @host = host
           @username = username
           @password = password
           @org_name = org_name
-#          @api_version = (api_version || "5.1")
-
 
           # Read and assign the version of vCloud we know which
           # specific driver to instantiate.
@@ -77,9 +72,6 @@ module VagrantPlugins
           end
 
           @logger.info("Using vCloud driver: #{driver_klass}")
-          # @driver = driver_klass.new(@uuid)
-
-          # FIXME: fix the hardcoded 5.1 value
           @driver = driver_klass.new(@host, @username, @password, @org_name)
 
         end
@@ -126,7 +118,6 @@ module VagrantPlugins
 
         protected
 
-
         def get_api_version(host_url)
 
           request = RestClient::Request.new(:method => "GET",
@@ -146,14 +137,6 @@ module VagrantPlugins
             raise
           end
         end
-
-
-
-
-
-
-
-
       end
     end
   end

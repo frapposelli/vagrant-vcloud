@@ -95,6 +95,7 @@ module VagrantPlugins
           b.use ConnectVCloud
           b.use Call, IsCreated do |env, b2|
             if env[:result]
+              #puts "DUMPING STUFF: " + env.inspect
               b2.use MessageAlreadyCreated
               next
             end

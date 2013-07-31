@@ -342,16 +342,16 @@ module VagrantPlugins
             chunkSize = (config[:chunksize] || 10485760)
 
             # Set progress bar to default format if not specified otherwise
-            progressBarFormat = (config[:progressbar_format] || "%e <%B> %p%% %t")
+            progressBarFormat = (config[:progressbar_format] || "%t Progress: %p%% %e")
 
             # Set progress bar length to 120 if not specified otherwise
-            progressBarLength = (config[:progressbar_length] || 120)
+            progressBarLength = (config[:progressbar_length] || 80)
 
             # Open our file for upload
             uploadFileHandle = File.new(uploadFile, "rb" )
             fileName = File.basename(uploadFileHandle)
 
-            progressBarTitle = "Uploading: " + uploadFile.to_s
+            progressBarTitle = "Uploading: " + fileName.to_s
 
             # Create a progressbar object if progress bar is enabled
             if config[:progressbar_enable] == true && uploadFileHandle.size.to_i > chunkSize
@@ -359,7 +359,7 @@ module VagrantPlugins
                 :title => progressBarTitle,
                 :starting_at => 0,
                 :total => uploadFileHandle.size.to_i,
-                :length => progressBarLength,
+                ##:length => progressBarLength,
                 :format => progressBarFormat
               )
             else

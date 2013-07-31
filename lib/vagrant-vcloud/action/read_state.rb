@@ -24,12 +24,14 @@ module VagrantPlugins
         def vcloud_upload_box(env)
 
           cfg = env[:machine].provider_config
-          cnx = cfg.vcloud_cnx
+          cnx = cfg.vcloud_cnx.driver
 
           boxDir = env[:machine].box.directory.to_s
           boxFile = env[:machine].box.name.to_s
 
           boxOVF = "#{boxDir}/#{boxFile}.ovf"
+
+          ### Still relying on ruby-progressbar because report_progress basically sucks.
 
           @logger.debug("OVF File: #{boxOVF}")
           cnx.upload_ovf(
@@ -39,13 +41,10 @@ module VagrantPlugins
             boxOVF,
             cfg.catalog_id,
             {
-              :progressbar_enable => true
+              :progressbar_enable => true,
+              :chunksize => 262144
             }
           )
-          ### FIXME: Doesn't work properly, method needs to be refactored.
-          #          ) do |progress|
-          #            env[:ui].info progress
-          #          end
 
         end
 
@@ -53,7 +52,7 @@ module VagrantPlugins
           # Will check each mandatory config value against the vCloud Director
           # Instance and will setup the global environment config values
           cfg = env[:machine].provider_config
-          cnx = cfg.vcloud_cnx
+          cnx = cfg.vcloud_cnx.driver
 
           cfg.org = cnx.get_organization_by_name(cfg.org_name)
           cfg.org_id = cnx.get_organization_id_by_name(cfg.org_name)
@@ -77,10 +76,12 @@ module VagrantPlugins
             @logger.info("Catalog item [#{cfg.catalog_item_name}] does not exist!")
             # Disabled for now, not working as expected ;-)
             # Need to handle OVF with & without Manifest files (.mf)
-            @logger.debug("UPLOAD DISABLED!")
-            #vcloud_upload_box(env)
+            #@logger.debug("UPLOAD DISABLED!")
+            env[:ui].warn("Catalog item [#{cfg.catalog_item_name}] not found in [#{cfg.catalog_name}], proceeding with upload...")
+            vcloud_upload_box(env)
           else
             @logger.info("Catalog item [#{cfg.catalog_item_name}] exists")
+            env[:ui].success("Found Catalog item [#{cfg.catalog_item_name}] in [#{cfg.catalog_name}].")
           end
 
         end
