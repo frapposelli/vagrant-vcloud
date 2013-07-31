@@ -31,7 +31,6 @@ module VagrantPlugins
             return nil
           end
 
-
           return {
               :host => vm[:ip],
               :port => 22

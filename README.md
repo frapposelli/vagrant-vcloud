@@ -9,11 +9,19 @@ Please note that this is NOT WORKING yet.
 Using this page as a reminder todo list to what needs to be done to integrate
 vCloud Director with vagrant, at a high level.
 
+### Overall things to consider ###
+
+*   Handle vCloud Director blocking tasks
+
+    This might surface at some point depending if this plugin is used in private 
+    cloud environment with an approval process. (sigh)
+
+*   Try multiple Catalog Items upload at the same time
+
+    This might surface when working in the same organization as another developer
+    and check if our error handling is working fine.
+
 ### Vagrant Actions ###
-
-*   Missing methods in vcloud-rest
-
-    Everything looks good for now.
 
 *   Box
 
