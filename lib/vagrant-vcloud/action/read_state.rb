@@ -67,21 +67,35 @@ module VagrantPlugins
 
           # Checking Catalog mandatory requirements
           if !cfg.catalog
+            env[:ui].error("Catalog [#{cfg.catalog_name}] does not exist!")
             @logger.info("Catalog [#{cfg.catalog_name}] does not exist!")
           else
+            env[:ui].success("Catalog [#{cfg.catalog_name}] exists")
             @logger.info("Catalog [#{cfg.catalog_name}] exists")
           end
 
           if !cfg.catalog_item
             @logger.info("Catalog item [#{cfg.catalog_item_name}] does not exist!")
-            # Disabled for now, not working as expected ;-)
-            # Need to handle OVF with & without Manifest files (.mf)
-            #@logger.debug("UPLOAD DISABLED!")
-            env[:ui].warn("Catalog item [#{cfg.catalog_item_name}] not found in [#{cfg.catalog_name}], proceeding with upload...")
-            vcloud_upload_box(env)
+            env[:ui].warn("Catalog item [#{cfg.catalog_item_name}] does not exist!")
+
+            user_input = env[:ui].ask(
+              "Would you like to upload the [#{cfg.catalog_item_name}] box to "\
+              "vCloud Director catalog named [#{cfg.catalog_name}]? (yes/no)"
+            )
+
+            if user_input.downcase == "yes"
+              env[:ui].warn("Catalog item [#{cfg.catalog_item_name}] uploading process...")
+              vcloud_upload_box(env)
+            else
+              env[:ui].error("Catalog item not available, exiting...")
+
+              raise VagrantPlugins::VCloud::Errors::VCloudError, 
+                    :message => "Catalog item not available, exiting..."
+
+            end
           else
             @logger.info("Catalog item [#{cfg.catalog_item_name}] exists")
-            env[:ui].success("Found Catalog item [#{cfg.catalog_item_name}] in [#{cfg.catalog_name}].")
+            env[:ui].success("Catalog item [#{cfg.catalog_item_name}] exists")
           end
 
         end

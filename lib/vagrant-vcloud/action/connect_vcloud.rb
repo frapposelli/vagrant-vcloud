@@ -26,13 +26,6 @@ module VagrantPlugins
 
               # Create the vcloud-rest connection object with the configuration 
               # information.
-
-
-
-              ## config.vcloud_cnx = VCloudClient::Connection.new(
-
-              # Switching to Driver Meta
-
               config.vcloud_cnx = Driver::Meta.new(
                 config.hostname,
                 config.username,
@@ -51,8 +44,8 @@ module VagrantPlugins
                   "x-vcloud-authorization=#{config.vcloud_cnx.driver.auth_key}"
                 )
               else
-                @logger.info("DID NOT LOG IN!")
-                env[:ui].error("Log in not successful #{config.hostname}.")
+                @logger.info("Login failed in to #{config.hostname}.")
+                env[:ui].error("Login failed in to #{config.hostname}.")
                 raise
               end
             else
