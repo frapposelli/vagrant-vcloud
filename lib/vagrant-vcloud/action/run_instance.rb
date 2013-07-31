@@ -1,6 +1,5 @@
 require "log4r"
 require "vagrant/util/retryable"
-require "vcloud-rest/connection"
 
 # FIXME: Change vSphere logic to vCloud clone logic (vApp, etc...)
 

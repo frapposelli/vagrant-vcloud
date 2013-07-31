@@ -26,7 +26,6 @@ vCloud Director with vagrant, at a high level.
 *   Box
 
     We should provide a vCloud Director-ready OVF inside the box file, and give the ability to upload the box to a Catalog (if the user has catalog author permission) or leverage a pre-existing box already in a catalog.
-    *upload_ovf now available in vcloud-rest ~> 0.3.0*
 
 *   Destroy
     

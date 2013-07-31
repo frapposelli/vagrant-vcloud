@@ -1,5 +1,6 @@
 require "vagrant"
 require "vagrant/action/builder"
+require "awesome_print"
 
 module VagrantPlugins
   module VCloud
@@ -95,14 +96,18 @@ module VagrantPlugins
           b.use ConnectVCloud
           b.use CatalogCheck
           b.use CreateVApp
+          b.use ReadState
           b.use Call, IsCreated do |env, b2|
             if env[:result]
-              #puts "DUMPING STUFF: " + env.inspect
+              ap "!!!! DUMPING OBJECT !!!!"
+              ap env[:machine].provider_config.vcloud_cnx.driver.inspect
+              ap "!!!! DUMPING METHODS !!!!"
+              ap env[:machine].provider_config.vcloud_cnx.driver.methods
               b2.use MessageAlreadyCreated
               next
             end
 
-            b2.use Clone
+            #b2.use Clone
             # TODO: provision
             b2.use TimedProvision
             # TODO: sync folders

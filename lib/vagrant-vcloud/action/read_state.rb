@@ -1,5 +1,4 @@
 require "log4r"
-require "vcloud-rest/connection"
 
 module VagrantPlugins
   module VCloud
@@ -21,7 +20,10 @@ module VagrantPlugins
 
           cfg = env[:machine].provider_config
 
-          #return :not_created  if machine.id.nil?
+          if cnx.id.nil?
+            @logger.debug("!!! Machine is not created yet. !!!")
+            return :not_created
+          end
 
           #vm = connection.get_vapp(machine)
 

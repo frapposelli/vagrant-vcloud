@@ -37,6 +37,11 @@ module VagrantPlugins
       #
       # @return [String]
       attr_accessor :catalog_item_name
+
+      # Upload Catalog Item if not available?
+      #
+      # @return [Bool]
+      attr_accessor :catalog_item_upload
       
       # Virtual Data Center to be used
       #
@@ -62,34 +67,34 @@ module VagrantPlugins
       ## vCloud Director config runtime values
       ## 
 
-      # vcloud-rest connection handle
+      # connection handle
       attr_accessor :vcloud_cnx
       
-      # vcloud-rest org object (Hash)
+      # org object (Hash)
       attr_accessor :org
       
-      # vcloud-rest org id (String)
+      # org id (String)
       attr_accessor :org_id
 
-      # vcloud-rest vdc object (Hash)
+      # vdc object (Hash)
       attr_accessor :vdc
 
-      # vcloud-rest vdc id (String)
+      # vdc id (String)
       attr_accessor :vdc_id
 
-      # vcloud-rest catalog object (Hash)
+      # catalog object (Hash)
       attr_accessor :catalog
 
-      # vcloud-rest catalog id (String)
+      # catalog id (String)
       attr_accessor :catalog_id 
 
-      # vcloud-rest catalog item object (Hash)
+      # catalog item object (Hash)
       attr_accessor :catalog_item 
 
-      # vcloud-rest vApp Name (String)
+      # vApp Name (String)
       attr_accessor :vAppName
 
-      # vcloud-rest vApp Id (String)
+      # vApp Id (String)
       attr_accessor :vAppId
 
       def validate(machine)

@@ -1,5 +1,3 @@
-require "vcloud-rest/connection"
-
 module VagrantPlugins
   module VCloud
     module Action
