@@ -1,5 +1,4 @@
 require "log4r"
-require "vcloud-rest/connection"
 
 module VagrantPlugins
   module VCloud
@@ -8,7 +7,7 @@ module VagrantPlugins
 
         def initialize(app, env)
           @app = app
-          @logger = Log4r::Logger.new("vagrant_vcloud::action::read_state")
+          @logger = Log4r::Logger.new("vagrant_vcloud::action::catalog_check")
         end
 
         def call(env)
@@ -72,8 +71,14 @@ module VagrantPlugins
 
           if !cfg.catalog_item
             @logger.info("Catalog item [#{cfg.catalog_item_name}] does not exist!")
-            env[:ui].warn("Catalog item [#{cfg.catalog_item_name}] not found in [#{cfg.catalog_name}], proceeding with upload...")
-            vcloud_upload_box(env)
+
+            if cfg.catalog_item_upload == true
+              env[:ui].warn("Catalog item [#{cfg.catalog_item_name}] not found in [#{cfg.catalog_name}], proceeding with upload...")
+              vcloud_upload_box(env)
+            else
+              env[:ui].error("Catalog item [#{cfg.catalog_item_name}] not found in [#{cfg.catalog_name}], please ask your cloud administrator to upload it.")
+              raise
+            end
           else
             @logger.info("Catalog item [#{cfg.catalog_item_name}] exists")
             env[:ui].success("Found Catalog item [#{cfg.catalog_item_name}] in [#{cfg.catalog_name}].")

@@ -1,4 +1,3 @@
-#require "vcloud-rest/connection"
 require "log4r"
 
 module VagrantPlugins
@@ -23,15 +22,6 @@ module VagrantPlugins
               @logger.debug("config.username    : #{config.username}")
               @logger.debug("config.password    : #{config.password}")
               @logger.debug("config.org_name    : #{config.org_name}")
-
-              # Create the vcloud-rest connection object with the configuration 
-              # information.
-
-
-
-              ## config.vcloud_cnx = VCloudClient::Connection.new(
-
-              # Switching to Driver Meta
 
               config.vcloud_cnx = Driver::Meta.new(
                 config.hostname,
