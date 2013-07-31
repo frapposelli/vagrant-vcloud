@@ -19,7 +19,8 @@ module VagrantPlugins
         def read_state(env)
 
           cfg = env[:machine].provider_config
-
+          cnx = cfg.vcloud_cnx.driver
+          
           if cnx.id.nil?
             @logger.debug("!!! Machine is not created yet. !!!")
             return :not_created

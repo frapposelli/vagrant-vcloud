@@ -96,7 +96,7 @@ module VagrantPlugins
           b.use ConnectVCloud
           b.use CatalogCheck
           b.use CreateVApp
-          b.use ReadState
+          #b.use ReadState
           b.use Call, IsCreated do |env, b2|
             if env[:result]
               ap "!!!! DUMPING OBJECT !!!!"
