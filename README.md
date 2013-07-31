@@ -55,8 +55,10 @@ vCloud Director with vagrant, at a high level.
 
     This could look like:
 
-    `cnx = cfg.vcloud_cnx.driver`  
-    `cnx.delete_vapp(vAppId)`  
+    ```ruby
+    cnx = cfg.vcloud_cnx.driver  
+    cnx.delete_vapp(vAppId)  
+    ```
 
 *   Halt
 
@@ -64,6 +66,7 @@ vCloud Director with vagrant, at a high level.
     is the top layer object that contains the whole configuration of the setup.
 
     This could look like:
+    
     ```ruby
     cnx = cfg.vcloud_cnx.driver  
     cnx.poweroff_vapp(vAppId)    
@@ -98,8 +101,11 @@ vCloud Director with vagrant, at a high level.
 
     This could look like:
 
-    `cnx = cfg.vcloud_cnx.driver`  
-    `cnx.poweron_vapp(vAppId)`  
+    ```ruby
+    cnx = cfg.vcloud_cnx.driver  
+    cnx.poweron_vapp(vAppId)
+    ```
+
 
 *   Ssh
 
@@ -110,10 +116,11 @@ vCloud Director with vagrant, at a high level.
     Those two methods could be called to check for information and map the 
     information accordingly:
 
-    `cnx = cfg.vcloud_cnx.driver`  
-    `cnx.get_vapp_edge_public_ip(vAppId)`  
-    `cnx.get_vapp_port_forwarding_rules(vAppId)`  
-
+    ```ruby
+    cnx = cfg.vcloud_cnx.driver  
+    cnx.get_vapp_edge_public_ip(vAppId)  
+    cnx.get_vapp_port_forwarding_rules(vAppId)
+    ```  
 
 *   Ssh-Config
 
@@ -124,9 +131,11 @@ vCloud Director with vagrant, at a high level.
     This will display the state of the vApp and it's overall configuration.
     vApp status, VM status, and Network NAT rules for example would be nice.
 
-    `cnx = cfg.vcloud_cnx.driver`  
-    `cnx.get_vapp(vAppId)`  
-    `cnx.get_vapp_port_forwarding_rules(vAppId)`  
+    ```ruby
+    cnx = cfg.vcloud_cnx.driver  
+    cnx.get_vapp(vAppId)  
+    cnx.get_vapp_port_forwarding_rules(vAppId)  
+    ```
 
 *   Suspend
 
@@ -135,8 +144,10 @@ vCloud Director with vagrant, at a high level.
 
     This could look like:
 
-    `cnx = cfg.vcloud_cnx.driver`  
-    `cnx.suspend_vapp(vAppId)`  
+    ```ruby
+    cnx = cfg.vcloud_cnx.driver  
+    cnx.suspend_vapp(vAppId)  
+    ```
 
 *   Up
 
@@ -146,7 +157,9 @@ vCloud Director with vagrant, at a high level.
 
     Code that would be used:
 
-    `cnx = cfg.vcloud_cnx.driver`  
-    `cnx.compose_vapp_from_vm(vdc, vapp_name, vapp_description, vm_list={}, network_config={})`  
-    `cnx.set_vapp_port_forwarding_rules(vappid, network_name, config={})`       
-    `cnx.start_vapp(vAppId)`  
+    ```ruby
+    cnx = cfg.vcloud_cnx.driver  
+    cnx.compose_vapp_from_vm(vdc, vapp_name, vapp_description, vm_list={}, network_config={})  
+    cnx.set_vapp_port_forwarding_rules(vappid, network_name, config={})       
+    cnx.start_vapp(vAppId)
+    ```  
