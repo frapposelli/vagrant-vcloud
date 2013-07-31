@@ -29,7 +29,6 @@ module VagrantPlugins
         Provider
       end
 
-
       def self.setup_i18n
         I18n.load_path << File.expand_path("locales/en.yml", VCloud.source_root)
         I18n.reload!
@@ -63,6 +62,10 @@ module VagrantPlugins
           logger = nil
         end
       end
+    end
+    module Driver
+      autoload :Meta, File.expand_path("../driver/meta", __FILE__)
+      autoload :Version_5_1, File.expand_path("../driver/version_5_1", __FILE__)
     end
   end
 end
