@@ -1,25 +1,24 @@
 #
-# Author:: Stefano Tortarolo (<stefano.tortarolo@gmail.com>)
-# Copyright:: Copyright (c) 2012
-# License:: Apache License, Version 2.0
+#  Copyright 2012 Stefano Tortarolo
+#  Copyright 2013 Fabio Rapposelli and Timo Sugliani
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
 #
-#     http://www.apache.org/licenses/LICENSE-2.0
+#      http://www.apache.org/licenses/LICENSE-2.0
 #
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
 #
 
-require 'rest-client'
-require 'nokogiri'
-require 'httpclient'
-require 'ruby-progressbar'
+require "rest-client"
+require "nokogiri"
+require "httpclient"
+require "ruby-progressbar"
 
 module VagrantPlugins
   module VCloud
@@ -34,7 +33,7 @@ module VagrantPlugins
 
       # Main class to access vCloud rest APIs
       class Version_5_1 < Base
-        attr_reader :auth_key
+        attr_reader :auth_key, :id
         
         def initialize(host, username, password, org_name)
           @host = host
@@ -44,6 +43,7 @@ module VagrantPlugins
           @password = password
           @org_name = org_name
           @api_version = "5.1"
+          @id = nil
         end
 
         ##

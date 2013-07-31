@@ -7,7 +7,7 @@ module VagrantPlugins
         end
 
         def call(env)
-          #puts "DUMPING MACHIEN STUFF: " + env[:machine].inspect
+          #puts "DUMPING MACHINE STUFF: " + env[:machine].inspect
           env[:result] = env[:machine].state.id != :not_created
           @app.call env
         end

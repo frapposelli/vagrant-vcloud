@@ -93,6 +93,7 @@ module VagrantPlugins
           b.use ConfigValidate
           b.use HandleBoxUrl #### THIS IS A BUILTIN FUNCTION TO HANDLE THE BOX DOWNLOAD, MUST BE USED!!!  
           b.use ConnectVCloud
+          b.use CatalogCheck
           b.use Call, IsCreated do |env, b2|
             if env[:result]
               #puts "DUMPING STUFF: " + env.inspect
@@ -119,6 +120,7 @@ module VagrantPlugins
       autoload :MessageNotCreated, action_root.join("message_not_created")
       autoload :MessageWillNotDestroy, action_root.join("message_will_not_destroy")
       autoload :ReadSSHInfo, action_root.join("read_ssh_info")
+      autoload :CatalogCheck, action_root.join("catalog_check")
       autoload :ReadState, action_root.join("read_state")
       autoload :RunInstance, action_root.join("run_instance")
       autoload :SyncFolders, action_root.join("sync_folders")
