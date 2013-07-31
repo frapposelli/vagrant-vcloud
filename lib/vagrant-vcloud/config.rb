@@ -14,7 +14,7 @@ module VagrantPlugins
       # The Organization Name to log in to
       #
       # @return [String]
-      attr_accessor :orgname
+      attr_accessor :org_name
 
       # The username used to log in
       #
@@ -26,11 +26,6 @@ module VagrantPlugins
       # @return [String]
       attr_accessor :password
 
-      # API version to be used
-      #
-      # @return [String]
-      attr_accessor :api_version
-
       # WIP on these
 
       # Catalog Name where the item resides
@@ -41,7 +36,7 @@ module VagrantPlugins
       # Catalog Item to be used as a template
       #
       # @return [String]
-      attr_accessor :catalog_item
+      attr_accessor :catalog_item_name
       
       # Virtual Data Center to be used
       #
@@ -63,20 +58,51 @@ module VagrantPlugins
       # @return [Hash]
       attr_reader :port_forwarding_rules
       
+      ##
+      ## vCloud Director config runtime values
+      ## 
+
+      # vcloud-rest connection handle
+      attr_accessor :vcloud_cnx
+      
+      # vcloud-rest org object (Hash)
+      attr_accessor :org
+      
+      # vcloud-rest org id (String)
+      attr_accessor :org_id
+
+      # vcloud-rest vdc object (Hash)
+      attr_accessor :vdc
+
+      # vcloud-rest vdc id (String)
+      attr_accessor :vdc_id
+
+      # vcloud-rest catalog object (Hash)
+      attr_accessor :catalog
+
+      # vcloud-rest catalog id (String)
+      attr_accessor :catalog_id 
+
+      # vcloud-rest catalog item object (Hash)
+      attr_accessor :catalog_item 
+
+      # vcloud-rest vApp Name (String)
+      attr_accessor :vAppName
+
+      # vcloud-rest vApp Id (String)
+      attr_accessor :vAppId
+
       def validate(machine)
         errors = _detected_errors
 
-
         # TODO: add blank?
         errors << I18n.t("config.hostname") if hostname.nil?
-        errors << I18n.t("config.orgname") if orgname.nil?
+        errors << I18n.t("config.org_name") if org_name.nil?
         errors << I18n.t("config.username") if username.nil?
         errors << I18n.t("config.password") if password.nil?
-
-        errors << I18n.t("config.api_version") if api_version.nil?
         
         errors << I18n.t("config.catalog_name") if catalog_name.nil?
-        errors << I18n.t("config.catalog_item") if catalog_item.nil?
+        errors << I18n.t("config.catalog_item_name") if catalog_item_name.nil?
         errors << I18n.t("config.vdc_name") if vdc_name.nil?
 
         { "vCloud Provider" => errors }

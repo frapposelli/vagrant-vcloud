@@ -11,16 +11,17 @@ module VagrantPlugins
 
         def call(env)
           begin
+           @logger.info("Disconnecting from vCloud Director...")
 
-            @logger.info("Disconnecting from vCloud Director...")
+            # Fetch the global vCloud Director connection handle            
+            cnx = env[:machine].provider_config.vcloud_cnx.driver
 
-            env[:vcloud_connection].logout
+            # Delete the current vCloud Director Session
+            cnx.logout
 
-            if !env[:vcloud_connection].auth_key
+            # If session key doesn't exist, we are disconnected
+            if !cnx.auth_key
               @logger.info("Disconnected from vCloud Director successfully!")
-              @logger.debug(
-                "x-vcloud-authorization=#{env[:vcloud_connection].auth_key}"
-              )
             end
 
           rescue Exception => e

@@ -1,5 +1,5 @@
 en:
-  vCloud:
+  vcloud:
     creating_cloned_vm: |-
       Calling vCloud CloneVM with the following settings:
     destroy_vm: |-
