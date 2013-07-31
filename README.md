@@ -28,21 +28,21 @@ vCloud Director with vagrant, at a high level.
 
 ### Vagrant Actions ###
 
-*   [x] Box
+*   Box
 
     We should provide a vCloud Director-ready OVF inside the box file, 
     and give the ability to upload the box to a Catalog 
     (if the user has catalog author permission) or leverage a pre-existing box 
     already in a catalog.
 
-    [x] Create a new precise32 box for vCloud Director
-    [x] Ability to use a vCloud Director Catalog Template/Catalog item
-    [x] Ability to upload a local box into a vCloud Catalog Template/Catalog item
+    [x] Create a new precise32 box for vCloud Director   
+    [x] Ability to use a vCloud Director Catalog Template/Catalog item  
+    [x] Ability to upload a local box into a vCloud Catalog Template/Catalog item  
 
-    Url to fetch the current box:
+    Url to fetch the current box:  
     [Precise32 box for vagrant-vcloud] (http://vstuff.org/precise32.box)
 
-*   [ ] Destroy
+*   Destroy
     
     This is a pretty simple action to implement in vCloud Director, as the vApp 
     is the top level object that contains the whole configuration of the setup.
@@ -55,19 +55,19 @@ vCloud Director with vagrant, at a high level.
 
     This could look like:
 
-    `cnx = cfg.vcloud_cnx.driver`
-    `cnx.delete_vapp(vAppId)`
+    `cnx = cfg.vcloud_cnx.driver`  
+    `cnx.delete_vapp(vAppId)`  
 
-
-*   [ ] Halt
+*   Halt
 
     This is a pretty simple action to implement in vCloud Director, as the vApp
     is the top layer object that contains the whole configuration of the setup.
 
     This could look like:
-
-    `cnx = cfg.vcloud_cnx.driver`
-    `cnx.poweroff_vapp(vAppId)`
+    ```ruby
+    cnx = cfg.vcloud_cnx.driver  
+    cnx.poweroff_vapp(vAppId)    
+     ```
 
 *   Init
     
@@ -91,17 +91,17 @@ vCloud Director with vagrant, at a high level.
 
     TBD
 
-*   [ ] Resume
+*   Resume
 
     This is a pretty simple action to implement in vCloud Director, as the vApp
     is the top layer object that contains the whole configuration of the setup.
 
     This could look like:
 
-    `cnx = cfg.vcloud_cnx.driver`
-    `cnx.poweron_vapp(vAppId)`
+    `cnx = cfg.vcloud_cnx.driver`  
+    `cnx.poweron_vapp(vAppId)`  
 
-*   [ ] Ssh
+*   Ssh
 
     As the vApp is using a vShield Edge device to NAT using portforwarding mode,
     we will need to fetch the portforwarding rules used for SSH, and then map 
@@ -110,35 +110,35 @@ vCloud Director with vagrant, at a high level.
     Those two methods could be called to check for information and map the 
     information accordingly:
 
-    `cnx = cfg.vcloud_cnx.driver`
-    `cnx.get_vapp_edge_public_ip(vAppId)`
-    `cnx.get_vapp_port_forwarding_rules(vAppId)`
+    `cnx = cfg.vcloud_cnx.driver`  
+    `cnx.get_vapp_edge_public_ip(vAppId)`  
+    `cnx.get_vapp_port_forwarding_rules(vAppId)`  
 
 
 *   Ssh-Config
 
     This will likely need the information used on the previous section "Ssh"
 
-*   [ ] Status
+*   Status
 
     This will display the state of the vApp and it's overall configuration.
     vApp status, VM status, and Network NAT rules for example would be nice.
 
-    `cnx = cfg.vcloud_cnx.driver`
-    `cnx.get_vapp(vAppId)`
-    `cnx.get_vapp_port_forwarding_rules(vAppId)`
+    `cnx = cfg.vcloud_cnx.driver`  
+    `cnx.get_vapp(vAppId)`  
+    `cnx.get_vapp_port_forwarding_rules(vAppId)`  
 
-*   [ ] Suspend
+*   Suspend
 
     This is a pretty simple action to implement in vCloud Director, as the vApp
     is the top layer object that contains the whole configuration of the setup.
 
     This could look like:
 
-    `cnx = cfg.vcloud_cnx.driver`
-    `cnx.suspend_vapp(vAppId)`
+    `cnx = cfg.vcloud_cnx.driver`  
+    `cnx.suspend_vapp(vAppId)`  
 
-*   [ ] Up
+*   Up
 
     This is probably the most important action.
     It will basically compose the vApp from all the properties in the Vagrant 
@@ -146,7 +146,7 @@ vCloud Director with vagrant, at a high level.
 
     Code that would be used:
 
-    `cnx = cfg.vcloud_cnx.driver`
-    `cnx.compose_vapp_from_vm(vdc, vapp_name, vapp_description, vm_list={}, network_config={})`
-    `cnx.set_vapp_port_forwarding_rules(vappid, network_name, config={})`     
-    `cnx.start_vapp(vAppId)`
+    `cnx = cfg.vcloud_cnx.driver`  
+    `cnx.compose_vapp_from_vm(vdc, vapp_name, vapp_description, vm_list={}, network_config={})`  
+    `cnx.set_vapp_port_forwarding_rules(vappid, network_name, config={})`       
+    `cnx.start_vapp(vAppId)`  
