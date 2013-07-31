@@ -38,11 +38,6 @@ module VagrantPlugins
       # @return [String]
       attr_accessor :catalog_item_name
 
-      # Upload Catalog Item if not available?
-      #
-      # @return [Bool]
-      attr_accessor :catalog_item_upload
-      
       # Virtual Data Center to be used
       #
       # @return [String]
