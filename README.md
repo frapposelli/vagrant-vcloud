@@ -21,11 +21,26 @@ vCloud Director with vagrant, at a high level.
     This might surface when working in the same organization as another developer
     and check if our error handling is working fine.
 
+*   Check vCloud Username credentials (permissions for catalog for example)
+    
+    If trying to use a public Catalog from another Organization that process
+    *will* fail.
+
 ### Vagrant Actions ###
 
 *   Box
 
-    We should provide a vCloud Director-ready OVF inside the box file, and give the ability to upload the box to a Catalog (if the user has catalog author permission) or leverage a pre-existing box already in a catalog.
+    We should provide a vCloud Director-ready OVF inside the box file, 
+    and give the ability to upload the box to a Catalog 
+    (if the user has catalog author permission) or leverage a pre-existing box 
+    already in a catalog.
+
+    [x] Create a new precise32 box for vCloud Director   
+    [x] Ability to use a vCloud Director Catalog Template/Catalog item  
+    [x] Ability to upload a local box into a vCloud Catalog Template/Catalog item  
+
+    Url to fetch the current box:  
+    [Precise32 box for vagrant-vcloud] (http://vstuff.org/precise32.box)
 
 *   Destroy
     
@@ -40,8 +55,10 @@ vCloud Director with vagrant, at a high level.
 
     This could look like:
 
-    `env[:vcloud_connection].delete_vapp(vAppId)`
-
+    ```ruby
+    cnx = cfg.vcloud_cnx.driver  
+    cnx.delete_vapp(vAppId)  
+    ```
 
 *   Halt
 
@@ -49,8 +66,11 @@ vCloud Director with vagrant, at a high level.
     is the top layer object that contains the whole configuration of the setup.
 
     This could look like:
-
-    `env[:vcloud_connection].poweroff_vapp(vAppId)`
+    
+    ```ruby
+    cnx = cfg.vcloud_cnx.driver  
+    cnx.poweroff_vapp(vAppId)    
+     ```
 
 *   Init
     
@@ -81,7 +101,11 @@ vCloud Director with vagrant, at a high level.
 
     This could look like:
 
-    `env[:vcloud_connection].poweron_vapp(vAppId)`
+    ```ruby
+    cnx = cfg.vcloud_cnx.driver  
+    cnx.poweron_vapp(vAppId)
+    ```
+
 
 *   Ssh
 
@@ -92,9 +116,11 @@ vCloud Director with vagrant, at a high level.
     Those two methods could be called to check for information and map the 
     information accordingly:
 
-    `env[:vcloud_connection].get_vapp_edge_public_ip(vAppId)`
-    `env[:vcloud_connection].get_vapp_port_forwarding_rules(vAppId)`
-
+    ```ruby
+    cnx = cfg.vcloud_cnx.driver  
+    cnx.get_vapp_edge_public_ip(vAppId)  
+    cnx.get_vapp_port_forwarding_rules(vAppId)
+    ```  
 
 *   Ssh-Config
 
@@ -105,8 +131,11 @@ vCloud Director with vagrant, at a high level.
     This will display the state of the vApp and it's overall configuration.
     vApp status, VM status, and Network NAT rules for example would be nice.
 
-    `env[:vcloud_connection].get_vapp(vAppId)`
-    `env[:vcloud_connection].get_vapp_port_forwarding_rules(vAppId)`
+    ```ruby
+    cnx = cfg.vcloud_cnx.driver  
+    cnx.get_vapp(vAppId)  
+    cnx.get_vapp_port_forwarding_rules(vAppId)  
+    ```
 
 *   Suspend
 
@@ -115,7 +144,10 @@ vCloud Director with vagrant, at a high level.
 
     This could look like:
 
-    `env[:vcloud_connection].suspend_vapp(vAppId)`
+    ```ruby
+    cnx = cfg.vcloud_cnx.driver  
+    cnx.suspend_vapp(vAppId)  
+    ```
 
 *   Up
 
@@ -125,6 +157,9 @@ vCloud Director with vagrant, at a high level.
 
     Code that would be used:
 
-    `env[:vcloud_connection].compose_vapp_from_vm(vdc, vapp_name, vapp_description, vm_list={}, network_config={})`
-    `env[:vcloud_connection].set_vapp_port_forwarding_rules(vappid, network_name, config={})`     
-    `env[:vcloud_connection].start_vapp(vAppId)`
+    ```ruby
+    cnx = cfg.vcloud_cnx.driver  
+    cnx.compose_vapp_from_vm(vdc, vapp_name, vapp_description, vm_list={}, network_config={})  
+    cnx.set_vapp_port_forwarding_rules(vappid, network_name, config={})       
+    cnx.start_vapp(vAppId)
+    ```  

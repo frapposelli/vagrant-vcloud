@@ -43,6 +43,16 @@ module VagrantPlugins
       # @return [String]
       attr_accessor :vdc_name
 
+      # Virtual Data Center Network to be used
+      #
+      # @return [String]
+      attr_accessor :vdc_network_name
+
+      # Virtual Data Center Network Id to be used
+      #
+      # @return [String]
+      attr_accessor :vdc_network_id
+
       # IP allocation type
       #
       # @return [String]
@@ -104,6 +114,7 @@ module VagrantPlugins
         errors << I18n.t("config.catalog_name") if catalog_name.nil?
         errors << I18n.t("config.catalog_item_name") if catalog_item_name.nil?
         errors << I18n.t("config.vdc_name") if vdc_name.nil?
+        errors << I18n.t("config.vdc_network") if vdc_network.nil?
 
         { "vCloud Provider" => errors }
       end

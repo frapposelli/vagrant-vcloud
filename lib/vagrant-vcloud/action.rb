@@ -94,19 +94,17 @@ module VagrantPlugins
           b.use ConfigValidate
           b.use HandleBoxUrl # TODO: test this
           b.use ConnectVCloud
-          b.use CatalogCheck
-          b.use CreateVApp
+          b.use InventoryCheck
           #b.use ReadState
           b.use Call, IsCreated do |env, b2|
             if env[:result]
-              ap "!!!! DUMPING OBJECT !!!!"
-              ap env[:machine].provider_config.vcloud_cnx.driver.inspect
-              ap "!!!! DUMPING METHODS !!!!"
-              ap env[:machine].provider_config.vcloud_cnx.driver.methods
+              ap "result ???"
+              ap env[:result]
               b2.use MessageAlreadyCreated
               next
             end
 
+            b2.use CreateVApp
             #b2.use Clone
             # TODO: provision
             b2.use TimedProvision
@@ -126,7 +124,7 @@ module VagrantPlugins
       autoload :MessageNotCreated, action_root.join("message_not_created")
       autoload :MessageWillNotDestroy, action_root.join("message_will_not_destroy")
       autoload :ReadSSHInfo, action_root.join("read_ssh_info")
-      autoload :CatalogCheck, action_root.join("catalog_check")
+      autoload :InventoryCheck, action_root.join("inventory_check")
       autoload :CreateVApp, action_root.join("create_vapp")
       autoload :ReadState, action_root.join("read_state")
       autoload :RunInstance, action_root.join("run_instance")

@@ -3,18 +3,16 @@ require "log4r"
 module VagrantPlugins
   module VCloud
     module Action
-      class CatalogCheck
+      class InventoryCheck
 
         def initialize(app, env)
           @app = app
-          @logger = Log4r::Logger.new("vagrant_vcloud::action::catalog_check")
+          @logger = Log4r::Logger.new("vagrant_vcloud::action::inventory_check")
         end
 
         def call(env)
-
           vcloud_check_inventory(env)
             
-          # What does this do ?
           @app.call env
         end
 
@@ -38,8 +36,8 @@ module VagrantPlugins
             boxOVF,
             cfg.catalog_id,
             {
-              :progressbar_enable => true,
-              :chunksize => 262144
+              :progressbar_enable => true
+              #:chunksize => 262144
             }
           )
 
@@ -61,6 +59,9 @@ module VagrantPlugins
           cfg.catalog_id = cnx.get_catalog_id_by_name(cfg.org, cfg.catalog_name)
 
           cfg.catalog_item = cnx.get_catalog_item_by_name(cfg.catalog_id, cfg.catalog_item_name)
+
+          cfg.vdc_network_id = cfg.org[:networks][cfg.vdc_network_name]
+
 
           # Checking Catalog mandatory requirements
           if !cfg.catalog

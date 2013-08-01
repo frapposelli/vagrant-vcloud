@@ -8,7 +8,17 @@ module VagrantPlugins
 
         def call(env)
           #puts "DUMPING MACHINE STUFF: " + env[:machine].inspect
-          env[:result] = env[:machine].provider_config.vcloud_cnx.driver.id != :not_created
+          
+          vmId = env[:machine].id
+          if vmId
+            env[:ui].info("VM has been created and ID is : [#{vmId}]")
+            true
+          else
+            env[:ui].error("VM has not been created, ID is nil!")
+            false
+          end
+
+
           @app.call env
         end
       end

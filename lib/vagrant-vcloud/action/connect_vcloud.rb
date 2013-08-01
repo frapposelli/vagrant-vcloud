@@ -11,7 +11,6 @@ module VagrantPlugins
         end
 
         def call(env)
-
           config = env[:machine].provider_config
 
           begin
@@ -58,8 +57,8 @@ module VagrantPlugins
             @app.call env
 
           rescue Exception => e
-            ### RAISED HERE!!! WHY?!?!?!
-            @logger.debug("FAILING BADLY: #{e.inspect}")
+            ### When bad credentials, we get here.
+            @logger.debug("Couldn't connect to vCloud Director: #{e.inspect}")
             raise VagrantPlugins::VCloud::Errors::VCloudError, :message => e.message
           end
 
