@@ -36,6 +36,9 @@ module VagrantPlugins
         attr_reader :auth_key, :id
         
         def initialize(host, username, password, org_name)
+
+          @logger = Log4r::Logger.new("vagrant::provider::vcloud::driver_5_1")
+
           @host = host
           @api_url = "#{host}/api"
           @host_url = "#{host}"
@@ -371,7 +374,7 @@ module VagrantPlugins
           vms.each do |vm|
             vapp_local_id = vm.css('VAppScopedLocalId')
             addresses = vm.css('rasd|Connection').collect{|n| n['vcloud:ipAddress'] || n['ipAddress'] }
-            vms_hash[vm['name']] = {
+            vms_hash[vm['name'].to_sym] = {
               :addresses => addresses,
               :status => convert_vapp_status(vm['status']),
               :id => vm['href'].gsub("#{@api_url}/vApp/vm-", ''),
@@ -599,6 +602,104 @@ module VagrantPlugins
 
           { :vapp_id => vapp_id, :task_id => task_id }
         end
+
+
+        ##
+        # Recompose an existing vapp using existing virtual machines
+        #
+        # Params:
+        # - vdc: the associated VDC
+        # - vapp_name: name of the target vapp
+        # - vapp_description: description of the target vapp
+        # - vm_list: hash with IDs of the VMs to be used in the composing process
+        # - network_config: hash of the network configuration for the vapp
+        def recompose_vapp_from_vm(vAppId, vm_list={}, network_config={})
+          originalVApp = get_vapp(vAppId)
+
+          builder = Nokogiri::XML::Builder.new do |xml|
+          xml.RecomposeVAppParams(
+            "xmlns" => "http://www.vmware.com/vcloud/v1.5",
+            "xmlns:ovf" => "http://schemas.dmtf.org/ovf/envelope/1",
+            "name" => originalVApp[:name]) {
+            xml.Description originalVApp[:description]
+            xml.InstantiationParams {
+              xml.NetworkConfigSection {
+                xml['ovf'].Info "Configuration parameters for logical networks"
+                xml.NetworkConfig("networkName" => network_config[:name]) {
+                  xml.Configuration {
+                    xml.IpScopes {
+                      xml.IpScope {
+                        xml.IsInherited(network_config[:is_inherited] || "false")
+                        xml.Gateway network_config[:gateway]
+                        xml.Netmask network_config[:netmask]
+                        xml.Dns1 network_config[:dns1] if network_config[:dns1]
+                        xml.Dns2 network_config[:dns2] if network_config[:dns2]
+                        xml.DnsSuffix network_config[:dns_suffix] if network_config[:dns_suffix]
+                        xml.IpRanges {
+                          xml.IpRange {
+                            xml.StartAddress network_config[:start_address]
+                            xml.EndAddress network_config[:end_address]
+                          }
+                        }
+                      }
+                    }
+                    xml.ParentNetwork("href" => "#{@api_url}/network/#{network_config[:parent_network]}")
+                    xml.FenceMode network_config[:fence_mode]
+
+                    xml.Features {
+                      xml.FirewallService {
+                        xml.IsEnabled(network_config[:enable_firewall] || "false")
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            vm_list.each do |vm_name, vm_id|
+              xml.SourcedItem {
+                xml.Source("href" => "#{@api_url}/vAppTemplate/vm-#{vm_id}", "name" => vm_name)
+                xml.InstantiationParams {
+                  xml.NetworkConnectionSection(
+                    "xmlns:ovf" => "http://schemas.dmtf.org/ovf/envelope/1",
+                    "type" => "application/vnd.vmware.vcloud.networkConnectionSection+xml",
+                    "href" => "#{@api_url}/vAppTemplate/vm-#{vm_id}/networkConnectionSection/") {
+                      xml['ovf'].Info "Network config for sourced item"
+                      xml.PrimaryNetworkConnectionIndex "0"
+                      xml.NetworkConnection("network" => network_config[:name]) {
+                        xml.NetworkConnectionIndex "0"
+                        xml.IsConnected "true"
+                        xml.IpAddressAllocationMode(network_config[:ip_allocation_mode] || "POOL")
+                    }
+                  }
+                }
+                xml.NetworkAssignment("containerNetwork" => network_config[:name], "innerNetwork" => network_config[:name])
+              }
+            end
+            xml.AllEULAsAccepted "true"
+          }
+          end
+
+          params = {
+            "method" => :post,
+            "command" => "/vApp/vapp-#{vAppId}/action/recomposeVApp"
+          }
+
+          @logger.debug("params: #{params.inspect}")
+
+          response, headers = send_request(params, builder.to_xml, "application/vnd.vmware.vcloud.recomposeVAppParams+xml")
+
+          vapp_id = headers[:location].gsub("#{@api_url}/vApp/vapp-", "")
+
+          @logger.debug("response: #{response.to_xml}")
+
+          task = response.css("Task [operationName='vdcRecomposeVapp']").first
+          task_id = task["href"].gsub("#{@api_url}/task/", "")
+
+          { :vapp_id => vapp_id, :task_id => task_id }
+        end
+
+
+
 
         # Fetch details about a given vapp template:
         # - name

@@ -98,13 +98,13 @@ module VagrantPlugins
           #b.use ReadState
           b.use Call, IsCreated do |env, b2|
             if env[:result]
-              ap "result ???"
-              ap env[:result]
               b2.use MessageAlreadyCreated
               next
             end
 
-            b2.use CreateVApp
+            ap "!!! ENV DATA #{env[:home_path].inspect}"
+            b2.use BuildVApp
+
             #b2.use Clone
             # TODO: provision
             b2.use TimedProvision
@@ -125,7 +125,7 @@ module VagrantPlugins
       autoload :MessageWillNotDestroy, action_root.join("message_will_not_destroy")
       autoload :ReadSSHInfo, action_root.join("read_ssh_info")
       autoload :InventoryCheck, action_root.join("inventory_check")
-      autoload :CreateVApp, action_root.join("create_vapp")
+      autoload :BuildVApp, action_root.join("build_vapp")
       autoload :ReadState, action_root.join("read_state")
       autoload :RunInstance, action_root.join("run_instance")
       autoload :SyncFolders, action_root.join("sync_folders")
