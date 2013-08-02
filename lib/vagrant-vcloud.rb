@@ -51,10 +51,8 @@ module Vagrant
 
     def get_vapp_id
 
-     # @logger.debug("INSPECTING CONFIG INSIDE GET_VAPP_ID: #{@config.inspect}")
+      @logger.debug("INSPECTING CONFIG INSIDE GET_VAPP_ID: #{@config.inspect}")
       
-
-
       vappid_file = @data_dir.join("../../../vcloud_vappid")
       if vappid_file.file?
         @vappid = vappid_file.read

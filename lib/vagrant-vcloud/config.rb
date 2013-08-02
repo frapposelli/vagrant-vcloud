@@ -112,7 +112,7 @@ module VagrantPlugins
         errors << I18n.t("config.password") if password.nil?
         
         errors << I18n.t("config.catalog_name") if catalog_name.nil?
-        errors << I18n.t("config.catalog_item_name") if catalog_item_name.nil?
+        #errors << I18n.t("config.catalog_item_name") if catalog_item_name.nil?
         errors << I18n.t("config.vdc_name") if vdc_name.nil?
         errors << I18n.t("config.vdc_network_name") if vdc_network_name.nil?
 

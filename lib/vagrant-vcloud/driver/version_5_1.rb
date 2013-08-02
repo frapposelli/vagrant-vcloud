@@ -978,9 +978,29 @@ module VagrantPlugins
               'method' => :post,
               'command' => "/catalog/#{catalogId}/catalogItems"
             }
-
+            @logger.debug("upload_ovf add_to_catalog params: #{params.inspect}")
             response, headers = send_request(params, builder.to_xml,
                             "application/vnd.vmware.vcloud.catalogItem+xml")
+            @logger.debug("upload_ovf add_to_catalog response: #{response.to_xml}")
+
+            ### LOOP TO CATCH WHEN CATALOG ITEM IS ADDED
+            @logger.debug("upload_ovf add_to_catalog Initiating Wait loop")
+
+            params = {
+              'method' => :get,
+              'command' => "/catalog/#{catalogId}"
+            }
+
+            while true
+              response, headers = send_request(params)
+              @logger.debug("upload_ovf add_to_catalog waiting loop params: #{params.inspect}")
+              @logger.debug("upload_ovf add_to_catalog waiting loop response: #{response.to_xml}")
+              break unless response.css("CatalogItems CatalogItem [name='#{vappName}']").count == 1
+              sleep 1
+            end
+
+
+            ######
 
           rescue Exception => e
             puts "Exception detected: #{e.message}."

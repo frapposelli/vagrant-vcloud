@@ -1,3 +1,6 @@
+require "securerandom"
+require "etc"
+
 module VagrantPlugins
   module VCloud
     module Action
@@ -18,14 +21,13 @@ module VagrantPlugins
             env[:ui].info("Creating vApp ...")
             @logger.info("Creating vApp ...")
 
-
             compose = cnx.compose_vapp_from_vm(
               cfg.vdc_id, 
-              "Vagrant-vApp-#{Time.now.to_i.to_s}", # FIXME: To be changed
+              "Vagrant-#{Etc.getlogin}-#{SecureRandom.hex(4)}", # FIXME: To be changed
               "vApp built by vagrant-vcloud", # FIXME: I might use this as the
                                               # container for all the information
               { 
-                vmName => cfg.catalog_item[:vms_hash][cfg.catalog_item_name][:id]
+                vmName => cfg.catalog_item[:vms_hash][env[:machine].box.name.to_s][:id]
               }, 
               { 
                 # This is static and will not change. (behind NAT)
@@ -103,7 +105,7 @@ module VagrantPlugins
             recompose = cnx.recompose_vapp_from_vm(
               env[:machine].get_vapp_id, 
               { 
-                vmName => cfg.catalog_item[:vms_hash][cfg.catalog_item_name][:id]
+                vmName => cfg.catalog_item[:vms_hash][env[:machine].box.name.to_s][:id]
                 # FIXME: Will need a for loop here for every VM defined in the
                 # Vagrant file
               }, 

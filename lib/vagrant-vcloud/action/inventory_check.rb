@@ -31,7 +31,7 @@ module VagrantPlugins
           @logger.debug("OVF File: #{boxOVF}")
           cnx.upload_ovf(
             cfg.vdc_id,
-            cfg.catalog_item_name,
+            env[:machine].box.name.to_s,
             "Vagrant Box",
             boxOVF,
             cfg.catalog_id,
@@ -58,7 +58,7 @@ module VagrantPlugins
           cfg.catalog = cnx.get_catalog_by_name(cfg.org, cfg.catalog_name)
           cfg.catalog_id = cnx.get_catalog_id_by_name(cfg.org, cfg.catalog_name)
 
-          cfg.catalog_item = cnx.get_catalog_item_by_name(cfg.catalog_id, cfg.catalog_item_name)
+          cfg.catalog_item = cnx.get_catalog_item_by_name(cfg.catalog_id, env[:machine].box.name.to_s)
 
           cfg.vdc_network_id = cfg.org[:networks][cfg.vdc_network_name]
 
@@ -73,16 +73,16 @@ module VagrantPlugins
           end
 
           if !cfg.catalog_item
-            @logger.info("Catalog item [#{cfg.catalog_item_name}] does not exist!")
-            env[:ui].warn("Catalog item [#{cfg.catalog_item_name}] does not exist!")
+            @logger.info("Catalog item [#{env[:machine].box.name.to_s}] does not exist!")
+            env[:ui].warn("Catalog item [#{env[:machine].box.name.to_s}] does not exist!")
 
             user_input = env[:ui].ask(
-              "Would you like to upload the [#{cfg.catalog_item_name}] box to "\
+              "Would you like to upload the [#{env[:machine].box.name.to_s}] box to "\
               "vCloud Director [#{cfg.catalog_name}] Catalog?\nChoice (yes/no): "
             )
 
             if user_input.downcase == "yes"
-              env[:ui].warn("Uploading [#{cfg.catalog_item_name}] process...")
+              env[:ui].warn("Uploading [#{env[:machine].box.name.to_s}] process...")
               vcloud_upload_box(env)
             else
               env[:ui].error("Catalog item not available, exiting...")
@@ -92,8 +92,8 @@ module VagrantPlugins
 
             end
           else
-            @logger.info("Catalog item [#{cfg.catalog_item_name}] exists")
-            env[:ui].success("Catalog item [#{cfg.catalog_item_name}] exists")
+            @logger.info("Catalog item [#{env[:machine].box.name.to_s}] exists")
+            env[:ui].success("Catalog item [#{env[:machine].box.name.to_s}] exists")
           end
         end
 
