@@ -481,15 +481,12 @@ module VagrantPlugins
         ##
         # Boot a given vm
         def poweron_vm(vmId)
-          @logger.debug("Powering on VM #{vmId}")
           params = {
             'method' => :post,
             'command' => "/vApp/vm-#{vmId}/power/action/powerOn"
           }
 
-          @logger.debug("params: #{params.inspect}")
           response, headers = send_request(params)
-          @logger.debug("response: #{response.to_xml}")
           task_id = headers[:location].gsub("#{@api_url}/task/", "")
           task_id
         end
@@ -703,13 +700,9 @@ module VagrantPlugins
             "command" => "/vApp/vapp-#{vAppId}/action/recomposeVApp"
           }
 
-          @logger.debug("params: #{params.inspect}")
-
           response, headers = send_request(params, builder.to_xml, "application/vnd.vmware.vcloud.recomposeVAppParams+xml")
 
           vapp_id = headers[:location].gsub("#{@api_url}/vApp/vapp-", "")
-
-          @logger.debug("response: #{response.to_xml}")
 
           task = response.css("Task [operationName='vdcRecomposeVapp']").first
           task_id = task["href"].gsub("#{@api_url}/task/", "")
@@ -935,6 +928,11 @@ module VagrantPlugins
               'command' => "/vAppTemplate/vappTemplate-#{vAppTemplate}"
             }
 
+            response, headers = send_request(params)
+
+            task = response.css("VAppTemplate Task[operationName='vdcUploadOvfContents']").first
+            task_id = task["href"].gsub("#{@api_url}/task/", "")
+
             # Loop to wait for the upload links to show up in the vAppTemplate we just created
             while true
               response, headers = send_request(params)
@@ -978,27 +976,10 @@ module VagrantPlugins
               'method' => :post,
               'command' => "/catalog/#{catalogId}/catalogItems"
             }
-            @logger.debug("upload_ovf add_to_catalog params: #{params.inspect}")
             response, headers = send_request(params, builder.to_xml,
                             "application/vnd.vmware.vcloud.catalogItem+xml")
-            @logger.debug("upload_ovf add_to_catalog response: #{response.to_xml}")
 
-            ### LOOP TO CATCH WHEN CATALOG ITEM IS ADDED
-            @logger.debug("upload_ovf add_to_catalog Initiating Wait loop")
-
-            params = {
-              'method' => :get,
-              'command' => "/catalog/#{catalogId}"
-            }
-
-            while true
-              response, headers = send_request(params)
-              @logger.debug("upload_ovf add_to_catalog waiting loop params: #{params.inspect}")
-              @logger.debug("upload_ovf add_to_catalog waiting loop response: #{response.to_xml}")
-              break unless response.css("CatalogItems CatalogItem [name='#{vappName}']").count == 1
-              sleep 1
-            end
-
+            task_id
 
             ######
 
@@ -1122,7 +1103,6 @@ module VagrantPlugins
         ##
         # Set VM Guest Customization Config
         def set_vm_guest_customization(vmid, computer_name, config={})
-          @logger.debug("INSIDE THE GUEST CUSTOMIZATION ROUTINE!")
           builder = Nokogiri::XML::Builder.new do |xml|
           xml.GuestCustomizationSection(
             "xmlns" => "http://www.vmware.com/vcloud/v1.5",
@@ -1140,9 +1120,7 @@ module VagrantPlugins
             'command' => "/vApp/vm-#{vmid}/guestCustomizationSection"
           }
 
-          @logger.debug("params: #{params.inspect}")
           response, headers = send_request(params, builder.to_xml, "application/vnd.vmware.vcloud.guestCustomizationSection+xml")
-          @logger.debug("response: #{response.to_xml}")
           task_id = headers[:location].gsub("#{@api_url}/task/", "")
           task_id
         end

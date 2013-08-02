@@ -44,7 +44,7 @@ module VagrantPlugins
                 :enable_firewall => "false"
               }
             )
-
+            @logger.debug("Launched Compose vApp")
             # Wait for the task to finish.
             wait = cnx.wait_task_completion(compose[:task_id])
 

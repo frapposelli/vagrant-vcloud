@@ -29,7 +29,7 @@ module VagrantPlugins
           ### Still relying on ruby-progressbar because report_progress basically sucks.
 
           @logger.debug("OVF File: #{boxOVF}")
-          cnx.upload_ovf(
+          uploadOVF = cnx.upload_ovf(
             cfg.vdc_id,
             env[:machine].box.name.to_s,
             "Vagrant Box",
@@ -40,6 +40,11 @@ module VagrantPlugins
               #:chunksize => 262144
             }
           )
+
+          env[:ui].info("Adding [#{env[:machine].box.name.to_s}] to Catalog [#{cfg.catalog_name}]")
+          cnx.wait_task_completion(uploadOVF)
+          ## Retrieve catalog_item ID
+          cfg.catalog_item = cnx.get_catalog_item_by_name(cfg.catalog_id, env[:machine].box.name.to_s)
 
         end
 
@@ -81,6 +86,7 @@ module VagrantPlugins
               "vCloud Director [#{cfg.catalog_name}] Catalog?\nChoice (yes/no): "
             )
 
+            # FIXME: add an OR clause for just Y
             if user_input.downcase == "yes"
               env[:ui].warn("Uploading [#{env[:machine].box.name.to_s}] process...")
               vcloud_upload_box(env)
