@@ -479,6 +479,23 @@ module VagrantPlugins
         end
 
         ##
+        # Boot a given vm
+        def poweron_vm(vmId)
+          @logger.debug("Powering on VM #{vmId}")
+          params = {
+            'method' => :post,
+            'command' => "/vApp/vm-#{vmId}/power/action/powerOn"
+          }
+
+          @logger.debug("params: #{params.inspect}")
+          response, headers = send_request(params)
+          @logger.debug("response: #{response.to_xml}")
+          task_id = headers[:location].gsub("#{@api_url}/task/", "")
+          task_id
+        end
+
+
+        ##
         # Create a vapp starting from a template
         #
         # Params:
@@ -529,7 +546,9 @@ module VagrantPlugins
           xml.ComposeVAppParams(
             "xmlns" => "http://www.vmware.com/vcloud/v1.5",
             "xmlns:ovf" => "http://schemas.dmtf.org/ovf/envelope/1",
-            "name" => vapp_name) {
+            "name" => vapp_name,
+            "deploy" => "false",
+            "powerOn" => "false") {
             xml.Description vapp_description
             xml.InstantiationParams {
               xml.NetworkConfigSection {
@@ -1083,6 +1102,7 @@ module VagrantPlugins
         ##
         # Set VM Guest Customization Config
         def set_vm_guest_customization(vmid, computer_name, config={})
+          @logger.debug("INSIDE THE GUEST CUSTOMIZATION ROUTINE!")
           builder = Nokogiri::XML::Builder.new do |xml|
           xml.GuestCustomizationSection(
             "xmlns" => "http://www.vmware.com/vcloud/v1.5",
@@ -1100,8 +1120,9 @@ module VagrantPlugins
             'command' => "/vApp/vm-#{vmid}/guestCustomizationSection"
           }
 
+          @logger.debug("params: #{params.inspect}")
           response, headers = send_request(params, builder.to_xml, "application/vnd.vmware.vcloud.guestCustomizationSection+xml")
-
+          @logger.debug("response: #{response.to_xml}")
           task_id = headers[:location].gsub("#{@api_url}/task/", "")
           task_id
         end

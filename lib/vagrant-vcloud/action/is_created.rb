@@ -11,7 +11,7 @@ module VagrantPlugins
           
           vAppId = env[:machine].get_vapp_id
           if vAppId.nil?
-            env[:ui].error("vApp has not been created, ID is nil!")
+            env[:ui].warn("vApp has not been created")
             env[:result] = false
           else
             env[:ui].info("vApp has been created and ID is : [#{vAppId}]")
@@ -21,7 +21,7 @@ module VagrantPlugins
               env[:ui].info("VM has been added to vApp and ID is : [#{vmId}]")
               env[:result] = true
            else
-              env[:ui].error("VM has not been added to vApp, ID is nil!")
+              env[:ui].warn("VM has not been added to vApp")
               env[:result] = false
            end
 

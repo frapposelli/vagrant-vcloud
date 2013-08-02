@@ -62,9 +62,24 @@ module VagrantPlugins
               env[:ui].success("vApp #{newVApp[:name]} created successfully!")
               @logger.info("vApp #{newVApp[:name]} created successfully!")
 
-              # Add the vapp_scoped_local_id as machine.id
+              # Add the vm id as machine.id
               newVMProperties = newVApp[:vms_hash].fetch(vmName)
-              env[:machine].id = newVMProperties[:vapp_scoped_local_id]
+              env[:machine].id = newVMProperties[:id]
+
+              ### SET GUEST CONFIG
+              @logger.info("Setting Guest Customization on ID: [#{newVMProperties[:id]}] of vApp [#{newVApp[:name]}]")
+              env[:ui].info("Setting Guest Customization on ID: [#{vmName}] of vApp [#{newVApp[:name]}]")
+              setCustom = cnx.set_vm_guest_customization(newVMProperties[:id], vmName, {
+                :enabled => true,
+                :admin_passwd_enabled => true,
+                :admin_passwd => "vagrant"
+                })
+              cnx.wait_task_completion(setCustom)
+
+              @logger.info("Starting VM [#{vmName}] - this will take a while as vShield Edge is getting deployed as well")
+              env[:ui].info("Starting VM [#{vmName}] - this will take a while as vShield Edge is getting deployed as well")
+              poweronVM = cnx.poweron_vm(newVMProperties[:id])
+              cnx.wait_task_completion(poweronVM)
 
             else
 
@@ -121,9 +136,25 @@ module VagrantPlugins
               env[:ui].success("VM #{vmName} added to #{newVApp[:name]} successfully!")
               @logger.info("VM #{vmName} added to #{newVApp[:name]} successfully!")
 
-              # Add the vapp_scoped_local_id as machine.id
+              # Add the vm id as machine.id
               newVMProperties = newVApp[:vms_hash].fetch(vmName)
-              env[:machine].id = newVMProperties[:vapp_scoped_local_id]
+              env[:machine].id = newVMProperties[:id]
+
+              ### SET GUEST CONFIG
+              @logger.info("Setting Guest Customization on ID: [#{newVMProperties[:id]}] of vApp [#{newVApp[:name]}]")
+              env[:ui].info("Setting Guest Customization on ID: [#{vmName}] of vApp [#{newVApp[:name]}]")
+              setCustom = cnx.set_vm_guest_customization(newVMProperties[:id], vmName, {
+                :enabled => true,
+                :admin_passwd_enabled => true,
+                :admin_passwd => "vagrant"
+                })
+              cnx.wait_task_completion(setCustom)
+
+              @logger.info("Starting VM [#{vmName}]")
+              env[:ui].info("Starting VM [#{vmName}]")
+              poweronVM = cnx.poweron_vm(newVMProperties[:id])
+              cnx.wait_task_completion(poweronVM)
+
 
             else
 

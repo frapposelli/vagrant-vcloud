@@ -101,10 +101,7 @@ module VagrantPlugins
               b2.use MessageAlreadyCreated
               next
             end
-
-            ap "!!! ENV DATA #{env[:home_path].inspect}"
             b2.use BuildVApp
-
             #b2.use Clone
             # TODO: provision
             b2.use TimedProvision
@@ -127,7 +124,6 @@ module VagrantPlugins
       autoload :InventoryCheck, action_root.join("inventory_check")
       autoload :BuildVApp, action_root.join("build_vapp")
       autoload :ReadState, action_root.join("read_state")
-      autoload :RunInstance, action_root.join("run_instance")
       autoload :SyncFolders, action_root.join("sync_folders")
       autoload :TimedProvision, action_root.join("timed_provision")
     end

@@ -18,12 +18,15 @@ module VagrantPlugins
 
         def read_state(env)
 
-          cfg = env[:machine].provider_config
-          cnx = cfg.vcloud_cnx.driver
-          
-          if cnx.id.nil?
-            @logger.debug("!!! Machine is not created yet. !!!")
+          @logger.debug("THIS IS OUR vAPP ID: #{env[:machine].get_vapp_id}")
+
+          if env[:machine].id.nil?
+            @logger.debug("!!! VM is not created yet. !!!")
             return :not_created
+
+          else
+
+            
           end
 
           #vm = connection.get_vapp(machine)
