@@ -23,7 +23,7 @@ module VagrantPlugins
 
             compose = cnx.compose_vapp_from_vm(
               cfg.vdc_id, 
-              "Vagrant-#{Etc.getlogin}-#{SecureRandom.hex(4)}", # FIXME: To be changed
+              "Vagrant-#{Etc.getlogin}-#{Socket.gethostname.downcase}-#{SecureRandom.hex(4)}", # FIXME: To be changed
               "vApp built by vagrant-vcloud", # FIXME: I might use this as the
                                               # container for all the information
               { 
