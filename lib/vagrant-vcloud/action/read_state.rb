@@ -20,26 +20,28 @@ module VagrantPlugins
 
           cfg = env[:machine].provider_config
           cnx = cfg.vcloud_cnx.driver
-          
-          if cnx.id.nil?
-            @logger.debug("!!! Machine is not created yet. !!!")
-            return :not_created
+          vAppId = env[:machine].get_vapp_id
+          vmName = env[:machine].name
+
+          if env[:machine].id.nil?
+            @logger.info("VM [#{vmName}] is not created yet")
+            env[:machine_state_id] = "notcreated"
           end
 
-          #vm = connection.get_vapp(machine)
+          vApp = cnx.get_vapp(vAppId)
+          vmStatus = vApp[:vms_hash][vmName][:status]
 
-          #if vm.nil?
-          #  return :not_created
-          #end
-
-          #if vm[:status].eql?(POWERED_ON)
-          #  @logger.info("Machine is powered on.")
-          #  :running
-          #else
-          #  @logger.info("Machine not found or terminated, assuming it got destroyed.")
-          #  # If the VM is powered off or suspended, we consider it to be powered off. A power on command will either turn on or resume the VM
-          #  :poweroff
-          #end
+          if vmStatus == "stopped"
+            @logger.info("VM [#{vmName}] is stopped")
+            env[:machine_state_id] = "stopped"
+          elsif vmStatus == "running"
+            @logger.info("VM [#{vmName}] is running")
+            env[:machine_state_id] = "running"
+          elsif vmStatus == "paused"
+            @logger.info("VM [#{vmName}] is suspended")
+            env[:machine_state_id] = "suspended"
+          end
+          
         end
       end
     end

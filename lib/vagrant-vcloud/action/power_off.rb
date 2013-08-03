@@ -7,14 +7,22 @@ module VagrantPlugins
 
         def initialize(app, env)
           @app = app
-          @logger = Log4r::Logger.new("vagrant_vcloud::action::PowerOff")
+          @logger = Log4r::Logger.new("vagrant_vcloud::action::poweroff")
         end
 
         def call(env)
-          # Simple idea
-          # env[:vcloud_connection].poweroff_vapp(env[:machine])
+          cfg = env[:machine].provider_config
+          cnx = cfg.vcloud_cnx.driver
 
-          # What does this do ?
+          vAppId = env[:machine].get_vapp_id
+          vmId = env[:machine].id
+          vmName = env[:machine].name
+
+          env[:ui].info("Powering off VM #{vmName} with id #{vmId} in vApp Id #{vAppId}")
+          cnx.poweroff_vapp(vAppId)
+
+          true
+
           @app.call env
         end
       end

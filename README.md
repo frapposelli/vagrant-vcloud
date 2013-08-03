@@ -26,6 +26,12 @@ vCloud Director with vagrant, at a high level.
     If trying to use a public Catalog from another Organization that process
     *will* fail.
 
+*   Wait for catalog item to be ready before processing to next step.
+
+    If you do a catalog upload, and deploy right after, the catalog item is
+    going through a ovf import process through vSphere which takes some time.
+
+
 ### Vagrant Actions ###
 
 *   Box

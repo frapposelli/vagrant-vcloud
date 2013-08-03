@@ -5,37 +5,26 @@ module VagrantPlugins
     module Action
       class Destroy
 
-        # FIXME: Probably a lot of logic to change to cope with vCloud.
-
         def initialize(app, env)
           @app = app
+          @logger = Log4r::Logger.new("vagrant_vcloud::action::destroy")
         end
 
         def call(env)
-          destroy_vm env
-          env[:machine].id = nil
+
+          env[:ui].info("Destroy vApp Id: #{vAppId}")
+         
+          cfg = env[:machine].provider_config
+          cnx = cfg.vcloud_cnx.driver
+          vAppId = env[:machine].get_vapp_id
+
+          env[:ui].info("Destory vApp Id: #{vAppId}")
+
+          cnx.delete_vapp(vAppId)
 
           @app.call env
         end
 
-        def destroy_vapp(env)
-
-          # Simple idea
-          # env[:vcloud_connection].delete_vapp(vAppId)
-
-        end
-
-        def destroy_vm(env)
-          vm = get_vm_by_uuid env[:vcloud_connection], env[:machine]
-          return if vm.nil?
-
-          begin
-            env[:ui].info I18n.t("vcloud.destroy_vm")
-            vm.Destroy_Task.wait_for_completion
-          rescue Exception => e
-            raise Errors::VCloudError, :message => e.message
-          end
-        end
       end
     end
   end

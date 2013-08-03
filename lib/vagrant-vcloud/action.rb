@@ -102,7 +102,6 @@ module VagrantPlugins
               next
             end
 
-            ap "!!! ENV DATA #{env[:home_path].inspect}"
             b2.use BuildVApp
 
             #b2.use Clone
@@ -120,6 +119,8 @@ module VagrantPlugins
       autoload :ConnectVCloud, action_root.join("connect_vcloud")
       autoload :DisconnectVCloud, action_root.join("disconnect_vcloud")
       autoload :IsCreated, action_root.join("is_created")
+      autoload :PowerOff, action_root.join("power_off")
+      autoload :Destroy, action_root.join("destroy")
       autoload :MessageAlreadyCreated, action_root.join("message_already_created")
       autoload :MessageNotCreated, action_root.join("message_not_created")
       autoload :MessageWillNotDestroy, action_root.join("message_will_not_destroy")

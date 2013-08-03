@@ -49,12 +49,10 @@ module Vagrant
       #@provider.machine_id_changed
     end
 
+    # This returns the vCloud Director vApp ID.
+    #
+    # @return [vAppId]
     def get_vapp_id
-
-     # @logger.debug("INSPECTING CONFIG INSIDE GET_VAPP_ID: #{@config.inspect}")
-      
-
-
       vappid_file = @data_dir.join("../../../vcloud_vappid")
       if vappid_file.file?
         @vappid = vappid_file.read

@@ -42,3 +42,16 @@ en:
       Configuration must specify a compute resource name
     resource_pool: |-
       Configuration must specify a resource pool name
+  states:
+    short_running: |-
+      VM is running
+    short_stopped: |-
+      VM is stopped
+    short_suspended: |-
+      VM is suspended
+    short_notcreated: |-
+      VM is not created yet
+
+
+
+
