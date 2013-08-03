@@ -8,6 +8,36 @@ module VagrantPlugins
       include Vagrant::Action::Builtin
 
       # Vagrant commands
+      def self.action_halt
+        Vagrant::Action::Builder.new.tap do |b|
+          b.use ConnectVCloud
+          b.use InventoryCheck
+          b.use Call, PowerOff do |env, b2|
+            # nothing for now       
+          end
+        end
+      end
+
+      def self.action_suspend
+        Vagrant::Action::Builder.new.tap do |b|
+          b.use ConnectVCloud
+          b.use InventoryCheck
+          b.use Call, Suspend do |env, b2|
+            # nothing for now       
+          end
+        end
+      end
+
+      def self.action_resume
+        Vagrant::Action::Builder.new.tap do |b|
+          b.use ConnectVCloud
+          b.use InventoryCheck
+          b.use Call, Resume do |env, b2|
+            # nothing for now       
+          end
+        end
+      end
+
       def self.action_destroy
         Vagrant::Action::Builder.new.tap do |b|
           b.use Call, DestroyConfirm do |env, b2|
@@ -119,7 +149,9 @@ module VagrantPlugins
       autoload :ConnectVCloud, action_root.join("connect_vcloud")
       autoload :DisconnectVCloud, action_root.join("disconnect_vcloud")
       autoload :IsCreated, action_root.join("is_created")
+      autoload :Resume, action_root.join("resume")
       autoload :PowerOff, action_root.join("power_off")
+      autoload :Suspend, action_root.join("suspend")
       autoload :Destroy, action_root.join("destroy")
       autoload :MessageAlreadyCreated, action_root.join("message_already_created")
       autoload :MessageNotCreated, action_root.join("message_not_created")

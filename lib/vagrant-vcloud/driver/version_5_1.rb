@@ -482,10 +482,10 @@ module VagrantPlugins
         ##
         # Delete a given vapp
         # NOTE: It doesn't verify that the vapp is shutdown
-        def delete_vm(vAppId)
+        def delete_vm(vmId)
           params = {
             'method' => :delete,
-            'command' => "/vApp/vapp-#{vAppId}"
+            'command' => "/vApp/vm-#{vAppId}"
           }
 
           response, headers = send_request(params)
@@ -494,7 +494,9 @@ module VagrantPlugins
         end
 
         ##
-        # Shutdown a given vapp
+        # Shutdown a given VM
+        # Using undeploy as a REAL powerOff 
+        # Only poweroff will put the VM into a partially powered off state.
         def poweroff_vm(vmId)
           builder = Nokogiri::XML::Builder.new do |xml|
           xml.UndeployVAppParams(
@@ -505,9 +507,10 @@ module VagrantPlugins
 
           params = {
             'method' => :post,
-            'command' => "/vApp/vm-#{vAppId}/action/undeploy"
+            'command' => "/vApp/vm-#{vmId}/action/undeploy"
           }
 
+          ap params
           response, headers = send_request(params, builder.to_xml,
                           "application/vnd.vmware.vcloud.undeployVAppParams+xml")
           task_id = headers[:location].gsub("#{@api_url}/task/", "")
@@ -515,27 +518,36 @@ module VagrantPlugins
         end
 
         ##
-        # Suspend a given vapp
-        def suspend_vm(vAppId)
+        # Suspend a given VM
+        def suspend_vm(vmId)
+          builder = Nokogiri::XML::Builder.new do |xml|
+          xml.UndeployVAppParams(
+            "xmlns" => "http://www.vmware.com/vcloud/v1.5") {
+            xml.UndeployPowerAction 'suspend'
+          }
+          end
+
           params = {
             'method' => :post,
-            'command' => "/vApp/vapp-#{vAppId}/power/action/suspend"
+            'command' => "/vApp/vm-#{vmId}/action/undeploy"
           }
 
-          response, headers = send_request(params)
+          ap params
+          response, headers = send_request(params, builder.to_xml,
+                          "application/vnd.vmware.vcloud.undeployVAppParams+xml")
           task_id = headers[:location].gsub("#{@api_url}/task/", "")
           task_id
         end
 
         ##
-        # reboot a given vapp
+        # reboot a given VM
         # This will basically initial a guest OS reboot, and will only work if
         # VMware-tools are installed on the underlying VMs.
         # vShield Edge devices are not affected
-        def reboot_vm(vAppId)
+        def reboot_vm(vmId)
           params = {
             'method' => :post,
-            'command' => "/vApp/vapp-#{vAppId}/power/action/reboot"
+            'command' => "/vApp/vm-#{vmId}/power/action/reboot"
           }
 
           response, headers = send_request(params)
@@ -544,13 +556,13 @@ module VagrantPlugins
         end
 
         ##
-        # reset a given vapp
+        # reset a given VM
         # This will basically reset the VMs within the vApp
         # vShield Edge devices are not affected.
-        def reset_vm(vAppId)
+        def reset_vm(vmId)
           params = {
             'method' => :post,
-            'command' => "/vApp/vapp-#{vAppId}/power/action/reset"
+            'command' => "/vApp/vm-#{vmId}/power/action/reset"
           }
 
           response, headers = send_request(params)
@@ -559,11 +571,11 @@ module VagrantPlugins
         end
 
         ##
-        # Boot a given vapp
-        def poweron_vm(vAppId)
+        # Boot a given VM
+        def poweron_vm(vmId)
           params = {
             'method' => :post,
-            'command' => "/vApp/vapp-#{vAppId}/power/action/powerOn"
+            'command' => "/vApp/vm-#{vmId}/power/action/powerOn"
           }
 
           response, headers = send_request(params)

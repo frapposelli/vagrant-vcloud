@@ -67,7 +67,7 @@ module VagrantPlugins
 
               # Add the vapp_scoped_local_id as machine.id
               newVMProperties = newVApp[:vms_hash].fetch(vmName)
-              env[:machine].id = newVMProperties[:vapp_scoped_local_id]
+              env[:machine].id = newVMProperties[:id]
             else
               env[:ui].error("vApp #{newVApp[:name]} creation failed!")
               @logger.error("vApp #{newVApp[:name]} creation failed!")
@@ -102,7 +102,7 @@ module VagrantPlugins
 
               # Add the vapp_scoped_local_id as machine.id
               newVMProperties = currentVApp[:vms_hash].fetch(vmName)
-              env[:machine].id = newVMProperties[:vapp_scoped_local_id]
+              env[:machine].id = newVMProperties[:id]
             else
               env[:ui].error("VM #{vmName} add to #{currentVApp[:name]} failed!")
               @logger.error("VM #{vmName} add to #{currentVApp[:name]} failed!")
