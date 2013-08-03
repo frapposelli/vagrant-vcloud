@@ -510,7 +510,6 @@ module VagrantPlugins
             'command' => "/vApp/vm-#{vmId}/action/undeploy"
           }
 
-          ap params
           response, headers = send_request(params, builder.to_xml,
                           "application/vnd.vmware.vcloud.undeployVAppParams+xml")
           task_id = headers[:location].gsub("#{@api_url}/task/", "")
@@ -532,7 +531,6 @@ module VagrantPlugins
             'command' => "/vApp/vm-#{vmId}/action/undeploy"
           }
 
-          ap params
           response, headers = send_request(params, builder.to_xml,
                           "application/vnd.vmware.vcloud.undeployVAppParams+xml")
           task_id = headers[:location].gsub("#{@api_url}/task/", "")
