@@ -478,6 +478,113 @@ module VagrantPlugins
           task_id
         end
 
+        #### VM operations ####
+        ##
+        # Delete a given vapp
+        # NOTE: It doesn't verify that the vapp is shutdown
+        def delete_vm(vmId)
+          params = {
+            'method' => :delete,
+            'command' => "/vApp/vm-#{vAppId}"
+          }
+
+          response, headers = send_request(params)
+          task_id = headers[:location].gsub("#{@api_url}/task/", "")
+          task_id
+        end
+
+        ##
+        # Shutdown a given VM
+        # Using undeploy as a REAL powerOff 
+        # Only poweroff will put the VM into a partially powered off state.
+        def poweroff_vm(vmId)
+          builder = Nokogiri::XML::Builder.new do |xml|
+          xml.UndeployVAppParams(
+            "xmlns" => "http://www.vmware.com/vcloud/v1.5") {
+            xml.UndeployPowerAction 'powerOff'
+          }
+          end
+
+          params = {
+            'method' => :post,
+            'command' => "/vApp/vm-#{vmId}/action/undeploy"
+          }
+
+          response, headers = send_request(params, builder.to_xml,
+                          "application/vnd.vmware.vcloud.undeployVAppParams+xml")
+          task_id = headers[:location].gsub("#{@api_url}/task/", "")
+          task_id
+        end
+
+        ##
+        # Suspend a given VM
+        def suspend_vm(vmId)
+          builder = Nokogiri::XML::Builder.new do |xml|
+          xml.UndeployVAppParams(
+            "xmlns" => "http://www.vmware.com/vcloud/v1.5") {
+            xml.UndeployPowerAction 'suspend'
+          }
+          end
+
+          params = {
+            'method' => :post,
+            'command' => "/vApp/vm-#{vmId}/action/undeploy"
+          }
+
+          response, headers = send_request(params, builder.to_xml,
+                          "application/vnd.vmware.vcloud.undeployVAppParams+xml")
+          task_id = headers[:location].gsub("#{@api_url}/task/", "")
+          task_id
+        end
+
+        ##
+        # reboot a given VM
+        # This will basically initial a guest OS reboot, and will only work if
+        # VMware-tools are installed on the underlying VMs.
+        # vShield Edge devices are not affected
+        def reboot_vm(vmId)
+          params = {
+            'method' => :post,
+            'command' => "/vApp/vm-#{vmId}/power/action/reboot"
+          }
+
+          response, headers = send_request(params)
+          task_id = headers[:location].gsub("#{@api_url}/task/", "")
+          task_id
+        end
+
+        ##
+        # reset a given VM
+        # This will basically reset the VMs within the vApp
+        # vShield Edge devices are not affected.
+        def reset_vm(vmId)
+          params = {
+            'method' => :post,
+            'command' => "/vApp/vm-#{vmId}/power/action/reset"
+          }
+
+          response, headers = send_request(params)
+          task_id = headers[:location].gsub("#{@api_url}/task/", "")
+          task_id
+        end
+
+        ##
+        # Boot a given VM
+        def poweron_vm(vmId)
+          params = {
+            'method' => :post,
+            'command' => "/vApp/vm-#{vmId}/power/action/powerOn"
+          }
+
+          response, headers = send_request(params)
+          task_id = headers[:location].gsub("#{@api_url}/task/", "")
+          task_id
+        end
+
+        ### End Of VM operations ###
+
+
+
         ##
         # Boot a given vm
         def poweron_vm(vmId)

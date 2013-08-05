@@ -24,8 +24,8 @@ module VagrantPlugins
 
         state_id = env[:machine_state_id]
 
-        short = I18n.t("vagrant_vcloud.states.short_#{state_id}")
-        long  = I18n.t("vagrant_vcloud.states.long_#{state_id}")
+        short = I18n.t("states.short_#{state_id}")
+        long  = I18n.t("states.long_#{state_id}")
 
         # Return the MachineState object
         Vagrant::MachineState.new(state_id, short, long)

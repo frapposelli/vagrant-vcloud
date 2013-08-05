@@ -97,6 +97,7 @@ module VagrantPlugins
                     :message => "Catalog item not available, exiting..."
 
             end
+
           else
             @logger.info("Catalog item [#{env[:machine].box.name.to_s}] exists")
             env[:ui].success("Catalog item [#{env[:machine].box.name.to_s}] exists")

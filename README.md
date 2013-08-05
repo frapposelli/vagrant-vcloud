@@ -9,7 +9,7 @@ Please note that this is NOT WORKING yet.
 Using this page as a reminder todo list to what needs to be done to integrate
 vCloud Director with vagrant, at a high level.
 
-### Overall things to consider ###
+### Overall things to consider/fix ###
 
 *   Handle vCloud Director blocking tasks
 
@@ -25,6 +25,16 @@ vCloud Director with vagrant, at a high level.
     
     If trying to use a public Catalog from another Organization that process
     *will* fail.
+
+*   Wait for catalog item to be ready before processing to next step.
+
+    If you do a catalog upload, and deploy right after, the catalog item is
+    going through a ovf import process through vSphere which takes some time.
+
+*   Set the VM guest customization default password to 'vagrant'
+
+    The vApp will actually not power on successfully with guest customization
+    enabled, and a blank password.
 
 ### Vagrant Actions ###
 

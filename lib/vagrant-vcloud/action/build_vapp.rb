@@ -16,10 +16,28 @@ module VagrantPlugins
           cnx = cfg.vcloud_cnx.driver
           vmName = env[:machine].name
 
+          # This is static and will not change. (behind NAT)
+          network_options = { 
+            # FIXME: We should let the user choose the subnet and then work out 
+            #        the gateway and address pool, maybe in the next release :-)
+            :name => "Vagrant-vApp-Net", 
+            :gateway => "10.250.254.251", 
+            :netmask => "255.255.255.0", 
+            :start_address => "10.250.254.11", 
+            :end_address => "10.250.254.100", 
+            :fence_mode => "natRouted",
+            :ip_allocation_mode => "POOL",
+            :parent_network =>  cfg.vdc_network_id,
+            :enable_firewall => "false"
+          }
+
+          # FIXME: design choice ?
+          # hmm maybe this would/should be better in IsCreated, and we should
+          # have 2 different actions (BuildVApp / AddToVApp) ?
           if env[:machine].get_vapp_id.nil?
 
-            env[:ui].info("Creating vApp ...")
-            @logger.info("Creating vApp ...")
+            env[:ui].info("Building vApp ...")
+            @logger.info("Building vApp ...")
 
             compose = cnx.compose_vapp_from_vm(
               cfg.vdc_id, 
@@ -29,20 +47,7 @@ module VagrantPlugins
               { 
                 vmName => cfg.catalog_item[:vms_hash][env[:machine].box.name.to_s][:id]
               }, 
-              { 
-                # This is static and will not change. (behind NAT)
-                # FIXME: We should let the user choose the subnet and then work out 
-                # the gateway and address pool, maybe in the next release :-)
-                :name => "Vagrant-vApp-Net", 
-                :gateway => "10.250.254.251", 
-                :netmask => "255.255.255.0", 
-                :start_address => "10.250.254.11", 
-                :end_address => "10.250.254.100", 
-                :fence_mode => "natRouted",
-                :ip_allocation_mode => "POOL",
-                :parent_network =>  cfg.vdc_network_id,
-                :enable_firewall => "false"
-              }
+              network_options
             )
             @logger.debug("Launched Compose vApp")
             # Wait for the task to finish.
@@ -60,7 +65,6 @@ module VagrantPlugins
             # FIXME: Add a lot of error handling for each step here !
 
             if newVApp
-
               env[:ui].success("vApp #{newVApp[:name]} created successfully!")
               @logger.info("vApp #{newVApp[:name]} created successfully!")
 
@@ -84,23 +88,13 @@ module VagrantPlugins
               cnx.wait_task_completion(poweronVM)
 
             else
-
               env[:ui].error("vApp #{newVApp[:name]} creation failed!")
               @logger.error("vApp #{newVApp[:name]} creation failed!")
               raise
-
-            end 
-
-
-
-
+           end 
           else
-
             env[:ui].info("Adding VM to existing vApp ID: [#{env[:machine].get_vapp_id}] ...")
             @logger.info("Adding VM to existing vApp ID: [#{env[:machine].get_vapp_id}] ...")
-
-
-            
             
             recompose = cnx.recompose_vapp_from_vm(
               env[:machine].get_vapp_id, 
@@ -109,18 +103,7 @@ module VagrantPlugins
                 # FIXME: Will need a for loop here for every VM defined in the
                 # Vagrant file
               }, 
-              { 
-                # This is static and will not change. (behind NAT)
-                :name => "Vagrant-vApp-Net", 
-                :gateway => "10.250.254.251", 
-                :netmask => "255.255.255.0", 
-                :start_address => "10.250.254.11", 
-                :end_address => "10.250.254.100", 
-                :fence_mode => "natRouted",
-                :ip_allocation_mode => "POOL",
-                :parent_network =>  cfg.vdc_network_id,
-                :enable_firewall => "false"
-              }
+              network_options
             )
 
             env[:ui].info("Waiting for the add to complete ...")
@@ -163,10 +146,7 @@ module VagrantPlugins
               env[:ui].error("VM #{vmName} add to #{newVApp[:name]} failed!")
               @logger.error("VM #{vmName} add to #{newVApp[:name]} failed!")
               raise
-
             end 
-
-
           end
 
           @app.call env

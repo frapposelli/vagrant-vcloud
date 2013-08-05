@@ -3,11 +3,11 @@ require "i18n"
 module VagrantPlugins
   module VCloud
     module Action
-      class PowerOff
+      class Resume
 
         def initialize(app, env)
           @app = app
-          @logger = Log4r::Logger.new("vagrant_vcloud::action::poweroff")
+          @logger = Log4r::Logger.new("vagrant_vcloud::action::resume")
         end
 
         def call(env)
@@ -19,10 +19,10 @@ module VagrantPlugins
           vmId = env[:machine].id
           vmName = env[:machine].name
 
-          env[:ui].info("Powering off VM #{vmName} with id #{vmId} in vApp Id #{vAppId}")
-          task_id = cnx.poweroff_vm(vmId)
+          env[:ui].info("Powering on VM #{vmName} with id #{vmId} in vApp Id #{vAppId}")
+          task_id = cnx.poweron_vm(vmId)
           wait = cnx.wait_task_completion(task_id)
-          
+
           true
 
           @app.call env
