@@ -11,7 +11,8 @@ module VagrantPlugins
       def self.action_halt
         Vagrant::Action::Builder.new.tap do |b|
           b.use ConnectVCloud
-          b.use InventoryCheck
+          # FIXME: I don't think we need this
+          #b.use InventoryCheck
           b.use Call, PowerOff do |env, b2|
             # nothing for now       
           end
@@ -21,7 +22,8 @@ module VagrantPlugins
       def self.action_suspend
         Vagrant::Action::Builder.new.tap do |b|
           b.use ConnectVCloud
-          b.use InventoryCheck
+          # FIXME: I don't think we need this
+          #b.use InventoryCheck
           b.use Call, Suspend do |env, b2|
             # nothing for now       
           end
@@ -31,7 +33,8 @@ module VagrantPlugins
       def self.action_resume
         Vagrant::Action::Builder.new.tap do |b|
           b.use ConnectVCloud
-          b.use InventoryCheck
+          # FIXME: I don't think we need this
+          #b.use InventoryCheck
           b.use Call, Resume do |env, b2|
             # nothing for now       
           end
@@ -44,7 +47,9 @@ module VagrantPlugins
             if env[:result]
               b2.use ConfigValidate
               b2.use ConnectVCloud
-              b2.use PowerOff
+              # FIXME: we probably don't need this either
+              # Poweroff logic is embedded into destroy.
+              #b2.use PowerOff
               b2.use Destroy
             else
               b2.use MessageWillNotDestroy

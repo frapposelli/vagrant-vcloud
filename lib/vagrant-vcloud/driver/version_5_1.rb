@@ -480,12 +480,12 @@ module VagrantPlugins
 
         #### VM operations ####
         ##
-        # Delete a given vapp
-        # NOTE: It doesn't verify that the vapp is shutdown
+        # Delete a given vm
+        # NOTE: It doesn't verify that the vm is shutdown
         def delete_vm(vmId)
           params = {
             'method' => :delete,
-            'command' => "/vApp/vm-#{vAppId}"
+            'command' => "/vApp/vm-#{vmId}"
           }
 
           response, headers = send_request(params)

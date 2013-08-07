@@ -12,15 +12,39 @@ module VagrantPlugins
 
         def call(env)
 
-          env[:ui].info("Destroy vApp Id: #{vAppId}")
-         
           cfg = env[:machine].provider_config
           cnx = cfg.vcloud_cnx.driver
           vAppId = env[:machine].get_vapp_id
+          vmId = env[:machine].id
 
-          env[:ui].info("Destory vApp Id: #{vAppId}")
+          testvApp = cnx.get_vapp(vAppId)
 
-          cnx.delete_vapp(vAppId)
+          @logger.debug("Number of VMs in the vApp: #{testvApp[:vms_hash].count}")
+
+          if testvApp[:vms_hash].count == 1
+            env[:ui].info("Single VM left in the vApp, destroy vApp Id: #{vAppId}")
+            env[:ui].info("Poweroff vApp Id: #{vAppId}")
+            vAppStopTask = cnx.poweroff_vapp(vAppId)
+            cnx.wait_task_completion(vAppStopTask)
+            env[:ui].info("Destroy vApp Id: #{vAppId}")
+            vAppDeleteTask = cnx.delete_vapp(vAppId)
+            @logger.debug("vApp Delete task id #{vAppDeleteTask}")
+            cnx.wait_task_completion(vAppDeleteTask)
+
+            # FIXME: Look into this.
+            ####env[:machine].provider.driver.delete
+            env[:machine].id=nil
+            env[:machine].vappid=nil
+          else
+            env[:ui].info("Powering off VM #{env[:machine].name} with id #{vmId} in vApp Id #{vAppId}")
+            task_id = cnx.poweroff_vm(vmId)
+            wait = cnx.wait_task_completion(task_id)
+            env[:ui].info("destroy VM Id: #{vmId}")
+            vmDeleteTask = cnx.delete_vm(vmId)
+            @logger.debug("VM Delete task id #{vmDeleteTask}")
+            cnx.wait_task_completion(vmDeleteTask)
+            env[:machine].id=nil
+          end
 
           @app.call env
         end

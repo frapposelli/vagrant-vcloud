@@ -37,7 +37,6 @@ module VagrantPlugins
 
               # Check for the vCloud Director authentication token
               if config.vcloud_cnx.driver.auth_key
-                env[:ui].success("Successfully logged in to #{config.hostname}.")
                 @logger.info("Logged in successfully!")
                 @logger.debug(
                   "x-vcloud-authorization=#{config.vcloud_cnx.driver.auth_key}"
