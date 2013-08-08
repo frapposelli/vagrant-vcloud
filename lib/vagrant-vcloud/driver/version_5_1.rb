@@ -682,6 +682,11 @@ module VagrantPlugins
                       xml.FirewallService {
                         xml.IsEnabled(network_config[:enable_firewall] || "false")
                       }
+                      xml.NatService {
+                        xml.IsEnabled "true"
+                        xml.NatType "portForwarding"
+                        xml.Policy(network_config[:nat_policy_type] || "allowTraffic")
+                      }
                     }
                   }
                 }
@@ -772,6 +777,11 @@ module VagrantPlugins
                     xml.Features {
                       xml.FirewallService {
                         xml.IsEnabled(network_config[:enable_firewall] || "false")
+                      }
+                      xml.NatService {
+                        xml.IsEnabled "true"
+                        xml.NatType "portForwarding"
+                        xml.Policy(network_config[:nat_policy_type] || "allowTraffic")
                       }
                     }
                   }

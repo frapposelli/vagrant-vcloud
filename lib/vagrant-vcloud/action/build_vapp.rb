@@ -1,5 +1,6 @@
 require "securerandom"
 require "etc"
+require "netaddr"
 
 module VagrantPlugins
   module VCloud
@@ -16,24 +17,62 @@ module VagrantPlugins
           cnx = cfg.vcloud_cnx.driver
           vmName = env[:machine].name
 
-          # This is static and will not change. (behind NAT)
-          network_options = { 
-            # FIXME: We should let the user choose the subnet and then work out 
-            #        the gateway and address pool, maybe in the next release :-)
-            :name => "Vagrant-vApp-Net", 
-            :gateway => "10.250.254.251", 
-            :netmask => "255.255.255.0", 
-            :start_address => "10.250.254.11", 
-            :end_address => "10.250.254.100", 
-            :fence_mode => "natRouted",
-            :ip_allocation_mode => "POOL",
-            :parent_network =>  cfg.vdc_network_id,
-            :enable_firewall => "false"
-          }
 
-          # FIXME: design choice ?
-          # hmm maybe this would/should be better in IsCreated, and we should
-          # have 2 different actions (BuildVApp / AddToVApp) ?
+          if !cfg.ip_subnet.nil?
+
+            @logger.debug("Input address: #{cfg.ip_subnet}")
+
+            cidr = NetAddr::CIDR.create(cfg.ip_subnet)
+
+            if cidr.bits > 30
+              @logger.debug("Subnet too small!")
+              raise SubnetTooSmall
+            end
+
+            rangeAddresses = cidr.range(0)
+
+            @logger.debug("Range: #{rangeAddresses}")
+
+
+            rangeAddresses.shift # Delete the "network" address from the range.
+            gatewayIp = rangeAddresses.shift # Retrieve the first usable IP, to be used as a gateway.
+            rangeAddresses.reverse! # Reverse the array in place.
+            rangeAddresses.shift # Delete the "broadcast" address from the range.
+            rangeAddresses.reverse! # Reverse back the array.
+
+            @logger.debug("Gateway IP: #{gatewayIp.to_s}")
+            @logger.debug("Netmask: #{cidr.wildcard_mask}")
+            @logger.debug("IP Pool: #{rangeAddresses.first}-#{rangeAddresses.last}")
+
+            network_options = { 
+              :name => "Vagrant-vApp-Net", 
+              :gateway => gatewayIp.to_s, 
+              :netmask => cidr.wildcard_mask, 
+              :start_address => rangeAddresses.first, 
+              :end_address => rangeAddresses.last, 
+              :fence_mode => "natRouted",
+              :ip_allocation_mode => "POOL",
+              :parent_network =>  cfg.vdc_network_id,
+              :enable_firewall => "false"
+            }
+
+          else
+
+            # No IP subnet specified, reverting to defaults
+            network_options = { 
+              :name => "Vagrant-vApp-Net", 
+              :gateway => "10.1.1.1", 
+              :netmask => "255.255.255.0", 
+              :start_address => "10.1.1.2", 
+              :end_address => "10.1.1.254", 
+              :fence_mode => "natRouted",
+              :ip_allocation_mode => "POOL",
+              :parent_network =>  cfg.vdc_network_id,
+              :enable_firewall => "false"
+            }
+
+          end
+
           if env[:machine].get_vapp_id.nil?
 
             env[:ui].info("Building vApp ...")
