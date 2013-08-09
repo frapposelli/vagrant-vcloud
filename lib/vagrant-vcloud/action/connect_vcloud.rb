@@ -13,7 +13,7 @@ module VagrantPlugins
         def call(env)
           config = env[:machine].provider_config
 
-          begin
+#          begin
             # Avoid recreating a new session each time.
             if !config.vcloud_cnx
               @logger.info("Connecting to vCloud Director...")
@@ -55,11 +55,11 @@ module VagrantPlugins
 
             @app.call env
 
-          rescue Exception => e
-            ### When bad credentials, we get here.
-            @logger.debug("Couldn't connect to vCloud Director: #{e.inspect}")
-            raise VagrantPlugins::VCloud::Errors::VCloudError, :message => e.message
-          end
+#          rescue Exception => e
+#            ### When bad credentials, we get here.
+#            @logger.debug("Couldn't connect to vCloud Director: #{e.inspect}")
+#            raise VagrantPlugins::VCloud::Errors::VCloudError, :message => e.message
+#          end
 
         end
       end

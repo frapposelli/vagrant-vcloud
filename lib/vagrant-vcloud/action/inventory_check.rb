@@ -48,6 +48,19 @@ module VagrantPlugins
 
         end
 
+        def vcloud_create_catalog(env)
+          cfg = env[:machine].provider_config
+          cnx = cfg.vcloud_cnx.driver
+
+          catalogCreation = cnx.create_catalog(cfg.org_id, cfg.catalog_name, "Created by vagrant-vcloud on <date>")
+          cnx.wait_task_completion(catalogCreation[:task_id])
+
+          @logger.debug("Catalog Creation result: #{catalogCreation.inspect}")
+
+          cfg.catalog_id = catalogCreation[:catalog_id]
+
+        end
+
         def vcloud_check_inventory(env)
           # Will check each mandatory config value against the vCloud Director
           # Instance and will setup the global environment config values
@@ -61,23 +74,55 @@ module VagrantPlugins
           cfg.vdc_id = cnx.get_vdc_id_by_name(cfg.org, cfg.vdc_name)
 
           cfg.catalog = cnx.get_catalog_by_name(cfg.org, cfg.catalog_name)
+          
+
+          @logger.debug("BEFORE get_catalog_id_by_name")          
           cfg.catalog_id = cnx.get_catalog_id_by_name(cfg.org, cfg.catalog_name)
+          @logger.debug("AFTER get_catalog_id_by_name: #{cfg.catalog_id}")
 
+
+          if cfg.catalog_id.nil?
+            @logger.debug("INSIDE RESCUE!")
+            env[:ui].error("Catalog [#{cfg.catalog_name}] does not exist!")
+            @logger.info("Catalog [#{cfg.catalog_name}] does not exist!")
+
+            user_input = env[:ui].ask(
+              "Would you like to create the [#{cfg.catalog_name}] catalog?\nChoice (yes/no): "
+            )
+
+            # FIXME: add an OR clause for just Y
+            if user_input.downcase == "yes"
+              env[:ui].warn("Creating [#{cfg.catalog_name}] catalog ...")
+              vcloud_create_catalog(env)
+            else
+              env[:ui].error("Catalog not created, exiting...")
+
+              raise VagrantPlugins::VCloud::Errors::VCloudError, 
+                    :message => "Catalog not available, exiting..."
+
+            end
+          end
+
+          
+          @logger.debug("Getting catalog item with cfg.catalog_id: [#{cfg.catalog_id}] and machine name [#{env[:machine].box.name.to_s}]")
           cfg.catalog_item = cnx.get_catalog_item_by_name(cfg.catalog_id, env[:machine].box.name.to_s)
-
+          @logger.debug("Catalog item is now #{cfg.catalog_item}")
           cfg.vdc_network_id = cfg.org[:networks][cfg.vdc_network_name]
 
 
           # Checking Catalog mandatory requirements
-          if !cfg.catalog
-            env[:ui].error("Catalog [#{cfg.catalog_name}] does not exist!")
-            @logger.info("Catalog [#{cfg.catalog_name}] does not exist!")
+          if !cfg.catalog_id
+            env[:ui].error("Catalog [#{cfg.catalog_name}] STILL does not exist!")
+            @logger.info("Catalog [#{cfg.catalog_name}] STILL does not exist!")
+              raise VagrantPlugins::VCloud::Errors::VCloudError, 
+                    :message => "Catalog not available, exiting..."
+
           else
             env[:ui].success("Catalog [#{cfg.catalog_name}] exists")
             @logger.info("Catalog [#{cfg.catalog_name}] exists")
           end
 
-          if !cfg.catalog_item
+          if cfg.catalog_item.empty?
             @logger.info("Catalog item [#{env[:machine].box.name.to_s}] does not exist!")
             env[:ui].warn("Catalog item [#{env[:machine].box.name.to_s}] does not exist!")
 

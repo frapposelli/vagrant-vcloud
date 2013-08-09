@@ -1,59 +1,33 @@
-en:
-  vagrant_vcloud:
-    creating_cloned_vm: |-
-      Calling vCloud CloneVM with the following settings:
-    destroy_vm: |-
-      Calling vCloud Destroy
-    power_off_vm: |-
-      Calling vCloud PowerOff
-    vm_already_created: |-
-      The VM is already created
-    vm_not_created: |-
-      The VM has not been created
-    will_not_destroy: |-
-      VM will not be destroyed
-  errors:
-    missing_template: |-
-      Configured template VM could not be found
-    missing_datacenter: |-
-      Configured data center not found
-    missing_compute_resource: |-
-      Configured compute resource not found
-    missing_resource_pool: |-
-      Configured resource pool not found
-  config:
-    hostname: |-
-      Configuration must specify a vCloud Director hostname
-    username: |-
-      Configuration must specify a vCloud Director username
-    password: |-
-      Configuration must specify a vCloud Director password
-    orgname: |-
-      Configuration must specify a vCloud Director organization
-    api_version: |-
-      Configuration must specify a vCloud API version (default=5.1)
-    catalog_name: |-
-      Configuration must specify a vCloud Director Catalog (for the VM templates images)
-    vdc_name: |-
-      Configuration must specify a vCloud Director Virtual Datacenter (Target Organization VDC)
-    name: |-
-      Configuration must specify a VM name
-    template: |-
-      Configuration must specify a template name
-    compute_resource: |-
-      Configuration must specify a compute resource name
-    resource_pool: |-
-      Configuration must specify a resource pool name
-  states:
-    short_running: |-
-      VM is running
-    short_stopped: |-
-      VM is stopped
-    short_suspended: |-
-      VM is suspended
-    short_notcreated: |-
-      VM is not created yet
-
-
-
-
+en: 
+  vagrant_vcloud: 
+    creating_cloned_vm: "Calling vCloud CloneVM with the following settings:"
+    destroy_vm: "Calling vCloud Destroy"
+    power_off_vm: "Calling vCloud PowerOff"
+    vm_already_created: "The VM is already created"
+    vm_not_created: "The VM has not been created"
+    will_not_destroy: "VM will not be destroyed"
+    config: 
+      api_version: "Configuration must specify a vCloud API version (default=5.1)"
+      catalog_name: "Configuration must specify a vCloud Director Catalog (for the VM templates images)"
+      compute_resource: "Configuration must specify a compute resource name"
+      hostname: "Configuration must specify a vCloud Director hostname"
+      name: "Configuration must specify a VM name"
+      orgname: "Configuration must specify a vCloud Director organization"
+      password: "Configuration must specify a vCloud Director password"
+      resource_pool: "Configuration must specify a resource pool name"
+      template: "Configuration must specify a template name"
+      username: "Configuration must specify a vCloud Director username"
+      vdc_name: "Configuration must specify a vCloud Director Virtual Datacenter (Target Organization VDC)"
+    errors: 
+      missing_compute_resource: "Configured compute resource not found"
+      missing_datacenter: "Configured data center not found"
+      missing_resource_pool: "Configured resource pool not found"
+      missing_template: "Configured template VM could not be found"
+      rest_error: "There was an error talking to vCloud. The error message is shown below: %{message}"
+      rest_errors: 
+        object_not_found: "Object not found in vCloud Director"
+    states: 
+      short_notcreated: "VM is not created yet"
+      short_running: "VM is running"
+      short_stopped: "VM is stopped"
+      short_suspended: "VM is suspended"

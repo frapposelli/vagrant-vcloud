@@ -303,6 +303,8 @@ module VagrantPlugins
 
               # TODO: handle asynch properly, see TasksList
               [Nokogiri.parse(response), response.headers]
+            rescue RestClient::ResourceNotFound => e
+              raise Errors::ObjectNotFound
             rescue RestClient::Unauthorized => e
               raise UnauthorizedAccess, "Client not authorized. Please check your credentials."
             rescue RestClient::BadRequest => e

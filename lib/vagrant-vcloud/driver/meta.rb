@@ -29,12 +29,13 @@ module VagrantPlugins
 
       class Meta < Base
 
-        class UnauthorizedAccess < StandardError; end
-        class WrongAPIVersion < StandardError; end
-        class WrongItemIDError < StandardError; end
-        class InvalidStateError < StandardError; end
-        class InternalServerError < StandardError; end
-        class UnhandledError < StandardError; end
+#      class ObjectNotFound < StandardError; end
+#      class UnauthorizedAccess < StandardError; end
+#      class WrongAPIVersion < StandardError; end
+#      class WrongItemIDError < StandardError; end
+#      class InvalidStateError < StandardError; end
+#      class InternalServerError < StandardError; end
+#      class UnhandledError < StandardError; end
 
         # We use forwardable to do all our driver forwarding
         extend Forwardable
