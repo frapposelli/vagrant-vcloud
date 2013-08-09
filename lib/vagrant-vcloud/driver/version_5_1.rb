@@ -23,7 +23,6 @@ require "ruby-progressbar"
 module VagrantPlugins
   module VCloud
     module Driver
-#      class ObjectNotFound < StandardError; end
 #      class UnauthorizedAccess < StandardError; end
 #      class WrongAPIVersion < StandardError; end
 #      class WrongItemIDError < StandardError; end
@@ -185,9 +184,6 @@ module VagrantPlugins
             items[item['name']] = item['href'].gsub("#{@api_url}/catalogItem/", "")
           end
           { :description => description, :items => items }
-          rescue Errors::ObjectNotFound
-            @logger.debug("error catched in get_catalog!!!!!!!!")
-            raise Errors::ObjectNotFound, :message => "Catalog not found"
         end
 
         ##
@@ -212,15 +208,14 @@ module VagrantPlugins
         # - catalog name
         def get_catalog_by_name(organization, catalogName)
           result = nil
+
           organization[:catalogs].each do |catalog|
             if catalog[0].downcase == catalogName.downcase
               result = get_catalog(catalog[1])
             end
           end
 
-          rescue Errors::ObjectNotFound
-            @logger.debug("error catched in get_catalog_by_name!!!!!!!!")
-            raise Errors::ObjectNotFound, :message => "Catalog name not found"
+          result
         end
 
         ##
@@ -339,9 +334,7 @@ module VagrantPlugins
             result = { catalogItemName => catalogItemId, :vms_hash => vms_hash }
             end
           end
-          rescue Errors::ObjectNotFound
-            @logger.debug("error catched in get_catalog_item_by_name!!!!!!!!")
-            raise Errors::ObjectNotFound, :message => "Catalog name not found"
+          result 
         end  
 
         ##
