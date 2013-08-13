@@ -1,3 +1,4 @@
+require "etc"
 require "log4r"
 
 module VagrantPlugins
@@ -52,7 +53,7 @@ module VagrantPlugins
           cfg = env[:machine].provider_config
           cnx = cfg.vcloud_cnx.driver
 
-          catalogCreation = cnx.create_catalog(cfg.org_id, cfg.catalog_name, "Created by vagrant-vcloud on <date>")
+          catalogCreation = cnx.create_catalog(cfg.org_id, cfg.catalog_name, "Created by #{Etc.getlogin} running on #{Socket.gethostname.downcase} using vagrant-vcloud on #{Time.now.strftime("%B %d, %Y")}")
           cnx.wait_task_completion(catalogCreation[:task_id])
 
           @logger.debug("Catalog Creation result: #{catalogCreation.inspect}")
@@ -122,7 +123,7 @@ module VagrantPlugins
             @logger.info("Catalog [#{cfg.catalog_name}] exists")
           end
 
-          if cfg.catalog_item.empty?
+          if !cfg.catalog_item
             @logger.info("Catalog item [#{env[:machine].box.name.to_s}] does not exist!")
             env[:ui].warn("Catalog item [#{env[:machine].box.name.to_s}] does not exist!")
 

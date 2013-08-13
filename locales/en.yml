@@ -26,6 +26,8 @@ en:
       rest_error: "There was an error talking to vCloud. The error message is shown below: %{message}"
       rest_errors: 
         object_not_found: "Object not found in vCloud Director"
+        invalid_config_error: "Invalid Guest Customization Specified"
+        invalid_state_error: "Invalid vApp State %{message}"
     states: 
       short_notcreated: "VM is not created yet"
       short_running: "VM is running"

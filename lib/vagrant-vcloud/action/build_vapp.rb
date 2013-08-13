@@ -33,7 +33,6 @@ module VagrantPlugins
 
             @logger.debug("Range: #{rangeAddresses}")
 
-
             rangeAddresses.shift # Delete the "network" address from the range.
             gatewayIp = rangeAddresses.shift # Retrieve the first usable IP, to be used as a gateway.
             rangeAddresses.reverse! # Reverse the array in place.
@@ -116,8 +115,7 @@ module VagrantPlugins
               env[:ui].info("Setting Guest Customization on ID: [#{vmName}] of vApp [#{newVApp[:name]}]")
               setCustom = cnx.set_vm_guest_customization(newVMProperties[:id], vmName, {
                 :enabled => true,
-                :admin_passwd_enabled => true,
-                :admin_passwd => "vagrant"
+                :admin_passwd_enabled => false
                 })
               cnx.wait_task_completion(setCustom)
 
@@ -169,8 +167,7 @@ module VagrantPlugins
               env[:ui].info("Setting Guest Customization on ID: [#{vmName}] of vApp [#{newVApp[:name]}]")
               setCustom = cnx.set_vm_guest_customization(newVMProperties[:id], vmName, {
                 :enabled => true,
-                :admin_passwd_enabled => true,
-                :admin_passwd => "vagrant"
+                :admin_passwd_enabled => false
                 })
               cnx.wait_task_completion(setCustom)
 

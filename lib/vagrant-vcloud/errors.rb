@@ -13,6 +13,12 @@ module VagrantPlugins
       class ObjectNotFound < RestError
         error_key(:object_not_found)
       end
+      class InvalidConfigError < RestError
+        error_key(:invalid_config_error)
+      end
+      class InvalidStateError < RestError
+        error_key(:invalid_state_error)
+      end
       class SyncError < VCloudError
         error_key(:sync_error)
       end
