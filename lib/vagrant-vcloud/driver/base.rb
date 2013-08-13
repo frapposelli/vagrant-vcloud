@@ -287,6 +287,8 @@ module VagrantPlugins
               headers.merge!({:content_type => content_type})
             end
 
+            # FIXME: get rid of RestClient and switch everything to HTTPClient, easier to use and we get rid of another dependency.
+
             request = RestClient::Request.new(:method => params['method'],
                                              :user => "#{@username}@#{@org_name}",
                                              :password => @password,
@@ -306,7 +308,7 @@ module VagrantPlugins
             rescue RestClient::ResourceNotFound => e
               raise Errors::ObjectNotFound
             rescue RestClient::Unauthorized => e
-              raise UnauthorizedAccess, "Client not authorized. Please check your credentials."
+              raise Errors::UnauthorizedAccess
             rescue RestClient::BadRequest => e
               body = Nokogiri.parse(e.http_body)
               message = body.css("Error").first["message"]
@@ -328,11 +330,13 @@ module VagrantPlugins
             rescue RestClient::Forbidden => e
               body = Nokogiri.parse(e.http_body)
               message = body.css("Error").first["message"]
-              raise UnauthorizedAccess, "Operation not permitted: #{message}."
+              raise Errors::UnauthorizedAccess
             rescue RestClient::InternalServerError => e
               body = Nokogiri.parse(e.http_body)
               message = body.css("Error").first["message"]
               raise InternalServerError, "Internal Server Error: #{message}."
+            rescue RestClient::Found => e
+              raise Errors::HostRedirect
             end
           end
 
@@ -417,7 +421,7 @@ module VagrantPlugins
                     progressbar.progress=file[:bytesTransferred].to_i
                   end
                 end
-              rescue
+              rescue # FIXME: HUGE FIXME!!!! DO SOMETHING WITH THIS, IT'S JUST STUPID AS IT IS NOW!!!
                 retryTime = (config[:retry_time] || 5)
                 puts "Range #{contentRange} failed to upload, retrying the chunk in #{retryTime.to_s} seconds, to stop the action press CTRL+C."
                 sleep retryTime.to_i

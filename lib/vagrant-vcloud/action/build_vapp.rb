@@ -17,17 +17,19 @@ module VagrantPlugins
           cnx = cfg.vcloud_cnx.driver
           vmName = env[:machine].name
 
-
           if !cfg.ip_subnet.nil?
 
             @logger.debug("Input address: #{cfg.ip_subnet}")
 
-            cidr = NetAddr::CIDR.create(cfg.ip_subnet)
-
-            if cidr.bits > 30
-              @logger.debug("Subnet too small!")
-              raise SubnetTooSmall
+            begin
+              cidr = NetAddr::CIDR.create(cfg.ip_subnet)
+            rescue NetAddr::ValidationError
+              raise Errors::InvalidSubnet, :message => cfg.ip_subnet
             end
+              if cidr.bits > 30
+                @logger.debug("Subnet too small!")
+                raise Errors::SubnetTooSmall, :message => cfg.ip_subnet
+              end
 
             rangeAddresses = cidr.range(0)
 
@@ -79,9 +81,8 @@ module VagrantPlugins
 
             compose = cnx.compose_vapp_from_vm(
               cfg.vdc_id, 
-              "Vagrant-#{Etc.getlogin}-#{Socket.gethostname.downcase}-#{SecureRandom.hex(4)}", # FIXME: To be changed
-              "vApp built by vagrant-vcloud", # FIXME: I might use this as the
-                                              # container for all the information
+              "Vagrant-#{Etc.getlogin}-#{Socket.gethostname.downcase}-#{SecureRandom.hex(4)}",
+              "vApp created by #{Etc.getlogin} running on #{Socket.gethostname.downcase} using vagrant-vcloud on #{Time.now.strftime("%B %d, %Y")}",
               { 
                 vmName => cfg.catalog_item[:vms_hash][env[:machine].box.name.to_s][:id]
               }, 
@@ -137,8 +138,6 @@ module VagrantPlugins
               env[:machine].get_vapp_id, 
               { 
                 vmName => cfg.catalog_item[:vms_hash][env[:machine].box.name.to_s][:id]
-                # FIXME: Will need a for loop here for every VM defined in the
-                # Vagrant file
               }, 
               network_options
             )
@@ -175,7 +174,6 @@ module VagrantPlugins
               env[:ui].info("Starting VM [#{vmName}]")
               poweronVM = cnx.poweron_vm(newVMProperties[:id])
               cnx.wait_task_completion(poweronVM)
-
 
             else
 

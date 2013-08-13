@@ -23,11 +23,17 @@ en:
       missing_datacenter: "Configured data center not found"
       missing_resource_pool: "Configured resource pool not found"
       missing_template: "Configured template VM could not be found"
-      rest_error: "There was an error talking to vCloud. The error message is shown below: %{message}"
+      vcloud_old_version: "Sorry, VMware vCloud Director API version %{version} is not supported"
+      host_not_found: "VMware vCloud Endpoint not found: %{message}"
+      host_redirect: "VMware vCloud Endpoint not found, received an HTTP 302 message back, are you sure you're using the right protocol? (https)"
+      unauthorized_access: "Access not authorized, please verify the username and password in your Vagrantfile"
       rest_errors: 
         object_not_found: "Object not found in vCloud Director"
         invalid_config_error: "Invalid Guest Customization Specified"
         invalid_state_error: "Invalid vApp State %{message}"
+      subnet_errors:
+        invalid_subnet: "The specified subnet is invalid: %{message}"
+        subnet_too_small: "The specified subnet is too small: %{message}, must contain at least 2 usable IPs (/30 or 255.255.255.252)"
     states: 
       short_notcreated: "VM is not created yet"
       short_running: "VM is running"

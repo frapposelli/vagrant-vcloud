@@ -29,14 +29,6 @@ module VagrantPlugins
 
       class Meta < Base
 
-#      class ObjectNotFound < StandardError; end
-#      class UnauthorizedAccess < StandardError; end
-#      class WrongAPIVersion < StandardError; end
-#      class WrongItemIDError < StandardError; end
-#      class InvalidStateError < StandardError; end
-#      class InternalServerError < StandardError; end
-#      class UnhandledError < StandardError; end
-
         # We use forwardable to do all our driver forwarding
         extend Forwardable
         attr_reader :driver
@@ -54,14 +46,7 @@ module VagrantPlugins
 
           # Read and assign the version of vCloud we know which
           # specific driver to instantiate.
-          begin
-            @version = get_api_version(@hostname) || ""
-          rescue Vagrant::Errors::CommandUnavailable,
-            Vagrant::Errors::CommandUnavailableWindows
-            # This means that vCloud was not found, so we raise this
-            # error here.
-            raise Vagrant::Errors::VCloudNotDetected
-          end
+          @version = get_api_version(@hostname) || ""
 
           # Instantiate the proper version driver for vCloud
           @logger.debug("Finding driver for vCloud version: #{@version}")
@@ -69,12 +54,9 @@ module VagrantPlugins
             "5.1" => Version_5_1
           }
 
-          if @version.start_with?("0.9")
-            # vCloud Director 1.5 just doesn't work with our Vagrant provider, 
-            # so show error
-            # FIXME: vCloud Director 1.5 should be "1.5", and older ones are a 
-            # bit different in 1.0, 0.9 is vCloud Express (not vCloud Director)
-            raise Vagrant::Errors::VCloudOldVersion
+          if @version.start_with?("0.9") || @version.start_with?("1.0") || @version.start_with?("1.5")
+            # We support only vCloud Director 5.1 or higher so show error.
+            raise Errors::VCloudOldVersion, :version => @version
           end
 
           driver_klass = nil
@@ -87,7 +69,7 @@ module VagrantPlugins
 
           if !driver_klass
             supported_versions = driver_map.keys.sort.join(", ")
-            raise Vagrant::Errors::VCloudInvalidVersion, :supported_versions => supported_versions
+            raise Errors::VCloudInvalidVersion, :supported_versions => supported_versions
           end
 
           @logger.info("Using vCloud driver: #{driver_klass}")
@@ -154,13 +136,14 @@ module VagrantPlugins
           # FIXME: Find a smarter way to check for vCloud API version
           # Changed from .first to .last because that's the way it's defined
           # in the request answer.
-          apiVersion = versionInfo.css("VersionInfo Version").last.text
+          apiVersion = versionInfo.css("VersionInfo Version")
+          
+          apiVersion.last.text
 
-          apiVersion
-          rescue
-            ## FIXME: Raise a realistic error, like host not found or url not found.
-            raise
+          rescue SocketError, Errno::ECONNREFUSED, RestClient::ResourceNotFound
+            raise Errors::HostNotFound, :message => host_url
           end
+
         end
       end
     end
