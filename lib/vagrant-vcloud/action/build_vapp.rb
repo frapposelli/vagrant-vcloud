@@ -13,6 +13,9 @@ module VagrantPlugins
 
         def call(env)
 
+          # FIXME: we need to find a way to clean things up when a SIGINT get 
+          # called... see env[:interrupted] in the vagrant code
+
           cfg = env[:machine].provider_config
           cnx = cfg.vcloud_cnx.driver
           vmName = env[:machine].name
