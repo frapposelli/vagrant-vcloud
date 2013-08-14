@@ -79,8 +79,7 @@ module VagrantPlugins
 
           if env[:machine].get_vapp_id.nil?
 
-            env[:ui].info("Building vApp ...")
-            @logger.info("Building vApp ...")
+            env[:ui].info("Building vApp...")
 
             compose = cnx.compose_vapp_from_vm(
               cfg.vdc_id, 
@@ -108,15 +107,13 @@ module VagrantPlugins
 
             if newVApp
               env[:ui].success("vApp #{newVApp[:name]} created successfully!")
-              @logger.info("vApp #{newVApp[:name]} created successfully!")
 
               # Add the vm id as machine.id
               newVMProperties = newVApp[:vms_hash].fetch(vmName)
               env[:machine].id = newVMProperties[:id]
 
               ### SET GUEST CONFIG
-              @logger.info("Setting Guest Customization on ID: [#{newVMProperties[:id]}] of vApp [#{newVApp[:name]}]")
-              env[:ui].info("Setting Guest Customization on ID: [#{vmName}] of vApp [#{newVApp[:name]}]")
+              #env[:ui].info("Setting Guest Customization on ID: [#{vmName}] of vApp [#{newVApp[:name]}]")
               setCustom = cnx.set_vm_guest_customization(newVMProperties[:id], vmName, {
                 :enabled => true,
                 :admin_passwd_enabled => false
@@ -130,12 +127,10 @@ module VagrantPlugins
 
             else
               env[:ui].error("vApp #{newVApp[:name]} creation failed!")
-              @logger.error("vApp #{newVApp[:name]} creation failed!")
               raise
            end 
           else
-            env[:ui].info("Adding VM to existing vApp ID: [#{env[:machine].get_vapp_id}] ...")
-            @logger.info("Adding VM to existing vApp ID: [#{env[:machine].get_vapp_id}] ...")
+            env[:ui].info("Adding VM to existing vApp...")
             
             recompose = cnx.recompose_vapp_from_vm(
               env[:machine].get_vapp_id, 
@@ -145,7 +140,6 @@ module VagrantPlugins
               network_options
             )
 
-            env[:ui].info("Waiting for the add to complete ...")
             @logger.info("Waiting for the add to complete ...")
 
             # Wait for the task to finish.
@@ -157,16 +151,16 @@ module VagrantPlugins
 
             if newVApp
 
-              env[:ui].success("VM #{vmName} added to #{newVApp[:name]} successfully!")
-              @logger.info("VM #{vmName} added to #{newVApp[:name]} successfully!")
+              #env[:ui].success("VM #{vmName} added to #{newVApp[:name]} successfully!")
+              #@logger.info("VM #{vmName} added to #{newVApp[:name]} successfully!")
 
               # Add the vm id as machine.id
               newVMProperties = newVApp[:vms_hash].fetch(vmName)
               env[:machine].id = newVMProperties[:id]
 
               ### SET GUEST CONFIG
-              @logger.info("Setting Guest Customization on ID: [#{newVMProperties[:id]}] of vApp [#{newVApp[:name]}]")
-              env[:ui].info("Setting Guest Customization on ID: [#{vmName}] of vApp [#{newVApp[:name]}]")
+              #@logger.info("Setting Guest Customization on ID: [#{newVMProperties[:id]}] of vApp [#{newVApp[:name]}]")
+              #env[:ui].info("Setting Guest Customization on ID: [#{vmName}] of vApp [#{newVApp[:name]}]")
               setCustom = cnx.set_vm_guest_customization(newVMProperties[:id], vmName, {
                 :enabled => true,
                 :admin_passwd_enabled => false
@@ -181,7 +175,6 @@ module VagrantPlugins
             else
 
               env[:ui].error("VM #{vmName} add to #{newVApp[:name]} failed!")
-              @logger.error("VM #{vmName} add to #{newVApp[:name]} failed!")
               raise
             end 
           end

@@ -58,6 +58,8 @@ module VagrantPlugins
 
           @logger.debug("Catalog Creation result: #{catalogCreation.inspect}")
 
+          env[:ui].info("Catalog [#{cfg.catalog_name}] created successfully.")
+
           cfg.catalog_id = catalogCreation[:catalog_id]
 
         end
@@ -83,9 +85,7 @@ module VagrantPlugins
 
 
           if cfg.catalog_id.nil?
-            @logger.debug("INSIDE RESCUE!")
-            env[:ui].error("Catalog [#{cfg.catalog_name}] does not exist!")
-            @logger.info("Catalog [#{cfg.catalog_name}] does not exist!")
+            env[:ui].warn("Catalog [#{cfg.catalog_name}] does not exist!")
 
             user_input = env[:ui].ask(
               "Would you like to create the [#{cfg.catalog_name}] catalog?\nChoice (yes/no): "
@@ -93,7 +93,6 @@ module VagrantPlugins
 
             # FIXME: add an OR clause for just Y
             if user_input.downcase == "yes"
-              env[:ui].warn("Creating [#{cfg.catalog_name}] catalog ...")
               vcloud_create_catalog(env)
             else
               env[:ui].error("Catalog not created, exiting...")
@@ -113,28 +112,25 @@ module VagrantPlugins
 
           # Checking Catalog mandatory requirements
           if !cfg.catalog_id
-            env[:ui].error("Catalog [#{cfg.catalog_name}] STILL does not exist!")
             @logger.info("Catalog [#{cfg.catalog_name}] STILL does not exist!")
               raise VagrantPlugins::VCloud::Errors::VCloudError, 
                     :message => "Catalog not available, exiting..."
 
           else
-            env[:ui].success("Catalog [#{cfg.catalog_name}] exists")
             @logger.info("Catalog [#{cfg.catalog_name}] exists")
           end
 
           if !cfg.catalog_item
-            @logger.info("Catalog item [#{env[:machine].box.name.to_s}] does not exist!")
-            env[:ui].warn("Catalog item [#{env[:machine].box.name.to_s}] does not exist!")
+            env[:ui].warn("Catalog item [#{env[:machine].box.name.to_s}] in Catalog [#{cfg.catalog_name}] does not exist!")
 
             user_input = env[:ui].ask(
               "Would you like to upload the [#{env[:machine].box.name.to_s}] box to "\
-              "vCloud Director [#{cfg.catalog_name}] Catalog?\nChoice (yes/no): "
+              "[#{cfg.catalog_name}] Catalog?\nChoice (yes/no): "
             )
 
             # FIXME: add an OR clause for just Y
             if user_input.downcase == "yes"
-              env[:ui].warn("Uploading [#{env[:machine].box.name.to_s}] process...")
+              env[:ui].info("Uploading [#{env[:machine].box.name.to_s}]...")
               vcloud_upload_box(env)
             else
               env[:ui].error("Catalog item not available, exiting...")
@@ -145,8 +141,7 @@ module VagrantPlugins
             end
 
           else
-            @logger.info("Catalog item [#{env[:machine].box.name.to_s}] exists")
-            env[:ui].success("Catalog item [#{env[:machine].box.name.to_s}] exists")
+            #env[:ui].info("Using catalog item [#{env[:machine].box.name.to_s}] in Catalog [#{cfg.catalog_name}]...")
           end
         end
 
