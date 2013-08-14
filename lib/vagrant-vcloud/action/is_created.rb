@@ -19,12 +19,6 @@ module VagrantPlugins
             vmId = env[:machine].id
             if vmId
               env[:ui].info("VM has been added to vApp and ID is: [#{vmId}]")
-              
-              # FIXME: add a check for VM status (powered on / powered off / 
-              # suspended) if we get to this point the VM should be powered on
-              # otherwise it's a vagrant up call that wants to power on the VM
-              # again, and we should let it do it.
-
               env[:result] = true
            else
               env[:ui].warn("VM has not been added to vApp")

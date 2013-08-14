@@ -25,7 +25,7 @@ module VagrantPlugins
         state_id = env[:machine_state_id]
 
         # Translate into short/long descriptions
-        short = state_id.to_s.gsub("_", " ").capitalize
+        short = state_id.to_s.gsub("_", " ")
         long  = I18n.t("vagrant_vcloud.states.#{state_id}")
 
         # Return the MachineState object

@@ -11,12 +11,16 @@ module VagrantPlugins
         end
 
         def call(env)
-          env = read_state(env)
+          #env = read_state(env)
             
+          env[:machine_state_id] = read_state(env) 
+          
           @app.call env
         end
 
         def read_state(env)
+
+          # FIXME: this part needs some cleanup
 
           begin
             cfg = env[:machine].provider_config
@@ -26,7 +30,7 @@ module VagrantPlugins
 
             if env[:machine].id.nil?
               @logger.info("VM [#{vmName}] is not created yet")
-              env[:machine_state_id] = "notcreated"
+              return :not_created
             end
 
             vApp = cnx.get_vapp(vAppId)
@@ -34,13 +38,13 @@ module VagrantPlugins
 
             if vmStatus == "stopped"
               @logger.info("VM [#{vmName}] is stopped")
-              env[:machine_state_id] = "stopped"
+              return :stopped
             elsif vmStatus == "running"
               @logger.info("VM [#{vmName}] is running")
-              env[:machine_state_id] = "running"
+              return :running
             elsif vmStatus == "paused"
               @logger.info("VM [#{vmName}] is suspended")
-              env[:machine_state_id] = "suspended"
+              return :suspended
             end
           rescue Exception => e
             ### When bad credentials, we get here.

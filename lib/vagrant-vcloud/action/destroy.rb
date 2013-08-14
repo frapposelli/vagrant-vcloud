@@ -36,9 +36,9 @@ module VagrantPlugins
             env[:machine].id=nil
             env[:machine].vappid=nil
           else
-            env[:ui].info("Powering off VM #{env[:machine].name} with id #{vmId} in vApp Id #{vAppId}")
-            task_id = cnx.poweroff_vm(vmId)
-            wait = cnx.wait_task_completion(task_id)
+#            env[:ui].info("Powering off VM #{env[:machine].name} with id #{vmId} in vApp Id #{vAppId}")
+#            task_id = cnx.poweroff_vm(vmId)
+#            wait = cnx.wait_task_completion(task_id)
             env[:ui].info("destroy VM Id: #{vmId}")
             vmDeleteTask = cnx.delete_vm(vmId)
             @logger.debug("VM Delete task id #{vmDeleteTask}")

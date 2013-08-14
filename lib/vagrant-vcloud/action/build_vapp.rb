@@ -123,10 +123,10 @@ module VagrantPlugins
                 })
               cnx.wait_task_completion(setCustom)
 
-              @logger.info("Starting VM [#{vmName}] - this will take a while as vShield Edge is getting deployed as well")
-              env[:ui].info("Starting VM [#{vmName}] - this will take a while as vShield Edge is getting deployed as well")
-              poweronVM = cnx.poweron_vm(newVMProperties[:id])
-              cnx.wait_task_completion(poweronVM)
+#              @logger.info("Starting VM [#{vmName}] - this will take a while as vShield Edge is getting deployed as well")
+#              env[:ui].info("Starting VM [#{vmName}] - this will take a while as vShield Edge is getting deployed as well")
+#              poweronVM = cnx.poweron_vm(newVMProperties[:id])
+#              cnx.wait_task_completion(poweronVM)
 
             else
               env[:ui].error("vApp #{newVApp[:name]} creation failed!")
@@ -173,10 +173,10 @@ module VagrantPlugins
                 })
               cnx.wait_task_completion(setCustom)
 
-              @logger.info("Starting VM [#{vmName}]")
-              env[:ui].info("Starting VM [#{vmName}]")
-              poweronVM = cnx.poweron_vm(newVMProperties[:id])
-              cnx.wait_task_completion(poweronVM)
+#              @logger.info("Starting VM [#{vmName}]")
+#              env[:ui].info("Starting VM [#{vmName}]")
+#              poweronVM = cnx.poweron_vm(newVMProperties[:id])
+#              cnx.wait_task_completion(poweronVM)
 
             else
 
