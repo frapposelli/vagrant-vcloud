@@ -324,6 +324,8 @@ module VagrantPlugins
                 raise Errors::InvalidStateError, :message => "Invalid request because vApp is stopped. Start vApp '#{$1}' and try again."
               when /The administrator password cannot be empty when it is enabled and automatic password generation is not selected/
                 raise Errors::InvalidConfigError
+              when /The reference "(.*)" cannot be parsed correctly/   # FIXME: doesn't work
+                raise Errors::InvalidNetSpecification
               else
                 raise UnhandledError, "BadRequest - unhandled error: #{message}.\nPlease report this issue."
               end

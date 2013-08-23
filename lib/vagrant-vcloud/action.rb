@@ -14,14 +14,14 @@ module VagrantPlugins
         Vagrant::Action::Builder.new.tap do |b|
 #          b.use SetName
 #          b.use ClearForwardedPorts
-#          b.use Provision
+          b.use Provision
 #          b.use EnvSet, :port_collision_repair => true
-#          b.use PrepareForwardedPortCollisionParams
-#          b.use HandleForwardedPortCollisions
+
+          b.use HandleNATPortCollisions
 #          b.use ShareFolders
 #          b.use ClearNetworkInterfaces
 #          b.use Network
-#          b.use ForwardPorts
+          b.use ForwardPorts
 #          b.use SetHostname
 #          b.use SaneDefaults
 #          b.use Customize, "pre-boot"
@@ -32,6 +32,16 @@ module VagrantPlugins
           b.use SyncFolders
 #          b.use Customize, "post-boot"
 #          b.use CheckGuestAdditions
+        end
+      end
+
+
+
+      def self.action_reload
+        Vagrant::Action::Builder.new.tap do |b|
+          b.use action_halt
+          b.use action_boot
+          b.use DisconnectVCloud
         end
       end
 
@@ -194,7 +204,6 @@ module VagrantPlugins
       def self.action_up
         Vagrant::Action::Builder.new.tap do |b|
           b.use ConfigValidate
-          b.use ConnectVCloud
 
           # Handle box_url downloading early so that if the Vagrantfile
           # references any files in the box or something it all just
@@ -204,6 +213,8 @@ module VagrantPlugins
               b2.use HandleBoxUrl
             end
           end
+
+          b.use ConnectVCloud
 
           b.use Call, IsCreated do |env, b2|
             if !env[:result]
@@ -228,12 +239,14 @@ module VagrantPlugins
       autoload :PowerOn, action_root.join("power_on")
       autoload :Suspend, action_root.join("suspend")
       autoload :Destroy, action_root.join("destroy")
+      autoload :ForwardPorts, action_root.join("forward_ports")
       autoload :MessageCannotHalt, action_root.join("message_cannot_halt")
       autoload :MessageAlreadyCreated, action_root.join("message_already_created")
       autoload :MessageAlreadyRunning, action_root.join("message_already_running")
       autoload :MessageNotCreated, action_root.join("message_not_created")
       autoload :MessageWillNotDestroy, action_root.join("message_will_not_destroy")
       autoload :MessageCannotSuspend, action_root.join("message_cannot_suspend")
+      autoload :HandleNATPortCollisions, action_root.join("handle_nat_port_collisions")
       autoload :ReadSSHInfo, action_root.join("read_ssh_info")
       autoload :InventoryCheck, action_root.join("inventory_check")
       autoload :BuildVApp, action_root.join("build_vapp")

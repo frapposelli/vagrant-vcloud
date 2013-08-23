@@ -1,3 +1,5 @@
+require "awesome_print"
+
 module VagrantPlugins
   module VCloud
     module Action
@@ -11,16 +13,23 @@ module VagrantPlugins
         end
 
         def call(env)
-          env[:machine_ssh_info] = read_ssh_info(env[:vcloud_connection], env[:machine])
+          env[:machine_ssh_info] = read_ssh_info(env)
 
           @app.call env
         end
 
 
-        def read_ssh_info(connection, machine)
-          return nil if machine.id.nil?
+        def read_ssh_info(env)
+          return nil if env[:machine].id.nil?
 
-          vm = connection.get_vapp(machine)
+          cfg = env[:machine].provider_config
+          cnx = cfg.vcloud_cnx.driver
+          vmName = env[:machine].name
+          vAppId = env[:machine].get_vapp_id
+
+          @logger.debug("Getting vapp info...")
+          vm = cnx.get_vapp(vAppId)
+          myhash = vm[:vms_hash][vmName.to_sym]
 
           if vm.nil?
             # The machine can't be found
@@ -29,9 +38,24 @@ module VagrantPlugins
             return nil
           end
 
+          @logger.debug("Getting port forwarding rules...")
+          rules = cnx.get_vapp_port_forwarding_rules(vAppId)
+          
+          rules.each do |rule|
+            if rule[:vapp_scoped_local_id] == myhash[:vapp_scoped_local_id] && rule[:nat_internal_port] == "22"
+
+              @logger.debug("Our variables: IP #{rule[:nat_external_ip]} and Port #{rule[:nat_external_port]}")
+              
+              @externalIP = rule[:nat_external_ip]
+              @externalPort = rule[:nat_external_port]
+              break
+            end
+          end
+
           return {
-              :host => vm[:ip],
-              :port => 22
+            # FIXME: these shouldn't be self
+              :host => @externalIP,
+              :port => @externalPort
           }
         end
       end

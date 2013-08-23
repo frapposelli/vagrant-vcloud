@@ -9,6 +9,9 @@ module VagrantPlugins
       class VCloudOldVersion < VCloudError
         error_key(:vcloud_old_version)
       end
+      class CatalogAddError < VCloudError
+        error_key(:catalog_add_error)
+      end
       class HostNotFound < VCloudError
         error_key(:host_not_found)
       end
@@ -17,6 +20,18 @@ module VagrantPlugins
       end
       class UnauthorizedAccess < VCloudError
         error_key(:unauthorized_access)
+      end
+      class StopVAppError < VCloudError
+        error_key(:stop_vapp_error)
+      end
+      class ComposeVAppError < VCloudError
+        error_key(:compose_vapp_error)
+      end
+      class InvalidNetSpecification < VCloudError
+        error_key(:invalid_network_specification)
+      end
+      class ForwardPortCollision < VCloudError
+        error_key(:forward_port_collision)
       end
       class SubnetErrors < VCloudError
         error_namespace("vagrant_vcloud.errors.subnet_errors")

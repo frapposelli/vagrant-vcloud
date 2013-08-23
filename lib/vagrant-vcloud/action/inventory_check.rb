@@ -43,7 +43,12 @@ module VagrantPlugins
           )
 
           env[:ui].info("Adding [#{env[:machine].box.name.to_s}] to Catalog [#{cfg.catalog_name}]")
-          cnx.wait_task_completion(uploadOVF)
+          addOVFtoCatalog = cnx.wait_task_completion(uploadOVF)
+
+          if !addOVFtoCatalog[:errormsg].nil?
+            raise Errors::CatalogAddError, :message => addOVFtoCatalog[:errormsg]
+          end
+
           ## Retrieve catalog_item ID
           cfg.catalog_item = cnx.get_catalog_item_by_name(cfg.catalog_id, env[:machine].box.name.to_s)
 

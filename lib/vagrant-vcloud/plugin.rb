@@ -67,5 +67,12 @@ module VagrantPlugins
       autoload :Meta, File.expand_path("../driver/meta", __FILE__)
       autoload :Version_5_1, File.expand_path("../driver/version_5_1", __FILE__)
     end
+    module Model
+      autoload :ForwardedPort, File.expand_path("../model/forwarded_port", __FILE__)
+    end
+
+    module Util
+      autoload :CompileForwardedPorts, File.expand_path("../util/compile_forwarded_ports", __FILE__)
+    end
   end
 end

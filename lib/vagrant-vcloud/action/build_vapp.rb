@@ -94,6 +94,11 @@ module VagrantPlugins
             # Wait for the task to finish.
             wait = cnx.wait_task_completion(compose[:task_id])
 
+            if !wait[:errormsg].nil?
+              raise Errors::ComposeVAppError, :message => wait[:errormsg]
+            end
+
+
             # Fetch thenewly created vApp ID
             vAppId = compose[:vapp_id]
 

@@ -19,6 +19,7 @@ require "rest-client"
 require "nokogiri"
 require "httpclient"
 require "ruby-progressbar"
+require "set"
 
 module VagrantPlugins
   module VCloud
@@ -923,7 +924,7 @@ module VagrantPlugins
                       xml.NatRule {
                         xml.VmRule {
                           xml.ExternalPort nat_rule[:nat_external_port]
-                          xml.VAppScopedVmId nat_rule[:vm_scoped_local_id]
+                          xml.VAppScopedVmId nat_rule[:vapp_scoped_local_id]
                           xml.VmNicId(nat_rule[:nat_vmnic_id] || "0")
                           xml.InternalPort nat_rule[:nat_internal_port]
                           xml.Protocol(nat_rule[:nat_protocol] || "TCP")
@@ -949,9 +950,74 @@ module VagrantPlugins
         end
 
         ##
+        # Add vApp port forwarding rules
+        #
+        # - vappid: id of the vapp to be modified
+        # - network_name: name of the vapp network to be modified
+        # - config: hash with network configuration specifications, must contain an array inside :nat_rules with the nat rules to be added.
+
+        # nat_rules << { :nat_external_port => j.to_s, :nat_internal_port => "22", :nat_protocol => "TCP", :vm_scoped_local_id => value[:vapp_scoped_local_id]}
+
+        def add_vapp_port_forwarding_rules(vappid, network_name, config={})
+          builder = Nokogiri::XML::Builder.new do |xml|
+          xml.NetworkConfigSection(
+            "xmlns" => "http://www.vmware.com/vcloud/v1.5",
+            "xmlns:ovf" => "http://schemas.dmtf.org/ovf/envelope/1") {
+            xml['ovf'].Info "Network configuration"
+            xml.NetworkConfig("networkName" => network_name) {
+              xml.Configuration {
+                xml.ParentNetwork("href" => "#{@api_url}/network/#{config[:parent_network]}")
+                xml.FenceMode(config[:fence_mode] || 'isolated')
+                xml.Features {
+                  xml.NatService {
+                    xml.IsEnabled "true"
+                    xml.NatType "portForwarding"
+                    xml.Policy(config[:nat_policy_type] || "allowTraffic")
+
+                    preExisting = get_vapp_port_forwarding_rules(vappid)
+
+                    config[:nat_rules].concat(preExisting)
+
+                    config[:nat_rules].each do |nat_rule|
+                      xml.NatRule {
+                        xml.VmRule {
+                          xml.ExternalPort nat_rule[:nat_external_port]
+                          xml.VAppScopedVmId nat_rule[:vapp_scoped_local_id]
+                          xml.VmNicId(nat_rule[:nat_vmnic_id] || "0")
+                          xml.InternalPort nat_rule[:nat_internal_port]
+                          xml.Protocol(nat_rule[:nat_protocol] || "TCP")
+                        }
+                      }
+                    end
+                  }
+                }
+              }
+            }
+          }
+          end
+
+          params = {
+            'method' => :put,
+            'command' => "/vApp/vapp-#{vappid}/networkConfigSection"
+          }
+
+          @logger.debug("OUR XML: #{builder.to_xml}")
+
+          response, headers = send_request(params, builder.to_xml, "application/vnd.vmware.vcloud.networkConfigSection+xml")
+
+          task_id = headers[:location].gsub("#{@api_url}/task/", "")
+          task_id
+        end
+
+
+
+        ##
         # Get vApp port forwarding rules
         #
         # - vappid: id of the vApp
+
+        # nat_rules << { :nat_external_port => j.to_s, :nat_internal_port => "22", :nat_protocol => "TCP", :vm_scoped_local_id => value[:vapp_scoped_local_id]}
+        
         def get_vapp_port_forwarding_rules(vAppId)
           params = {
             'method' => :get,
@@ -969,23 +1035,57 @@ module VagrantPlugins
           raise InvalidStateError, "Invalid request because FenceMode must be set to natRouted." unless fenceMode == "natRouted"
           raise InvalidStateError, "Invalid request because NatType must be set to portForwarding." unless natType == "portForwarding"
 
-          nat_rules = {}
+          nat_rules = []
           config.css('/Features/NatService/NatRule').each do |rule|
             # portforwarding rules information
             ruleId = rule.css('Id').text
             vmRule = rule.css('VmRule')
 
-            nat_rules[rule.css('Id').text] = {
-              :ExternalIpAddress  => vmRule.css('ExternalIpAddress').text,
-              :ExternalPort       => vmRule.css('ExternalPort').text,
-              :VAppScopedVmId     => vmRule.css('VAppScopedVmId').text,
-              :VmNicId            => vmRule.css('VmNicId').text,
-              :InternalPort       => vmRule.css('InternalPort').text,
-              :Protocol           => vmRule.css('Protocol').text
+            nat_rules << {
+              :nat_external_ip      => vmRule.css('ExternalIpAddress').text,
+              :nat_external_port    => vmRule.css('ExternalPort').text,
+              :vapp_scoped_local_id => vmRule.css('VAppScopedVmId').text,
+              :vm_nic_id            => vmRule.css('VmNicId').text,
+              :nat_internal_port    => vmRule.css('InternalPort').text,
+              :nat_protocol         => vmRule.css('Protocol').text
             }
           end
           nat_rules
         end
+
+        ##
+        # Get vApp port forwarding rules external ports used and returns a set instead
+        # of an HASH.
+        #
+        # - vappid: id of the vApp
+        def get_vapp_port_forwarding_external_ports(vAppId)
+          params = {
+            'method' => :get,
+            'command' => "/vApp/vapp-#{vAppId}/networkConfigSection"
+          }
+
+          response, headers = send_request(params)
+
+          # FIXME: this will return nil if the vApp uses multiple vApp Networks
+          # with Edge devices in natRouted/portForwarding mode.
+          config = response.css('NetworkConfigSection/NetworkConfig/Configuration')
+          fenceMode = config.css('/FenceMode').text
+          natType = config.css('/Features/NatService/NatType').text
+
+          raise InvalidStateError, "Invalid request because FenceMode must be set to natRouted." unless fenceMode == "natRouted"
+          raise InvalidStateError, "Invalid request because NatType must be set to portForwarding." unless natType == "portForwarding"
+
+          nat_rules = Set.new
+          config.css('/Features/NatService/NatRule').each do |rule|
+            # portforwarding rules information
+            vmRule = rule.css('VmRule')
+            nat_rules.add(vmRule.css('ExternalPort').text.to_i)
+          end
+          nat_rules
+        end
+
+
+
         ##
         # get vApp edge public IP from the vApp ID
         # Only works when:
@@ -1049,14 +1149,17 @@ module VagrantPlugins
             'command' => "/vdc/#{vdcId}/action/uploadVAppTemplate"
           }
 
+          @logger.debug("Sending uploadVAppTemplate request...")
+
           response, headers = send_request(
             params, 
             builder.to_xml,
             "application/vnd.vmware.vcloud.uploadVAppTemplateParams+xml"
           )
 
-          # Get vAppTemplate Link from location
+          # Get vAppTemplate Link from location        
           vAppTemplate = headers[:location].gsub("#{@api_url}/vAppTemplate/vappTemplate-", "")
+          @logger.debug("Getting vAppTemplate ID: #{vAppTemplate}")
           descriptorUpload = response.css("Files Link [rel='upload:default']").first[:href].gsub("#{@host_url}/transfer/", "")
           transferGUID = descriptorUpload.gsub("/descriptor.ovf", "")
 
@@ -1064,6 +1167,7 @@ module VagrantPlugins
           ovfDir = File.dirname(ovfFile)
 
           # Send OVF Descriptor
+          @logger.debug("Sending OVF Descriptor...")
           uploadURL = "/transfer/#{descriptorUpload}"
           uploadFile = "#{ovfDir}/#{ovfFileBasename}.ovf"
           upload_file(uploadURL, uploadFile, vAppTemplate, uploadOptions)
@@ -1081,8 +1185,10 @@ module VagrantPlugins
             task_id = task["href"].gsub("#{@api_url}/task/", "")
 
             # Loop to wait for the upload links to show up in the vAppTemplate we just created
+            @logger.debug("Waiting for the upload links to show up in the vAppTemplate we just created.")
             while true
               response, headers = send_request(params)
+              @logger.debug("Request...")
               break unless response.css("Files Link [rel='upload:default']").count == 1
               sleep 1
             end
@@ -1173,19 +1279,22 @@ module VagrantPlugins
         ##
         # Poll a given task until completion
         def wait_task_completion(taskid)
-          status, errormsg, start_time, end_time, response = nil
+          task, status, errormsg, start_time, end_time, response = nil
           loop do
             task = get_task(taskid)
+            @logger.debug("Evaluating taskid: #{taskid}, current status #{task[:status]}")
             break if task[:status] != 'running'
             sleep 1
           end
 
-          if status == 'error'
-            errormsg = response.css("Error").first
+          if task[:status] == 'error'
+            @logger.debug("Task Errored out")
+            errormsg = task[:response].css("Error").first
+            @logger.debug("Task Error Message #{errormsg['majorErrorCode']} - #{errormsg['message']}")
             errormsg = "Error code #{errormsg['majorErrorCode']} - #{errormsg['message']}"
           end
 
-          { :status => status, :errormsg => errormsg, :start_time => start_time, :end_time => end_time }
+          { :status => task[:status], :errormsg => errormsg, :start_time => task[:start_time], :end_time => task[:end_time] }
         end
 
         ##
