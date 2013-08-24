@@ -772,6 +772,7 @@ module VagrantPlugins
         # - vapp_description: description of the target vapp
         # - vm_list: hash with IDs of the VMs to be used in the composing process
         # - network_config: hash of the network configuration for the vapp
+
         def recompose_vapp_from_vm(vAppId, vm_list={}, network_config={})
           originalVApp = get_vapp(vAppId)
 
@@ -781,44 +782,7 @@ module VagrantPlugins
             "xmlns:ovf" => "http://schemas.dmtf.org/ovf/envelope/1",
             "name" => originalVApp[:name]) {
             xml.Description originalVApp[:description]
-            xml.InstantiationParams {
-              xml.NetworkConfigSection {
-                xml['ovf'].Info "Configuration parameters for logical networks"
-                xml.NetworkConfig("networkName" => network_config[:name]) {
-                  xml.Configuration {
-                    xml.IpScopes {
-                      xml.IpScope {
-                        xml.IsInherited(network_config[:is_inherited] || "false")
-                        xml.Gateway network_config[:gateway]
-                        xml.Netmask network_config[:netmask]
-                        xml.Dns1 network_config[:dns1] if network_config[:dns1]
-                        xml.Dns2 network_config[:dns2] if network_config[:dns2]
-                        xml.DnsSuffix network_config[:dns_suffix] if network_config[:dns_suffix]
-                        xml.IpRanges {
-                          xml.IpRange {
-                            xml.StartAddress network_config[:start_address]
-                            xml.EndAddress network_config[:end_address]
-                          }
-                        }
-                      }
-                    }
-                    xml.ParentNetwork("href" => "#{@api_url}/network/#{network_config[:parent_network]}")
-                    xml.FenceMode network_config[:fence_mode]
-
-                    xml.Features {
-                      xml.FirewallService {
-                        xml.IsEnabled(network_config[:enable_firewall] || "false")
-                      }
-                      xml.NatService {
-                        xml.IsEnabled "true"
-                        xml.NatType "portForwarding"
-                        xml.Policy(network_config[:nat_policy_type] || "allowTraffic")
-                      }
-                    }
-                  }
-                }
-              }
-            }
+            xml.InstantiationParams {}
             vm_list.each do |vm_name, vm_id|
               xml.SourcedItem {
                 xml.Source("href" => "#{@api_url}/vAppTemplate/vm-#{vm_id}", "name" => vm_name)
@@ -975,6 +939,7 @@ module VagrantPlugins
                     xml.Policy(config[:nat_policy_type] || "allowTraffic")
 
                     preExisting = get_vapp_port_forwarding_rules(vappid)
+                    @logger.debug("This is the PREEXISTING RULE BLOCK: #{preExisting.inspect}")
 
                     config[:nat_rules].concat(preExisting)
 
@@ -1064,7 +1029,11 @@ module VagrantPlugins
             'command' => "/vApp/vapp-#{vAppId}/networkConfigSection"
           }
 
+          @logger.debug("these are the params: #{params.inspect}")
+
           response, headers = send_request(params)
+
+          @logger.debug("this is what we get back from networkConfigSection: #{response.to_xml}")
 
           # FIXME: this will return nil if the vApp uses multiple vApp Networks
           # with Edge devices in natRouted/portForwarding mode.

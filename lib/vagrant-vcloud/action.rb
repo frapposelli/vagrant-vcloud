@@ -17,15 +17,17 @@ module VagrantPlugins
           b.use Provision
 #          b.use EnvSet, :port_collision_repair => true
 
-          b.use HandleNATPortCollisions
+
 #          b.use ShareFolders
 #          b.use ClearNetworkInterfaces
 #          b.use Network
+          b.use PowerOn
+          b.use HandleNATPortCollisions
           b.use ForwardPorts
 #          b.use SetHostname
 #          b.use SaneDefaults
 #          b.use Customize, "pre-boot"
-          b.use PowerOn
+
           # TODO: provision
           b.use TimedProvision
           # TODO: sync folders
