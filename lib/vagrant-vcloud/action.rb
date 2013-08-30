@@ -14,7 +14,7 @@ module VagrantPlugins
         Vagrant::Action::Builder.new.tap do |b|
 #          b.use SetName
 #          b.use ClearForwardedPorts
-          b.use Provision
+          
 #          b.use EnvSet, :port_collision_repair => true
 
 
@@ -29,9 +29,11 @@ module VagrantPlugins
 #          b.use Customize, "pre-boot"
 
           # TODO: provision
-          b.use TimedProvision
+          #b.use TimedProvision
           # TODO: sync folders
+          b.use Provision
           b.use SyncFolders
+
 #          b.use Customize, "post-boot"
 #          b.use CheckGuestAdditions
         end
@@ -81,10 +83,9 @@ module VagrantPlugins
       def self.action_halt
         Vagrant::Action::Builder.new.tap do |b|
           b.use ConnectVCloud
-          b.use Call, IsRunning do |env, b2|
-            if !env[:result]
-              b2.use MessageCannotHalt
-              next
+          b.use Call, IsPaused do |env, b2|
+            if env[:result]
+              b2.use Resume
             end
             b2.use UnmapPortForwardings
             b2.use PowerOff
@@ -96,7 +97,7 @@ module VagrantPlugins
         Vagrant::Action::Builder.new.tap do |b|
           b.use ConnectVCloud
           b.use Call, IsRunning do |env, b2|
-            # If the VM is running, must power off
+            # If the VM is stopped, can't suspend
             if !env[:result]
               b2.use MessageCannotSuspend
             else
@@ -109,11 +110,10 @@ module VagrantPlugins
       def self.action_resume
         Vagrant::Action::Builder.new.tap do |b|
           b.use ConnectVCloud
-          # FIXME: I don't think we need this
-          #b.use InventoryCheck
-          b.use Call, Resume do |env, b2|
-            # nothing for now       
-          end
+          b.use Resume
+          b.use Provision
+          b.use SyncFolders
+
         end
       end
 
@@ -185,7 +185,7 @@ module VagrantPlugins
               next
             end
 
-            b2.use SSHExec
+            b2.use AnnounceSSHExec
           end
         end
       end
@@ -257,6 +257,7 @@ module VagrantPlugins
       autoload :ReadState, action_root.join("read_state")
       autoload :SyncFolders, action_root.join("sync_folders")
       autoload :TimedProvision, action_root.join("timed_provision")
+      autoload :AnnounceSSHExec, action_root.join("announce_ssh_exec")
     end
   end
 end

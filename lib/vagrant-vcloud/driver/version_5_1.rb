@@ -24,13 +24,6 @@ require "set"
 module VagrantPlugins
   module VCloud
     module Driver
-#      class UnauthorizedAccess < StandardError; end
-#      class WrongAPIVersion < StandardError; end
-#      class WrongItemIDError < StandardError; end
-#      class InvalidStateError < StandardError; end
-#      class InternalServerError < StandardError; end
-#      class UnhandledError < StandardError; end
-
 
       # Main class to access vCloud rest APIs
       class Version_5_1 < Base

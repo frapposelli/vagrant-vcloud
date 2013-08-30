@@ -57,7 +57,9 @@ module VagrantPlugins
               :fence_mode => "natRouted",
               :ip_allocation_mode => "POOL",
               :parent_network =>  cfg.vdc_network_id,
-              :enable_firewall => "false"
+              :enable_firewall => "false",
+              :dns1 => "8.8.8.8", # FIXME: We should let the user choose DNS servers and then 
+              :dns2 => "8.8.4.4"  # fall back to Google's if they're not specified.
             }
 
           else
@@ -72,7 +74,9 @@ module VagrantPlugins
               :fence_mode => "natRouted",
               :ip_allocation_mode => "POOL",
               :parent_network =>  cfg.vdc_network_id,
-              :enable_firewall => "false"
+              :enable_firewall => "false",
+              :dns1 => "8.8.8.8",
+              :dns2 => "8.8.4.4"
             }
 
           end
