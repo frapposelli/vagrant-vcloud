@@ -86,6 +86,7 @@ module VagrantPlugins
               b2.use MessageCannotHalt
               next
             end
+            b2.use UnmapPortForwardings
             b2.use PowerOff
           end
         end
@@ -126,7 +127,7 @@ module VagrantPlugins
               b2.use Call, IsRunning do |env2, b3|
               # If the VM is running, must power off
                 if env2[:result]
-                 b3.use PowerOff
+                 b3.use action_halt
                 end
                 b3.use Destroy
               end 
@@ -249,6 +250,7 @@ module VagrantPlugins
       autoload :MessageWillNotDestroy, action_root.join("message_will_not_destroy")
       autoload :MessageCannotSuspend, action_root.join("message_cannot_suspend")
       autoload :HandleNATPortCollisions, action_root.join("handle_nat_port_collisions")
+      autoload :UnmapPortForwardings, action_root.join("unmap_port_forwardings")
       autoload :ReadSSHInfo, action_root.join("read_ssh_info")
       autoload :InventoryCheck, action_root.join("inventory_check")
       autoload :BuildVApp, action_root.join("build_vapp")
