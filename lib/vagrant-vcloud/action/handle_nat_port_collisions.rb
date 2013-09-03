@@ -1,5 +1,4 @@
 require "set"
-
 require "log4r"
 
 module VagrantPlugins
@@ -23,7 +22,6 @@ module VagrantPlugins
       #
       class HandleNATPortCollisions
 
-
         def initialize(app, env)
           @app    = app
           @logger = Log4r::Logger.new("vagrant_vcloud::action::handle_port_collisions")
@@ -32,23 +30,8 @@ module VagrantPlugins
         def call(env)
           @logger.info("Detecting any forwarded port collisions...")
 
-          # Get the extra ports we consider in use
-          extra_in_use = env[:port_collision_extra_in_use] || []
-
-          # Get the remap
-          # remap = env[:port_collision_remap] || {}
-
-          # Determine the handler we'll use if we have any port collisions
-          repair = !!env[:port_collision_repair]
-
-          # Log out some of our parameters
-          @logger.debug("Extra in use: #{extra_in_use.inspect}")
-          # @logger.debug("Remap: #{remap.inspect}")
-          @logger.debug("Repair: #{repair.inspect}")
-
           # Determine a list of usable ports for repair
           usable_ports = Set.new(env[:machine].config.vm.usable_port_range)
-          usable_ports.subtract(extra_in_use)
 
           @logger.debug("USABLE PORTS: #{usable_ports.inspect}")
 
@@ -56,7 +39,6 @@ module VagrantPlugins
           with_forwarded_ports(env) do |options|
             usable_ports.delete(options[:host])
           end
-
 
           @logger.debug("USABLE PORTS AFTER IN USE DELETION: #{usable_ports.inspect}")
 
@@ -72,29 +54,11 @@ module VagrantPlugins
           @logger.debug("Getting port forwarding rules...")
           rules = cnx.get_vapp_port_forwarding_external_ports(vAppId)
 
-
-
           # Pass two, detect/handle any collisions
           with_forwarded_ports(env) do |options|
             guest_port = options[:guest]
             host_port  = options[:host]
 
-
-
-            # if remap[host_port]
-            #   remap_port = remap[host_port]
-            #   @logger.debug("Remap port override: #{host_port} => #{remap_port}")
-            #   host_port = remap_port
-            # end
-
-
-
-
-            # DEBUG prepare_forwarded_port_collision_params: DEBUGGING NETWORKS: forwarded_port, {:guest=>22, :host=>2222, :host_ip=>"127.0.0.1", :id=>"ssh", :auto_correct=>true}
-            # DEBUG prepare_forwarded_port_collision_params: DEBUGGING NETWORKS: forwarded_port, {:guest=>80, :host=>8080, :auto_correct=>true, :id=>8080}
-
-            #@logger.debug("DEBUGGING NETWORKS: rules: #{rules}")
-   
             #testHash = rules.flatten
             @logger.debug("DEBUGGING NETWORKS: rules: #{rules.inspect}")         
 

@@ -12,34 +12,13 @@ module VagrantPlugins
       # a bootup (i.e. not saved).
       def self.action_boot
         Vagrant::Action::Builder.new.tap do |b|
-#          b.use SetName
-#          b.use ClearForwardedPorts
-          
-#          b.use EnvSet, :port_collision_repair => true
-
-
-#          b.use ShareFolders
-#          b.use ClearNetworkInterfaces
-#          b.use Network
           b.use PowerOn
           b.use HandleNATPortCollisions
           b.use ForwardPorts
-#          b.use SetHostname
-#          b.use SaneDefaults
-#          b.use Customize, "pre-boot"
-
-          # TODO: provision
-          #b.use TimedProvision
-          # TODO: sync folders
-          b.use Provision
-          b.use SyncFolders
-
-#          b.use Customize, "post-boot"
-#          b.use CheckGuestAdditions
+#          b.use Provision
+#          b.use SyncFolders
         end
       end
-
-
 
       def self.action_reload
         Vagrant::Action::Builder.new.tap do |b|
@@ -48,8 +27,6 @@ module VagrantPlugins
           b.use DisconnectVCloud
         end
       end
-
-
 
       # This action starts a VM, assuming it is already imported and exists.
       # A precondition of this action is that the VM exists.
@@ -70,15 +47,11 @@ module VagrantPlugins
                 next
               end
 
-              # The VM is not saved, so we must have to boot it up
-              # like normal. Boot!
               b3.use action_boot
             end
           end
         end
       end
-
-
 
       def self.action_halt
         Vagrant::Action::Builder.new.tap do |b|
@@ -111,6 +84,7 @@ module VagrantPlugins
         Vagrant::Action::Builder.new.tap do |b|
           b.use ConnectVCloud
           b.use Resume
+          # FIXME: this is to test the provisioning and syncfolder routines
           b.use Provision
           b.use SyncFolders
 
@@ -261,4 +235,3 @@ module VagrantPlugins
     end
   end
 end
-
