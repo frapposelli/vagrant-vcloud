@@ -18,8 +18,6 @@ module VagrantPlugins
           # Get the ports we're forwarding
           env[:forwarded_ports] ||= compile_forwarded_ports(env[:machine].config)
 
-          env[:ui].info("forwarding ports")
-
           @logger.debug("WE'RE GOING TO FORWARD THIS!: #{@env[:forwarded_ports]}")
 
           forward_ports
@@ -55,7 +53,7 @@ module VagrantPlugins
             # because the VM is using Virtualbox NAT networking. Host-only
             # bridged networking don't require port-forwarding and establishing
             # forwarded ports on these attachment types has uncertain behaviour.
-            @env[:ui].info("Here's our message: #{message_attributes}")
+            @env[:ui].info("Forwarding Ports: VM port #{fp.guest_port} -> vShield Edge port #{fp.host_port}")
 
             # Verify we have the network interface to attach to
             # if !interfaces[fp.adapter]

@@ -84,10 +84,6 @@ module VagrantPlugins
         Vagrant::Action::Builder.new.tap do |b|
           b.use ConnectVCloud
           b.use Resume
-          # FIXME: this is to test the provisioning and syncfolder routines
-          b.use Provision
-          b.use SyncFolders
-
         end
       end
 

@@ -67,7 +67,17 @@ module VagrantPlugins
       #
       # @return [Hash]
       attr_reader :port_forwarding_rules
-      
+
+      # Name of the edge gateway [optional]
+      #
+      # @return [String]
+      attr_accessor :vdc_edge_gateway
+
+      # Public IP of the edge gateway [optional, required if :vdc_edge_gateway is specified]
+      #
+      # @return [String]
+      attr_accessor :vdc_edge_gateway_ip
+     
       ##
       ## vCloud Director config runtime values
       ## 

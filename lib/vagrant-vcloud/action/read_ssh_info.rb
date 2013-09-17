@@ -52,6 +52,11 @@ module VagrantPlugins
             end
           end
 
+          if cfg.vdc_edge_gateway_ip && cfg.vdc_edge_gateway
+            @logger.debug("We're running vagrant behind an org edge")
+            @externalIP = cfg.vdc_edge_gateway_ip
+          end
+
           return {
             # FIXME: these shouldn't be self
               :host => @externalIP,

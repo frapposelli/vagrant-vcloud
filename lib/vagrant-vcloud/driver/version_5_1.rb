@@ -20,6 +20,7 @@ require "nokogiri"
 require "httpclient"
 require "ruby-progressbar"
 require "set"
+require "netaddr"
 
 module VagrantPlugins
   module VCloud
@@ -959,8 +960,6 @@ module VagrantPlugins
             'command' => "/vApp/vapp-#{vappid}/networkConfigSection"
           }
 
-          @logger.debug("OUR XML: #{builder.to_xml}")
-
           response, headers = send_request(params, builder.to_xml, "application/vnd.vmware.vcloud.networkConfigSection+xml")
 
           task_id = headers[:location].gsub("#{@api_url}/task/", "")
@@ -1026,8 +1025,6 @@ module VagrantPlugins
 
           response, headers = send_request(params)
 
-          @logger.debug("this is what we get back from networkConfigSection: #{response.to_xml}")
-
           # FIXME: this will return nil if the vApp uses multiple vApp Networks
           # with Edge devices in natRouted/portForwarding mode.
           config = response.css('NetworkConfigSection/NetworkConfig/Configuration')
@@ -1045,6 +1042,283 @@ module VagrantPlugins
           end
           nat_rules
         end
+
+
+        def find_edge_gateway_id(edge_gateway_name, vdc_id)
+          params = {
+            'method' => :get,
+            'command' => "/query?type=edgeGateway&format=records&filter=vdc==#{@api_url}/vdc/#{vdc_id}&filter=name==#{edge_gateway_name}"
+          }
+
+          response, headers = send_request(params)
+
+          edgeGateway = response.css('EdgeGatewayRecord').first
+
+          if edgeGateway
+            return edgeGateway['href'].gsub("#{@api_url}/admin/edgeGateway/", "")
+          else
+            return nil
+          end
+        end
+
+        def find_edge_gateway_network(edge_gateway_name, vdc_id, edge_gateway_ip)
+
+          params = {
+            'method' => :get,
+            'command' => "/query?type=edgeGateway&format=records&filter=vdc==#{@api_url}/vdc/#{vdc_id}&filter=name==#{edge_gateway_name}"
+          }
+
+          response, headers = send_request(params)
+
+          edgeGateway = response.css('EdgeGatewayRecord').first
+
+          if edgeGateway
+            edgeGatewayId = edgeGateway['href'].gsub("#{@api_url}/admin/edgeGateway/", "")
+          end
+
+          params = {
+            'method' => :get,
+            'command' => "/admin/edgeGateway/#{edgeGatewayId}"
+          }
+
+          response, headers = send_request(params)
+
+          response.css("EdgeGateway Configuration GatewayInterfaces GatewayInterface").each do |gw|
+            
+            if gw.css("InterfaceType").text == "internal"
+              next
+            end
+
+            lowip = gw.css("SubnetParticipation IpRanges IpRange StartAddress").first.text
+            highip = gw.css("SubnetParticipation IpRanges IpRange EndAddress").first.text
+
+            rangeIpLow = NetAddr.ip_to_i(lowip)
+            rangeIpHigh = NetAddr.ip_to_i(highip)
+            testIp = NetAddr.ip_to_i(edge_gateway_ip)
+
+            if (rangeIpLow..rangeIpHigh) === testIp
+              return gw.css("Network").first[:href]
+            end
+          end
+
+        end
+
+
+        ##
+        # Set Org Edge port forwarding and firewall rules
+        #
+        # - vappid: id of the vapp to be modified
+        # - network_name: name of the vapp network to be modified
+        # - config: hash with network configuration specifications, must contain an array inside :nat_rules with the nat rules to be applied.
+        def set_edge_gateway_rules(edge_gateway_name, vdc_id, edge_gateway_ip, vAppId)
+
+          edge_vapp_ip = get_vapp_edge_public_ip(vAppId)
+          edge_network_id = find_edge_gateway_network(edge_gateway_name, vdc_id, edge_gateway_ip)
+          edge_gateway_id = find_edge_gateway_id(edge_gateway_name, vdc_id)
+
+          params = {
+             'method' => :get,
+             'command' => "/admin/edgeGateway/#{edge_gateway_id}"
+           }
+
+          response, headers = send_request(params)
+
+          interesting = response.css("EdgeGateway Configuration EdgeGatewayServiceConfiguration")
+
+          natRule1 = Nokogiri::XML::Node.new 'NatRule', response
+            ruleType = Nokogiri::XML::Node.new 'RuleType', response
+            ruleType.content = "DNAT"
+            natRule1.add_child ruleType
+
+            isEnabled = Nokogiri::XML::Node.new 'IsEnabled', response
+            isEnabled.content = "true"
+            natRule1.add_child isEnabled
+
+            gatewayNatRule = Nokogiri::XML::Node.new 'GatewayNatRule', response
+            natRule1.add_child gatewayNatRule
+
+              interface = Nokogiri::XML::Node.new 'Interface', response
+              interface["href"] = edge_network_id
+              gatewayNatRule.add_child interface
+
+              originalIp = Nokogiri::XML::Node.new 'OriginalIp', response
+              originalIp.content = edge_gateway_ip
+              gatewayNatRule.add_child originalIp
+
+              originalPort = Nokogiri::XML::Node.new 'OriginalPort', response
+              originalPort.content = "any"
+              gatewayNatRule.add_child originalPort
+
+              translatedIp = Nokogiri::XML::Node.new 'TranslatedIp', response
+              translatedIp.content = edge_vapp_ip
+              gatewayNatRule.add_child translatedIp
+
+              translatedPort = Nokogiri::XML::Node.new 'TranslatedPort', response
+              translatedPort.content = "any"
+              gatewayNatRule.add_child translatedPort
+
+              protocol = Nokogiri::XML::Node.new 'Protocol', response
+              protocol.content = "any"
+              gatewayNatRule.add_child protocol
+
+              icmpSubType = Nokogiri::XML::Node.new 'IcmpSubType', response
+              icmpSubType.content = "any"
+              gatewayNatRule.add_child icmpSubType
+
+          natRule2 = Nokogiri::XML::Node.new 'NatRule', response
+
+            ruleType = Nokogiri::XML::Node.new 'RuleType', response
+            ruleType.content = "SNAT"
+            natRule2.add_child ruleType
+
+            isEnabled = Nokogiri::XML::Node.new 'IsEnabled', response
+            isEnabled.content = "true"
+            natRule2.add_child isEnabled
+
+            gatewayNatRule = Nokogiri::XML::Node.new 'GatewayNatRule', response
+            natRule2.add_child gatewayNatRule
+
+              interface = Nokogiri::XML::Node.new 'Interface', response
+              interface["href"] = edge_network_id
+              gatewayNatRule.add_child interface
+
+              originalIp = Nokogiri::XML::Node.new 'OriginalIp', response
+              originalIp.content = edge_vapp_ip
+              gatewayNatRule.add_child originalIp
+
+              translatedIp = Nokogiri::XML::Node.new 'TranslatedIp', response
+              translatedIp.content = edge_gateway_ip
+              gatewayNatRule.add_child translatedIp
+
+              protocol = Nokogiri::XML::Node.new 'Protocol', response
+              protocol.content = "any"
+              gatewayNatRule.add_child protocol
+
+
+          firewallRule1 = Nokogiri::XML::Node.new 'FirewallRule', response
+
+            isEnabled = Nokogiri::XML::Node.new 'IsEnabled', response
+            isEnabled.content = "true"
+            firewallRule1.add_child isEnabled
+
+            description = Nokogiri::XML::Node.new 'Description', response
+            description.content = "Allow Vagrant Comms"
+            firewallRule1.add_child description
+
+            policy = Nokogiri::XML::Node.new 'Policy', response
+            policy.content = "allow"
+            firewallRule1.add_child policy
+
+            protocols = Nokogiri::XML::Node.new 'Protocols', response
+            firewallRule1.add_child protocols
+
+              any = Nokogiri::XML::Node.new 'Any', response
+              any.content = "true"
+              protocols.add_child any
+
+            destinationPortRange = Nokogiri::XML::Node.new 'DestinationPortRange', response
+            destinationPortRange.content = "Any"
+            firewallRule1.add_child destinationPortRange
+
+            destinationIp = Nokogiri::XML::Node.new 'DestinationIp', response
+            destinationIp.content = edge_gateway_ip
+            firewallRule1.add_child destinationIp
+
+            sourcePortRange = Nokogiri::XML::Node.new 'SourcePortRange', response
+            sourcePortRange.content = "Any"
+            firewallRule1.add_child sourcePortRange
+
+            sourceIp = Nokogiri::XML::Node.new 'SourceIp', response
+            sourceIp.content = "Any"
+            firewallRule1.add_child sourceIp
+
+            enableLogging = Nokogiri::XML::Node.new 'EnableLogging', response
+            enableLogging.content = "false"
+            firewallRule1.add_child enableLogging
+
+          builder = Nokogiri::XML::Builder.new
+          builder << interesting
+
+          set_edge_rules = Nokogiri::XML(builder.to_xml) do |config|
+            config.default_xml.noblanks
+          end
+
+          nat_rules = set_edge_rules.at_css("NatService")
+
+          nat_rules << natRule1
+          nat_rules << natRule2
+
+          fw_rules = set_edge_rules.at_css("FirewallService")
+
+          fw_rules << firewallRule1
+
+          xml1 = set_edge_rules.at_css "EdgeGatewayServiceConfiguration"
+          xml1["xmlns"] = "http://www.vmware.com/vcloud/v1.5"
+
+ 
+        params = {
+          'method' => :post,
+          'command' => "/admin/edgeGateway/#{edge_gateway_id}/action/configureServices"
+        }
+
+        @logger.debug("OUR XML: #{set_edge_rules.to_xml(:indent => 2)}")
+
+        response, headers = send_request(params, set_edge_rules.to_xml(:indent => 2), "application/vnd.vmware.admin.edgeGatewayServiceConfiguration+xml")
+
+        task_id = headers[:location].gsub("#{@api_url}/task/", "")
+        task_id
+
+      end
+
+      def remove_edge_gateway_rules(edge_gateway_name, vdc_id, edge_gateway_ip, vAppId)
+
+          edge_vapp_ip = get_vapp_edge_public_ip(vAppId)
+          edge_gateway_id = find_edge_gateway_id(edge_gateway_name, vdc_id)
+
+           params = {
+             'method' => :get,
+             'command' => "/admin/edgeGateway/#{edge_gateway_id}"
+           }
+
+          response, headers = send_request(params)
+          
+          interesting = response.css("EdgeGateway Configuration EdgeGatewayServiceConfiguration")
+          interesting.css("NatService NatRule").each do |node|
+            if node.css("RuleType").text == "DNAT" && node.css("GatewayNatRule/OriginalIp").text == edge_gateway_ip && node.css("GatewayNatRule/TranslatedIp").text == edge_vapp_ip
+              node.remove
+            end 
+            if node.css("RuleType").text == "SNAT" && node.css("GatewayNatRule/OriginalIp").text == edge_vapp_ip && node.css("GatewayNatRule/TranslatedIp").text == edge_gateway_ip
+              node.remove
+            end 
+          end
+
+          interesting.css("FirewallService FirewallRule").each do |node|
+            if node.css("Port").text == "-1" && node.css("DestinationIp").text == edge_gateway_ip && node.css("DestinationPortRange").text == "Any"
+              node.remove
+            end 
+          end
+
+          builder = Nokogiri::XML::Builder.new
+          builder << interesting
+
+          remove_edge_rules = Nokogiri::XML(builder.to_xml)
+
+          xml1 = remove_edge_rules.at_css "EdgeGatewayServiceConfiguration"
+          xml1["xmlns"] = "http://www.vmware.com/vcloud/v1.5"
+  
+          params = {
+            'method' => :post,
+            'command' => "/admin/edgeGateway/#{edge_gateway_id}/action/configureServices"
+          }
+
+          @logger.debug("OUR XML: #{remove_edge_rules.to_xml}")
+
+          response, headers = send_request(params, remove_edge_rules.to_xml, "application/vnd.vmware.admin.edgeGatewayServiceConfiguration+xml")
+
+          task_id = headers[:location].gsub("#{@api_url}/task/", "")
+          task_id
+      end
+
 
 
 
@@ -1075,8 +1349,12 @@ module VagrantPlugins
           raise InvalidStateError, "Invalid request because NatType must be set to portForwarding." unless natType == "portForwarding"
 
           # Check the routerInfo configuration where the global external IP is defined
-          edgeIp = config.css('/RouterInfo/ExternalIp')
-          edgeIp = edgeIp.text unless edgeIp.nil?
+          edgeIp = config.css('/RouterInfo/ExternalIp').text
+          if edgeIp == ""
+            return nil
+          else
+            return edgeIp
+          end
         end
 
         ##
