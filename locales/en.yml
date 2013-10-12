@@ -1,13 +1,7 @@
 en: 
   vagrant_vcloud: 
-    creating_cloned_vm: "Calling vCloud CloneVM with the following settings:"
-    destroy_vm: "Calling vCloud Destroy"
-    power_off_vm: "Calling vCloud PowerOff"
-    vm_already_created: "The VM is already created"
     vm_not_created: "The VM has not been created"
     will_not_destroy: "VM will not be destroyed"
-    vm_cannot_halt: "VM is not running or is suspended, it cannot be halted"
-    vm_already_created: "VM is already created"
     vm_already_running: "VM is already running"
     vm_halted_cannot_suspend: "VM is not running or already suspended, cannot suspend it."
     config: 
@@ -50,10 +44,8 @@ en:
         default provider will be shown. So if a provider is not listed,
         then the machine is not created for that environment.
       suspended: |-
-        The VM is paused. This VM may have been paused via the VirtualBox
-        GUI or the VBoxManage command line interface. To unpause, please
-        use the VirtualBox GUI and/or VBoxManage command line interface so
-        that vagrant would be able to control the VM again.
+        The VM is paused. To resume the VM, simply run `vagrant up`
+        or `vagrant resume`
       stopped: |-
         The VM is powered off. To restart the VM, simply run `vagrant up`
       running: |-
