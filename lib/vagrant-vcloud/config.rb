@@ -67,7 +67,17 @@ module VagrantPlugins
       #
       # @return [Hash]
       attr_reader :port_forwarding_rules
-      
+
+      # Name of the edge gateway [optional]
+      #
+      # @return [String]
+      attr_accessor :vdc_edge_gateway
+
+      # Public IP of the edge gateway [optional, required if :vdc_edge_gateway is specified]
+      #
+      # @return [String]
+      attr_accessor :vdc_edge_gateway_ip
+     
       ##
       ## vCloud Director config runtime values
       ## 
@@ -112,7 +122,6 @@ module VagrantPlugins
         errors << I18n.t("config.password") if password.nil?
         
         errors << I18n.t("config.catalog_name") if catalog_name.nil?
-        #errors << I18n.t("config.catalog_item_name") if catalog_item_name.nil?
         errors << I18n.t("config.vdc_name") if vdc_name.nil?
         errors << I18n.t("config.vdc_network_name") if vdc_network_name.nil?
 

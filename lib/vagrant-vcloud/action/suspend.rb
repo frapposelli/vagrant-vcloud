@@ -19,7 +19,7 @@ module VagrantPlugins
           vmId = env[:machine].id
           vmName = env[:machine].name
 
-          env[:ui].info("Suspending VM #{vmName} with id #{vmId} in vApp Id #{vAppId}")
+          env[:ui].info("Suspending VM...")
           task_id = cnx.suspend_vm(vmId)
           wait = cnx.wait_task_completion(task_id)
 

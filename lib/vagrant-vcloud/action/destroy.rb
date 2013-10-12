@@ -17,12 +17,23 @@ module VagrantPlugins
           vAppId = env[:machine].get_vapp_id
           vmId = env[:machine].id
 
+          cfg.org = cnx.get_organization_by_name(cfg.org_name)
+          cfg.vdc_id = cnx.get_vdc_id_by_name(cfg.org, cfg.vdc_name)
+
           testvApp = cnx.get_vapp(vAppId)
 
           @logger.debug("Number of VMs in the vApp: #{testvApp[:vms_hash].count}")
 
           if testvApp[:vms_hash].count == 1
             env[:ui].info("Single VM left in the vApp, destroying the vApp...")
+
+            if cfg.vdc_edge_gateway_ip && cfg.vdc_edge_gateway
+              env[:ui].info("Removing mapping for ip #{cfg.vdc_edge_gateway_ip} on Edge #{cfg.vdc_edge_gateway}.")
+              @logger.debug("Deleting Edge Gateway rules - vdc id: #{cfg.vdc_id}")
+              edge_remove = cnx.remove_edge_gateway_rules(cfg.vdc_edge_gateway, cfg.vdc_id, cfg.vdc_edge_gateway_ip, vAppId)
+              cnx.wait_task_completion(edge_remove)
+            end
+
             env[:ui].info("Powering off vApp...")
             vAppStopTask = cnx.poweroff_vapp(vAppId)
             vAppStopWait = cnx.wait_task_completion(vAppStopTask)
@@ -31,20 +42,17 @@ module VagrantPlugins
               raise Errors::StopVAppError, :message => vAppStopWait[:errormsg]
             end
 
-
             env[:ui].info("Destroying vApp...")
             vAppDeleteTask = cnx.delete_vapp(vAppId)
             @logger.debug("vApp Delete task id #{vAppDeleteTask}")
             cnx.wait_task_completion(vAppDeleteTask)
+
 
             # FIXME: Look into this.
             ####env[:machine].provider.driver.delete
             env[:machine].id=nil
             env[:machine].vappid=nil
           else
-#            env[:ui].info("Powering off VM #{env[:machine].name} with id #{vmId} in vApp Id #{vAppId}")
-#            task_id = cnx.poweroff_vm(vmId)
-#            wait = cnx.wait_task_completion(task_id)
             env[:ui].info("Destroying VM...")
             vmDeleteTask = cnx.delete_vm(vmId)
             @logger.debug("VM Delete task id #{vmDeleteTask}")

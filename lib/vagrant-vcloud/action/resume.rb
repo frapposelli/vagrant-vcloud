@@ -19,7 +19,7 @@ module VagrantPlugins
           vmId = env[:machine].id
           vmName = env[:machine].name
 
-          env[:ui].info("Powering on VM #{vmName} with id #{vmId} in vApp Id #{vAppId}")
+          env[:ui].info("Powering on VM...")
           task_id = cnx.poweron_vm(vmId)
           wait = cnx.wait_task_completion(task_id)
 
