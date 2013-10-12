@@ -11,10 +11,9 @@ module VagrantPlugins
         end
 
         def call(env)
-
           config = env[:machine].provider_config
 
-          begin
+#          begin
             # Avoid recreating a new session each time.
             if !config.vcloud_cnx
               @logger.info("Connecting to vCloud Director...")
@@ -26,13 +25,6 @@ module VagrantPlugins
 
               # Create the vcloud-rest connection object with the configuration 
               # information.
-
-
-
-              ## config.vcloud_cnx = VCloudClient::Connection.new(
-
-              # Switching to Driver Meta
-
               config.vcloud_cnx = Driver::Meta.new(
                 config.hostname,
                 config.username,
@@ -45,14 +37,13 @@ module VagrantPlugins
 
               # Check for the vCloud Director authentication token
               if config.vcloud_cnx.driver.auth_key
-                env[:ui].success("Successfully logged in to #{config.hostname}.")
                 @logger.info("Logged in successfully!")
                 @logger.debug(
                   "x-vcloud-authorization=#{config.vcloud_cnx.driver.auth_key}"
                 )
               else
-                @logger.info("DID NOT LOG IN!")
-                env[:ui].error("Log in not successful #{config.hostname}.")
+                @logger.info("Login failed in to #{config.hostname}.")
+                env[:ui].error("Login failed in to #{config.hostname}.")
                 raise
               end
             else
@@ -64,11 +55,11 @@ module VagrantPlugins
 
             @app.call env
 
-          rescue Exception => e
-            ### RAISED HERE!!! WHY?!?!?!
-            @logger.debug("FAILING BADLY: #{e.inspect}")
-            raise VagrantPlugins::VCloud::Errors::VCloudError, :message => e.message
-          end
+#          rescue Exception => e
+#            ### When bad credentials, we get here.
+#            @logger.debug("Couldn't connect to vCloud Director: #{e.inspect}")
+#            raise VagrantPlugins::VCloud::Errors::VCloudError, :message => e.message
+#          end
 
         end
       end

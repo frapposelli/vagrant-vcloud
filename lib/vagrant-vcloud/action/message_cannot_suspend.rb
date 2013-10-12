@@ -1,14 +1,14 @@
 module VagrantPlugins
   module VCloud
     module Action
-      class MessageNotCreated
+      class MessageCannotSuspend
         def initialize(app, env)
           @app = app
         end
 
         def call(env)
-          # FIXME: this error should be categorized
-          env[:ui].info(I18n.t("vcloud.vm_not_created"))
+          # FIXME: This error should be categorized
+          env[:ui].info(I18n.t("vagrant_vcloud.vm_halted_cannot_suspend"))
           @app.call(env)
         end
       end

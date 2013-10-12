@@ -5,37 +5,64 @@ module VagrantPlugins
     module Action
       class Destroy
 
-        # FIXME: Probably a lot of logic to change to cope with vCloud.
-
         def initialize(app, env)
           @app = app
+          @logger = Log4r::Logger.new("vagrant_vcloud::action::destroy")
         end
 
         def call(env)
-          destroy_vm env
-          env[:machine].id = nil
+
+          cfg = env[:machine].provider_config
+          cnx = cfg.vcloud_cnx.driver
+          vAppId = env[:machine].get_vapp_id
+          vmId = env[:machine].id
+
+          cfg.org = cnx.get_organization_by_name(cfg.org_name)
+          cfg.vdc_id = cnx.get_vdc_id_by_name(cfg.org, cfg.vdc_name)
+
+          testvApp = cnx.get_vapp(vAppId)
+
+          @logger.debug("Number of VMs in the vApp: #{testvApp[:vms_hash].count}")
+
+          if testvApp[:vms_hash].count == 1
+            env[:ui].info("Single VM left in the vApp, destroying the vApp...")
+
+            if cfg.vdc_edge_gateway_ip && cfg.vdc_edge_gateway
+              env[:ui].info("Removing mapping for ip #{cfg.vdc_edge_gateway_ip} on Edge #{cfg.vdc_edge_gateway}.")
+              @logger.debug("Deleting Edge Gateway rules - vdc id: #{cfg.vdc_id}")
+              edge_remove = cnx.remove_edge_gateway_rules(cfg.vdc_edge_gateway, cfg.vdc_id, cfg.vdc_edge_gateway_ip, vAppId)
+              cnx.wait_task_completion(edge_remove)
+            end
+
+            env[:ui].info("Powering off vApp...")
+            vAppStopTask = cnx.poweroff_vapp(vAppId)
+            vAppStopWait = cnx.wait_task_completion(vAppStopTask)
+
+            if !vAppStopWait[:errormsg].nil?
+              raise Errors::StopVAppError, :message => vAppStopWait[:errormsg]
+            end
+
+            env[:ui].info("Destroying vApp...")
+            vAppDeleteTask = cnx.delete_vapp(vAppId)
+            @logger.debug("vApp Delete task id #{vAppDeleteTask}")
+            cnx.wait_task_completion(vAppDeleteTask)
+
+
+            # FIXME: Look into this.
+            ####env[:machine].provider.driver.delete
+            env[:machine].id=nil
+            env[:machine].vappid=nil
+          else
+            env[:ui].info("Destroying VM...")
+            vmDeleteTask = cnx.delete_vm(vmId)
+            @logger.debug("VM Delete task id #{vmDeleteTask}")
+            cnx.wait_task_completion(vmDeleteTask)
+            env[:machine].id=nil
+          end
 
           @app.call env
         end
 
-        def destroy_vapp(env)
-
-          # Simple idea
-          # env[:vcloud_connection].delete_vapp(vAppId)
-
-        end
-
-        def destroy_vm(env)
-          vm = get_vm_by_uuid env[:vcloud_connection], env[:machine]
-          return if vm.nil?
-
-          begin
-            env[:ui].info I18n.t("vcloud.destroy_vm")
-            vm.Destroy_Task.wait_for_completion
-          rescue Exception => e
-            raise Errors::VCloudError, :message => e.message
-          end
-        end
       end
     end
   end

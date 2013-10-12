@@ -1,4 +1,4 @@
-require "vagrant"
+require "pathname"
 require "vagrant/action/builder"
 
 module VagrantPlugins
@@ -7,14 +7,103 @@ module VagrantPlugins
       include Vagrant::Action::Builtin
 
       # Vagrant commands
+      # This action boots the VM, assuming the VM is in a state that requires
+      # a bootup (i.e. not saved).
+      def self.action_boot
+        Vagrant::Action::Builder.new.tap do |b|
+          b.use PowerOn
+          b.use HandleNATPortCollisions
+          b.use ForwardPorts
+          b.use Provision
+          b.use SyncFolders
+        end
+      end
+
+      def self.action_reload
+        Vagrant::Action::Builder.new.tap do |b|
+          b.use ConfigValidate
+          b.use Call, IsCreated do |env, b2|
+            if !env[:result]
+              b2.use MessageNotCreated
+              next
+            end
+            b2.use action_halt
+            b2.use action_start
+            b2.use DisconnectVCloud
+          end
+        end
+      end
+
+      # This action starts a VM, assuming it is already imported and exists.
+      # A precondition of this action is that the VM exists.
+      def self.action_start
+        Vagrant::Action::Builder.new.tap do |b|
+          b.use ConfigValidate
+          b.use ConnectVCloud
+          b.use Call, IsRunning do |env, b2|
+            # If the VM is running, then our work here is done, exit
+            if env[:result]
+              b2.use MessageAlreadyRunning
+              next
+            end
+            b2.use Call, IsPaused do |env2, b3|
+              if env2[:result]
+                b3.use Resume
+                next
+              end
+              b3.use action_boot
+            end
+          end
+        end
+      end
+
+      def self.action_halt
+        Vagrant::Action::Builder.new.tap do |b|
+          b.use ConnectVCloud
+          b.use Call, IsPaused do |env, b2|
+            if env[:result]
+              b2.use Resume
+            end
+            b2.use UnmapPortForwardings
+            b2.use PowerOff
+          end
+        end
+      end
+
+      def self.action_suspend
+        Vagrant::Action::Builder.new.tap do |b|
+          b.use ConnectVCloud
+          b.use Call, IsRunning do |env, b2|
+            # If the VM is stopped, can't suspend
+            if !env[:result]
+              b2.use MessageCannotSuspend
+            else
+              b2.use Suspend
+            end
+          end
+        end
+      end
+
+      def self.action_resume
+        Vagrant::Action::Builder.new.tap do |b|
+          b.use ConnectVCloud
+          b.use Resume
+        end
+      end
+
       def self.action_destroy
         Vagrant::Action::Builder.new.tap do |b|
           b.use Call, DestroyConfirm do |env, b2|
             if env[:result]
               b2.use ConfigValidate
               b2.use ConnectVCloud
-              b2.use PowerOff
-              b2.use Destroy
+              b2.use Call, IsRunning do |env2, b3|
+              # If the VM is running, must power off
+                if env2[:result]
+                 b3.use action_halt
+                end
+                b3.use Destroy
+              end 
             else
               b2.use MessageWillNotDestroy
             end
@@ -30,9 +119,7 @@ module VagrantPlugins
               b2.use MessageNotCreated
               next
             end
-
             b2.use Provision
-            ### TODO --- explore UNISON!
             b2.use SyncFolders
           end
         end
@@ -68,8 +155,9 @@ module VagrantPlugins
               b2.use MessageNotCreated
               next
             end
-
-            b2.use SSHExec
+            # This calls our helper that announces the IP used to connect
+            # to the VM, either directly to the vApp vShield or to the Org Edge.
+            b2.use AnnounceSSHExec
           end
         end
       end
@@ -91,39 +179,48 @@ module VagrantPlugins
       def self.action_up
         Vagrant::Action::Builder.new.tap do |b|
           b.use ConfigValidate
-          b.use HandleBoxUrl #### THIS IS A BUILTIN FUNCTION TO HANDLE THE BOX DOWNLOAD, MUST BE USED!!!  
+          b.use Call, IsCreated do |env, b2|
+            if !env[:result]
+              b2.use HandleBoxUrl
+            end
+          end
           b.use ConnectVCloud
           b.use Call, IsCreated do |env, b2|
-            if env[:result]
-              #puts "DUMPING STUFF: " + env.inspect
-              b2.use MessageAlreadyCreated
-              next
+            if !env[:result]
+              b2.use InventoryCheck
+              b2.use BuildVApp
             end
-
-            b2.use Clone
-            # TODO: provision
-            b2.use TimedProvision
-            # TODO: sync folders
-            b2.use SyncFolders
           end
+          b.use action_start
           b.use DisconnectVCloud
         end
       end
 
       # The autoload farm
       action_root = Pathname.new(File.expand_path("../action", __FILE__))
+      autoload :AnnounceSSHExec, action_root.join("announce_ssh_exec")
+      autoload :BuildVApp, action_root.join("build_vapp")
       autoload :ConnectVCloud, action_root.join("connect_vcloud")
+      autoload :Destroy, action_root.join("destroy")
       autoload :DisconnectVCloud, action_root.join("disconnect_vcloud")
+      autoload :ForwardPorts, action_root.join("forward_ports")
+      autoload :HandleNATPortCollisions, action_root.join("handle_nat_port_collisions")
+      autoload :InventoryCheck, action_root.join("inventory_check")
       autoload :IsCreated, action_root.join("is_created")
-      autoload :MessageAlreadyCreated, action_root.join("message_already_created")
+      autoload :IsPaused, action_root.join("is_paused")
+      autoload :IsRunning, action_root.join("is_running")
+      autoload :MessageAlreadyRunning, action_root.join("message_already_running")
+      autoload :MessageCannotSuspend, action_root.join("message_cannot_suspend")
       autoload :MessageNotCreated, action_root.join("message_not_created")
       autoload :MessageWillNotDestroy, action_root.join("message_will_not_destroy")
+      autoload :PowerOff, action_root.join("power_off")
+      autoload :PowerOn, action_root.join("power_on")
       autoload :ReadSSHInfo, action_root.join("read_ssh_info")
       autoload :ReadState, action_root.join("read_state")
-      autoload :RunInstance, action_root.join("run_instance")
+      autoload :Resume, action_root.join("resume")
+      autoload :Suspend, action_root.join("suspend")
       autoload :SyncFolders, action_root.join("sync_folders")
-      autoload :TimedProvision, action_root.join("timed_provision")
+      autoload :UnmapPortForwardings, action_root.join("unmap_port_forwardings")      
     end
   end
 end
-

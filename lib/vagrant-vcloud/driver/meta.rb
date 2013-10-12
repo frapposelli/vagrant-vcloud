@@ -1,3 +1,20 @@
+#
+#  Copyright 2012 Stefano Tortarolo
+#  Copyright 2013 Fabio Rapposelli and Timo Sugliani
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#   limitations under the License.
+#
+
 require "forwardable"
 require "log4r"
 require "rest-client"
@@ -12,50 +29,34 @@ module VagrantPlugins
 
       class Meta < Base
 
-        class UnauthorizedAccess < StandardError; end
-        class WrongAPIVersion < StandardError; end
-        class WrongItemIDError < StandardError; end
-        class InvalidStateError < StandardError; end
-        class InternalServerError < StandardError; end
-        class UnhandledError < StandardError; end
-
-
         # We use forwardable to do all our driver forwarding
         extend Forwardable
         attr_reader :driver
         
-        def initialize(host, username, password, org_name)
+        def initialize(hostname, username, password, org_name)
 
           # Setup the base
           super()
 
           @logger = Log4r::Logger.new("vagrant::provider::vcloud::meta")
-          @host = host
+          @hostname = hostname
           @username = username
           @password = password
           @org_name = org_name
 
           # Read and assign the version of vCloud we know which
           # specific driver to instantiate.
-          begin
-            @version = get_api_version(@host) || ""
-          rescue Vagrant::Errors::CommandUnavailable,
-            Vagrant::Errors::CommandUnavailableWindows
-            # This means that vCloud was not found, so we raise this
-            # error here.
-            raise Vagrant::Errors::VCloudNotDetected
-          end
+          @version = get_api_version(@hostname) || ""
 
           # Instantiate the proper version driver for vCloud
           @logger.debug("Finding driver for vCloud version: #{@version}")
           driver_map   = {
-            # API 1.5 maps to vCloud Director 5.1 - don't ask me why we're not on par with the release number...
-            "1.5" => Version_5_1
+            "5.1" => Version_5_1
           }
 
-          if @version.start_with?("0.9")
-            # vCloud Director 1.5 just doesn't work with our Vagrant provider, so show error
-            raise Vagrant::Errors::VCloudOldVersion
+          if @version.start_with?("0.9") || @version.start_with?("1.0") || @version.start_with?("1.5")
+            # We support only vCloud Director 5.1 or higher so show error.
+            raise Errors::VCloudOldVersion, :version => @version
           end
 
           driver_klass = nil
@@ -68,11 +69,11 @@ module VagrantPlugins
 
           if !driver_klass
             supported_versions = driver_map.keys.sort.join(", ")
-            raise Vagrant::Errors::VCloudInvalidVersion, :supported_versions => supported_versions
+            raise Errors::VCloudInvalidVersion, :supported_versions => supported_versions
           end
 
           @logger.info("Using vCloud driver: #{driver_klass}")
-          @driver = driver_klass.new(@host, @username, @password, @org_name)
+          @driver = driver_klass.new(@hostname, @username, @password, @org_name)
 
         end
 
@@ -120,8 +121,11 @@ module VagrantPlugins
 
         def get_api_version(host_url)
 
-          request = RestClient::Request.new(:method => "GET",
-                                           :url => "#{host_url}/api/versions")
+          request = RestClient::Request.new(
+            :method => "GET",
+            :url => "#{host_url}/api/versions"
+          )
+          
           begin
             response = request.execute
             if ![200, 201, 202, 204].include?(response.code)
@@ -129,13 +133,17 @@ module VagrantPlugins
             end
 
           versionInfo = Nokogiri.parse(response)
-          apiVersion = versionInfo.css("VersionInfo Version").first.text
+          # FIXME: Find a smarter way to check for vCloud API version
+          # Changed from .first to .last because that's the way it's defined
+          # in the request answer.
+          apiVersion = versionInfo.css("VersionInfo Version")
+          
+          apiVersion.last.text
 
-          apiVersion
-          rescue
-            ## FIXME: Raise a realistic error, like host not found or url not found.
-            raise
+          rescue SocketError, Errno::ECONNREFUSED, RestClient::ResourceNotFound
+            raise Errors::HostNotFound, :message => host_url
           end
+
         end
       end
     end
