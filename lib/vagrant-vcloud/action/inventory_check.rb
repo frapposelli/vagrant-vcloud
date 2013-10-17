@@ -83,11 +83,7 @@ module VagrantPlugins
 
           cfg.catalog = cnx.get_catalog_by_name(cfg.org, cfg.catalog_name)
           
-
-          @logger.debug("BEFORE get_catalog_id_by_name")          
           cfg.catalog_id = cnx.get_catalog_id_by_name(cfg.org, cfg.catalog_name)
-          @logger.debug("AFTER get_catalog_id_by_name: #{cfg.catalog_id}")
-
 
           if cfg.catalog_id.nil?
             env[:ui].warn("Catalog [#{cfg.catalog_name}] does not exist!")
