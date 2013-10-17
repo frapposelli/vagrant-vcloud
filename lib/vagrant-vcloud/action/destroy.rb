@@ -28,7 +28,7 @@ module VagrantPlugins
             env[:ui].info("Single VM left in the vApp, destroying the vApp...")
 
             if cfg.vdc_edge_gateway_ip && cfg.vdc_edge_gateway
-              env[:ui].info("Removing mapping for ip #{cfg.vdc_edge_gateway_ip} on Edge #{cfg.vdc_edge_gateway}.")
+              env[:ui].info("Removing NAT rules on [#{cfg.vdc_edge_gateway}] for IP [#{cfg.vdc_edge_gateway_ip}].")
               @logger.debug("Deleting Edge Gateway rules - vdc id: #{cfg.vdc_id}")
               edge_remove = cnx.remove_edge_gateway_rules(cfg.vdc_edge_gateway, cfg.vdc_id, cfg.vdc_edge_gateway_ip, vAppId)
               cnx.wait_task_completion(edge_remove)
