@@ -17,8 +17,8 @@
 
 require "forwardable"
 require "log4r"
-require "rest-client"
 require "nokogiri"
+require "httpclient"
 
 
 require File.expand_path("../base", __FILE__)
@@ -119,32 +119,69 @@ module VagrantPlugins
 
         protected
 
+        # def old_get_api_version(host_url)
+
+        #   request = RestClient::Request.new(
+        #     :method => "GET",
+        #     :url => "#{host_url}/api/versions"
+        #   )
+          
+        #   begin
+        #     response = request.execute
+        #     if ![200, 201, 202, 204].include?(response.code)
+        #       puts "Warning: unattended code #{response.code}"
+        #     end
+
+        #   versionInfo = Nokogiri.parse(response)
+        #   # FIXME: Find a smarter way to check for vCloud API version
+        #   # Changed from .first to .last because that's the way it's defined
+        #   # in the request answer.
+        #   apiVersion = versionInfo.css("VersionInfo Version")
+          
+        #   apiVersion.last.text
+
+        #   rescue SocketError, Errno::ECONNREFUSED, RestClient::ResourceNotFound
+        #     raise Errors::HostNotFound, :message => host_url
+        #   end
+
+        # end
+
         def get_api_version(host_url)
 
-          request = RestClient::Request.new(
-            :method => "GET",
-            :url => "#{host_url}/api/versions"
-          )
+          # Create a new HTTP client
+          clnt = HTTPClient.new
+
+          # Disable SSL cert verification
+          clnt.ssl_config.verify_mode=(OpenSSL::SSL::VERIFY_NONE)
+
+          # Suppress SSL depth message
+          clnt.ssl_config.verify_callback=proc{ |ok, ctx|; true };
           
+          url = "#{host_url}/api/versions"
+
           begin
-            response = request.execute
-            if ![200, 201, 202, 204].include?(response.code)
-              puts "Warning: unattended code #{response.code}"
+            response = clnt.request("GET", url, nil, nil, nil)
+            if !response.ok?
+              raise "Warning: unattended code #{response.status} #{response.reason}"
             end
 
-          versionInfo = Nokogiri.parse(response)
-          # FIXME: Find a smarter way to check for vCloud API version
-          # Changed from .first to .last because that's the way it's defined
-          # in the request answer.
-          apiVersion = versionInfo.css("VersionInfo Version")
-          
-          apiVersion.last.text
+            versionInfo = Nokogiri.parse(response.body)
+            # FIXME: Find a smarter way to check for vCloud API version
+            # Changed from .first to .last because that's the way it's defined
+            # in the request answer.
+            apiVersion = versionInfo.css("VersionInfo Version")
+            
+            apiVersion.last.text
 
-          rescue SocketError, Errno::ECONNREFUSED, RestClient::ResourceNotFound
-            raise Errors::HostNotFound, :message => host_url
+
+          rescue SocketError
+            raise "Impossible to connect, verify endpoint"
+          rescue Errno::EADDRNOTAVAIL
+            raise "Impossible to connect, verify endpoint"
           end
 
         end
+
       end
     end
   end
