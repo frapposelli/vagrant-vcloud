@@ -6,6 +6,13 @@ module VagrantPlugins
       class VCloudError < Vagrant::Errors::VagrantError
         error_namespace("vagrant_vcloud.errors")
       end
+      class RsyncError < VCloudError
+        error_key(:rsync_error)
+      end
+
+      class MkdirError < VCloudError
+        error_key(:mkdir_error)
+      end
       class VCloudOldVersion < VCloudError
         error_key(:vcloud_old_version)
       end
