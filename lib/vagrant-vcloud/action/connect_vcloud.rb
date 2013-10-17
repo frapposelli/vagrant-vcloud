@@ -1,4 +1,3 @@
-#require "vcloud-rest/connection"
 require "log4r"
 
 module VagrantPlugins

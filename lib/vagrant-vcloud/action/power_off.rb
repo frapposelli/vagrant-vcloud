@@ -19,10 +19,28 @@ module VagrantPlugins
           vmId = env[:machine].id
           vmName = env[:machine].name
 
-          env[:ui].info("Powering off VM...")
-          task_id = cnx.poweroff_vm(vmId)
-          wait = cnx.wait_task_completion(task_id)
-          
+          testvApp = cnx.get_vapp(vAppId)
+
+          @logger.debug("Number of VMs in the vApp: #{testvApp[:vms_hash].count}")
+
+          if testvApp[:vms_hash].count == 1
+
+            # Poweroff vApp
+            env[:ui].info("Powering off vApp...")
+            vAppStopTask = cnx.poweroff_vapp(vAppId)
+            vAppStopWait = cnx.wait_task_completion(vAppStopTask)
+
+            if !vAppStopWait[:errormsg].nil?
+              raise Errors::StopVAppError, :message => vAppStopWait[:errormsg]
+            end
+
+          else
+            # Poweroff VM
+            env[:ui].info("Powering off VM...")
+            task_id = cnx.poweroff_vm(vmId)
+            wait = cnx.wait_task_completion(task_id)
+          end
+
           true
 
           @app.call env

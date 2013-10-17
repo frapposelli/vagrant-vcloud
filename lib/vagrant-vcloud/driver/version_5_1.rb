@@ -15,9 +15,6 @@
 #  limitations under the License.
 #
 
-require "rest-client"
-require "nokogiri"
-require "httpclient"
 require "ruby-progressbar"
 require "set"
 require "netaddr"
@@ -54,11 +51,11 @@ module VagrantPlugins
 
           response, headers = send_request(params)
 
-          if !headers.has_key?(:x_vcloud_authorization)
+          if !headers.has_key?("x-vcloud-authorization")
             raise "Unable to authenticate: missing x_vcloud_authorization header"
           end
 
-          @auth_key = headers[:x_vcloud_authorization]
+          @auth_key = headers["x-vcloud-authorization"]
         end
 
         ##
@@ -391,7 +388,7 @@ module VagrantPlugins
           }
 
           response, headers = send_request(params)
-          task_id = headers[:location].gsub("#{@api_url}/task/", "")
+          task_id = headers["Location"].gsub("#{@api_url}/task/", "")
           task_id
         end
 
@@ -412,7 +409,7 @@ module VagrantPlugins
 
           response, headers = send_request(params, builder.to_xml,
                           "application/vnd.vmware.vcloud.undeployVAppParams+xml")
-          task_id = headers[:location].gsub("#{@api_url}/task/", "")
+          task_id = headers["Location"].gsub("#{@api_url}/task/", "")
           task_id
         end
 
@@ -425,7 +422,7 @@ module VagrantPlugins
           }
 
           response, headers = send_request(params)
-          task_id = headers[:location].gsub("#{@api_url}/task/", "")
+          task_id = headers["Location"].gsub("#{@api_url}/task/", "")
           task_id
         end
 
@@ -441,7 +438,7 @@ module VagrantPlugins
           }
 
           response, headers = send_request(params)
-          task_id = headers[:location].gsub("#{@api_url}/task/", "")
+          task_id = headers["Location"].gsub("#{@api_url}/task/", "")
           task_id
         end
 
@@ -456,7 +453,7 @@ module VagrantPlugins
           }
 
           response, headers = send_request(params)
-          task_id = headers[:location].gsub("#{@api_url}/task/", "")
+          task_id = headers["Location"].gsub("#{@api_url}/task/", "")
           task_id
         end
 
@@ -469,7 +466,7 @@ module VagrantPlugins
           }
 
           response, headers = send_request(params)
-          task_id = headers[:location].gsub("#{@api_url}/task/", "")
+          task_id = headers["Location"].gsub("#{@api_url}/task/", "")
           task_id
         end
 
@@ -484,7 +481,7 @@ module VagrantPlugins
           }
 
           response, headers = send_request(params)
-          task_id = headers[:location].gsub("#{@api_url}/task/", "")
+          task_id = headers["Location"].gsub("#{@api_url}/task/", "")
           task_id
         end
 
@@ -507,7 +504,7 @@ module VagrantPlugins
 
           response, headers = send_request(params, builder.to_xml,
                           "application/vnd.vmware.vcloud.undeployVAppParams+xml")
-          task_id = headers[:location].gsub("#{@api_url}/task/", "")
+          task_id = headers["Location"].gsub("#{@api_url}/task/", "")
           task_id
         end
 
@@ -528,7 +525,7 @@ module VagrantPlugins
 
           response, headers = send_request(params, builder.to_xml,
                           "application/vnd.vmware.vcloud.undeployVAppParams+xml")
-          task_id = headers[:location].gsub("#{@api_url}/task/", "")
+          task_id = headers["Location"].gsub("#{@api_url}/task/", "")
           task_id
         end
 
@@ -544,7 +541,7 @@ module VagrantPlugins
           }
 
           response, headers = send_request(params)
-          task_id = headers[:location].gsub("#{@api_url}/task/", "")
+          task_id = headers["Location"].gsub("#{@api_url}/task/", "")
           task_id
         end
 
@@ -559,7 +556,7 @@ module VagrantPlugins
           }
 
           response, headers = send_request(params)
-          task_id = headers[:location].gsub("#{@api_url}/task/", "")
+          task_id = headers["Location"].gsub("#{@api_url}/task/", "")
           task_id
         end
 
@@ -572,7 +569,7 @@ module VagrantPlugins
           }
 
           response, headers = send_request(params)
-          task_id = headers[:location].gsub("#{@api_url}/task/", "")
+          task_id = headers["Location"].gsub("#{@api_url}/task/", "")
           task_id
         end
 
@@ -589,7 +586,7 @@ module VagrantPlugins
           }
 
           response, headers = send_request(params)
-          task_id = headers[:location].gsub("#{@api_url}/task/", "")
+          task_id = headers["Location"].gsub("#{@api_url}/task/", "")
           task_id
         end
 
@@ -653,7 +650,7 @@ module VagrantPlugins
 
           response, headers = send_request(params, builder.to_xml, "application/vnd.vmware.vcloud.instantiateVAppTemplateParams+xml")
 
-          vapp_id = headers[:location].gsub("#{@api_url}/vApp/vapp-", "")
+          vapp_id = headers["Location"].gsub("#{@api_url}/vApp/vapp-", "")
 
           task = response.css("VApp Task[operationName='vdcInstantiateVapp']").first
           task_id = task["href"].gsub("#{@api_url}/task/", "")
@@ -748,7 +745,7 @@ module VagrantPlugins
 
           response, headers = send_request(params, builder.to_xml, "application/vnd.vmware.vcloud.composeVAppParams+xml")
 
-          vapp_id = headers[:location].gsub("#{@api_url}/vApp/vapp-", "")
+          vapp_id = headers["Location"].gsub("#{@api_url}/vApp/vapp-", "")
 
           task = response.css("VApp Task[operationName='vdcComposeVapp']").first
           task_id = task["href"].gsub("#{@api_url}/task/", "")
@@ -808,7 +805,7 @@ module VagrantPlugins
 
           response, headers = send_request(params, builder.to_xml, "application/vnd.vmware.vcloud.recomposeVAppParams+xml")
 
-          vapp_id = headers[:location].gsub("#{@api_url}/vApp/vapp-", "")
+          vapp_id = headers["Location"].gsub("#{@api_url}/vApp/vapp-", "")
 
           task = response.css("Task [operationName='vdcRecomposeVapp']").first
           task_id = task["href"].gsub("#{@api_url}/task/", "")
@@ -903,7 +900,7 @@ module VagrantPlugins
 
           response, headers = send_request(params, builder.to_xml, "application/vnd.vmware.vcloud.networkConfigSection+xml")
 
-          task_id = headers[:location].gsub("#{@api_url}/task/", "")
+          task_id = headers["Location"].gsub("#{@api_url}/task/", "")
           task_id
         end
 
@@ -962,7 +959,7 @@ module VagrantPlugins
 
           response, headers = send_request(params, builder.to_xml, "application/vnd.vmware.vcloud.networkConfigSection+xml")
 
-          task_id = headers[:location].gsub("#{@api_url}/task/", "")
+          task_id = headers["Location"].gsub("#{@api_url}/task/", "")
           task_id
         end
 
@@ -1265,7 +1262,7 @@ module VagrantPlugins
 
         response, headers = send_request(params, set_edge_rules.to_xml(:indent => 2), "application/vnd.vmware.admin.edgeGatewayServiceConfiguration+xml")
 
-        task_id = headers[:location].gsub("#{@api_url}/task/", "")
+        task_id = headers["Location"].gsub("#{@api_url}/task/", "")
         task_id
 
       end
@@ -1315,7 +1312,7 @@ module VagrantPlugins
 
           response, headers = send_request(params, remove_edge_rules.to_xml, "application/vnd.vmware.admin.edgeGatewayServiceConfiguration+xml")
 
-          task_id = headers[:location].gsub("#{@api_url}/task/", "")
+          task_id = headers["Location"].gsub("#{@api_url}/task/", "")
           task_id
       end
 
@@ -1398,7 +1395,7 @@ module VagrantPlugins
           )
 
           # Get vAppTemplate Link from location        
-          vAppTemplate = headers[:location].gsub("#{@api_url}/vAppTemplate/vappTemplate-", "")
+          vAppTemplate = headers["Location"].gsub("#{@api_url}/vAppTemplate/vappTemplate-", "")
           @logger.debug("Getting vAppTemplate ID: #{vAppTemplate}")
           descriptorUpload = response.css("Files Link [rel='upload:default']").first[:href].gsub("#{@host_url}/transfer/", "")
           transferGUID = descriptorUpload.gsub("/descriptor.ovf", "")
@@ -1562,7 +1559,7 @@ module VagrantPlugins
 
           response, headers = send_request(params, builder.to_xml, "application/vnd.vmware.vcloud.networkConfigSection+xml")
 
-          task_id = headers[:location].gsub("#{@api_url}/task/", "")
+          task_id = headers["Location"].gsub("#{@api_url}/task/", "")
           task_id
         end
 
@@ -1591,7 +1588,7 @@ module VagrantPlugins
 
           response, headers = send_request(params, builder.to_xml, "application/vnd.vmware.vcloud.networkConnectionSection+xml")
 
-          task_id = headers[:location].gsub("#{@api_url}/task/", "")
+          task_id = headers["Location"].gsub("#{@api_url}/task/", "")
           task_id
         end
 
@@ -1617,7 +1614,7 @@ module VagrantPlugins
           }
 
           response, headers = send_request(params, builder.to_xml, "application/vnd.vmware.vcloud.guestCustomizationSection+xml")
-          task_id = headers[:location].gsub("#{@api_url}/task/", "")
+          task_id = headers["Location"].gsub("#{@api_url}/task/", "")
           task_id
         end
 

@@ -34,14 +34,6 @@ module VagrantPlugins
               cnx.wait_task_completion(edge_remove)
             end
 
-            env[:ui].info("Powering off vApp...")
-            vAppStopTask = cnx.poweroff_vapp(vAppId)
-            vAppStopWait = cnx.wait_task_completion(vAppStopTask)
-
-            if !vAppStopWait[:errormsg].nil?
-              raise Errors::StopVAppError, :message => vAppStopWait[:errormsg]
-            end
-
             env[:ui].info("Destroying vApp...")
             vAppDeleteTask = cnx.delete_vapp(vAppId)
             @logger.debug("vApp Delete task id #{vAppDeleteTask}")
