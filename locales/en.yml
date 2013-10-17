@@ -12,6 +12,7 @@ en:
     config: 
       api_version: "Configuration must specify a vCloud API version (default=5.1)"
       catalog_name: "Configuration must specify a vCloud Director Catalog (for the VM templates images)"
+      ip_dns: "DNS configuration must be specified as an Array type"
       compute_resource: "Configuration must specify a compute resource name"
       hostname: "Configuration must specify a vCloud Director hostname"
       name: "Configuration must specify a VM name"

@@ -20,6 +20,15 @@ module VagrantPlugins
           cnx = cfg.vcloud_cnx.driver
           vmName = env[:machine].name
 
+          if cfg.ip_dns.nil?
+            dnsAddress1 = nil
+            dnsAddress2 = nil
+          else
+            dnsAddress1 = cfg.ip_dns.shift
+            dnsAddress2 = cfg.ip_dns.shift
+          end
+
+
           if !cfg.ip_subnet.nil?
 
             @logger.debug("Input address: #{cfg.ip_subnet}")
@@ -47,6 +56,8 @@ module VagrantPlugins
             @logger.debug("Gateway IP: #{gatewayIp.to_s}")
             @logger.debug("Netmask: #{cidr.wildcard_mask}")
             @logger.debug("IP Pool: #{rangeAddresses.first}-#{rangeAddresses.last}")
+            @logger.debug("DNS1: #{dnsAddress1} DNS2: #{dnsAddress2}")
+
 
             network_options = { 
               :name => "Vagrant-vApp-Net", 
@@ -58,12 +69,13 @@ module VagrantPlugins
               :ip_allocation_mode => "POOL",
               :parent_network =>  cfg.vdc_network_id,
               :enable_firewall => "false",
-              :dns1 => "8.8.8.8", # FIXME: We should let the user choose DNS servers and then 
-              :dns2 => "8.8.4.4"  # fall back to Google's if they're not specified.
+              :dns1 => dnsAddress1,
+              :dns2 => dnsAddress2
             }
 
           else
 
+            @logger.debug("DNS1: #{dnsAddress1} DNS2: #{dnsAddress2}")
             # No IP subnet specified, reverting to defaults
             network_options = { 
               :name => "Vagrant-vApp-Net", 
@@ -75,8 +87,8 @@ module VagrantPlugins
               :ip_allocation_mode => "POOL",
               :parent_network =>  cfg.vdc_network_id,
               :enable_firewall => "false",
-              :dns1 => "8.8.8.8",
-              :dns2 => "8.8.4.4"
+              :dns1 => dnsAddress1,
+              :dns2 => dnsAddress2
             }
 
           end
