@@ -115,7 +115,7 @@ module VagrantPlugins
             # FIXME: Add a lot of error handling for each step here !
 
             if newVApp
-              env[:ui].success("vApp #{newVApp[:name]} created successfully!")
+              env[:ui].success("vApp #{newVApp[:name]} successfully created.")
 
               # Add the vm id as machine.id
               newVMProperties = newVApp[:vms_hash].fetch(vmName)
