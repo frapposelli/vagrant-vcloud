@@ -27,7 +27,9 @@ module VagrantPlugins
 
         if testIp.nil? && cfg.vdc_edge_gateway_ip && cfg.vdc_edge_gateway
           @logger.debug("This is our first boot, we should map ports on org edge!")
-          env[:ui].info("Mapping ip #{cfg.vdc_edge_gateway_ip} on Edge #{cfg.vdc_edge_gateway} as our entry point.")
+
+          env[:ui].info("Creating NAT rules on [#{cfg.vdc_edge_gateway}] for IP [#{cfg.vdc_edge_gateway_ip}].")
+
           edgeMap = cnx.set_edge_gateway_rules(cfg.vdc_edge_gateway, cfg.vdc_id, cfg.vdc_edge_gateway_ip, vAppId)
           cnx.wait_task_completion(edgeMap)
         end

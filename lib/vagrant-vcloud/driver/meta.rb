@@ -119,33 +119,6 @@ module VagrantPlugins
 
         protected
 
-        # def old_get_api_version(host_url)
-
-        #   request = RestClient::Request.new(
-        #     :method => "GET",
-        #     :url => "#{host_url}/api/versions"
-        #   )
-          
-        #   begin
-        #     response = request.execute
-        #     if ![200, 201, 202, 204].include?(response.code)
-        #       puts "Warning: unattended code #{response.code}"
-        #     end
-
-        #   versionInfo = Nokogiri.parse(response)
-        #   # FIXME: Find a smarter way to check for vCloud API version
-        #   # Changed from .first to .last because that's the way it's defined
-        #   # in the request answer.
-        #   apiVersion = versionInfo.css("VersionInfo Version")
-          
-        #   apiVersion.last.text
-
-        #   rescue SocketError, Errno::ECONNREFUSED, RestClient::ResourceNotFound
-        #     raise Errors::HostNotFound, :message => host_url
-        #   end
-
-        # end
-
         def get_api_version(host_url)
 
           # Create a new HTTP client
@@ -175,9 +148,9 @@ module VagrantPlugins
 
 
           rescue SocketError
-            raise "Impossible to connect, verify endpoint"
+            raise Errors::HostNotFound, :message => host_url
           rescue Errno::EADDRNOTAVAIL
-            raise "Impossible to connect, verify endpoint"
+            raise Errors::HostNotFound, :message => host_url
           end
 
         end

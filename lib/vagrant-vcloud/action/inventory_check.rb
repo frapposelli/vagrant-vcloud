@@ -63,7 +63,7 @@ module VagrantPlugins
 
           @logger.debug("Catalog Creation result: #{catalogCreation.inspect}")
 
-          env[:ui].info("Catalog [#{cfg.catalog_name}] created successfully.")
+          env[:ui].info("Catalog [#{cfg.catalog_name}] successfully created.")
 
           cfg.catalog_id = catalogCreation[:catalog_id]
 

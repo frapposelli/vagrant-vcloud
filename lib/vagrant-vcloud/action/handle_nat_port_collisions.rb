@@ -33,14 +33,10 @@ module VagrantPlugins
           # Determine a list of usable ports for repair
           usable_ports = Set.new(env[:machine].config.vm.usable_port_range)
 
-          @logger.debug("USABLE PORTS: #{usable_ports.inspect}")
-
           # Pass one, remove all defined host ports from usable ports
           with_forwarded_ports(env) do |options|
             usable_ports.delete(options[:host])
           end
-
-          @logger.debug("USABLE PORTS AFTER IN USE DELETION: #{usable_ports.inspect}")
 
           cfg = env[:machine].provider_config
           cnx = cfg.vcloud_cnx.driver
@@ -59,12 +55,8 @@ module VagrantPlugins
             guest_port = options[:guest]
             host_port  = options[:host]
 
-            #testHash = rules.flatten
-            @logger.debug("DEBUGGING NETWORKS: rules: #{rules.inspect}")         
-
             # If the port is open (listening for TCP connections)
             if rules.include?(host_port)
-              @logger.debug("SO OUR PORT IS INCLUDED IN RULES BUT WHAT'S IN OPTIONS?: #{options.inspect}")
               if !options[:auto_correct]
                 raise Errors::ForwardPortCollision,
                   :guest_port => guest_port.to_s,
