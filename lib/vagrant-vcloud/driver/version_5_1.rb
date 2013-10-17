@@ -930,8 +930,7 @@ module VagrantPlugins
                     xml.Policy(config[:nat_policy_type] || "allowTraffic")
 
                     preExisting = get_vapp_port_forwarding_rules(vappid)
-                    @logger.debug("This is the PREEXISTING RULE BLOCK: #{preExisting.inspect}")
-
+                    
                     config[:nat_rules].concat(preExisting)
 
                     config[:nat_rules].each do |nat_rule|
@@ -1258,8 +1257,6 @@ module VagrantPlugins
           'command' => "/admin/edgeGateway/#{edge_gateway_id}/action/configureServices"
         }
 
-        @logger.debug("OUR XML: #{set_edge_rules.to_xml(:indent => 2)}")
-
         response, headers = send_request(params, set_edge_rules.to_xml(:indent => 2), "application/vnd.vmware.admin.edgeGatewayServiceConfiguration+xml")
 
         task_id = headers["Location"].gsub("#{@api_url}/task/", "")
@@ -1307,8 +1304,6 @@ module VagrantPlugins
             'method' => :post,
             'command' => "/admin/edgeGateway/#{edge_gateway_id}/action/configureServices"
           }
-
-          @logger.debug("OUR XML: #{remove_edge_rules.to_xml}")
 
           response, headers = send_request(params, remove_edge_rules.to_xml, "application/vnd.vmware.admin.edgeGatewayServiceConfiguration+xml")
 
