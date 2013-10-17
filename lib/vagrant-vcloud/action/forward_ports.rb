@@ -18,8 +18,6 @@ module VagrantPlugins
           # Get the ports we're forwarding
           env[:forwarded_ports] ||= compile_forwarded_ports(env[:machine].config)
 
-          @logger.debug("WE'RE GOING TO FORWARD THIS!: #{@env[:forwarded_ports]}")
-
           forward_ports
 
           @app.call(env)
@@ -86,8 +84,8 @@ module VagrantPlugins
           if !ports.empty?
             # We only need to forward ports if there are any to forward
 
-            @logger.debug("Here's what we should pass to the driver method: #{ports.inspect}")
-            @logger.debug("here's our network id #{cfg.vdc_network_id}")
+            @logger.debug("Port object to be passed: #{ports.inspect}")
+            @logger.debug("Current network id #{cfg.vdc_network_id}")
             # @env[:machine].provider.driver.forward_ports(ports)
 
             # newvapp[:vms_hash].each do |key, value|
