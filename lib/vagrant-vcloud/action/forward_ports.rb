@@ -26,8 +26,6 @@ module VagrantPlugins
         def forward_ports
           ports = []
 
-          # interfaces = @env[:machine].provider.driver.read_network_interfaces
-
           cfg = @env[:machine].provider_config
           cnx = cfg.vcloud_cnx.driver
           vmName = @env[:machine].name
@@ -47,27 +45,7 @@ module VagrantPlugins
               :host_port => fp.host_port
             }
 
-            # Assuming the only reason to establish port forwarding is
-            # because the VM is using Virtualbox NAT networking. Host-only
-            # bridged networking don't require port-forwarding and establishing
-            # forwarded ports on these attachment types has uncertain behaviour.
             @env[:ui].info("Forwarding Ports: VM port #{fp.guest_port} -> vShield Edge port #{fp.host_port}")
-
-            # Verify we have the network interface to attach to
-            # if !interfaces[fp.adapter]
-            #   raise Vagrant::Errors::ForwardPortAdapterNotFound,
-            #     :adapter => fp.adapter.to_s,
-            #     :guest => fp.guest_port.to_s,
-            #     :host => fp.host_port.to_s
-            # end
-
-            # Port forwarding requires the network interface to be a NAT interface,
-            # so verify that that is the case.
-            # if interfaces[fp.adapter][:type] != :nat
-            #   @env[:ui].info(I18n.t("vagrant.actions.vm.forward_ports.non_nat",
-            #                         message_attributes))
-            #   next
-            # end
 
             # Add the options to the ports array to send to the driver later
             ports << {
@@ -83,19 +61,10 @@ module VagrantPlugins
 
           if !ports.empty?
             # We only need to forward ports if there are any to forward
-
             @logger.debug("Port object to be passed: #{ports.inspect}")
             @logger.debug("Current network id #{cfg.vdc_network_id}")
-            # @env[:machine].provider.driver.forward_ports(ports)
-
-            # newvapp[:vms_hash].each do |key, value|
-
-            # nat_rules << { :nat_external_port => j.to_s, :nat_internal_port => "873", :nat_protocol => "UDP", :vm_scoped_local_id => value[:vapp_scoped_local_id]}
-            # j += 1
 
             ### Here we apply the nat_rules to the vApp we just built
-
-            # puts "### Applying Port Forwarding NAT Rules"
 
             addports = cnx.add_vapp_port_forwarding_rules(
               vAppId,
@@ -113,10 +82,7 @@ module VagrantPlugins
               raise Errors::ComposeVAppError, :message => wait[:errormsg]
             end
 
-
           end
-
-
 
         end
       end

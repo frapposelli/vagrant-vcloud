@@ -47,11 +47,11 @@ module VagrantPlugins
 
             @logger.debug("Range: #{rangeAddresses}")
 
-            rangeAddresses.shift # Delete the "network" address from the range.
-            gatewayIp = rangeAddresses.shift # Retrieve the first usable IP, to be used as a gateway.
-            rangeAddresses.reverse! # Reverse the array in place.
-            rangeAddresses.shift # Delete the "broadcast" address from the range.
-            rangeAddresses.reverse! # Reverse back the array.
+            rangeAddresses.shift              # Delete the "network" address from the range.
+            gatewayIp = rangeAddresses.shift  # Retrieve the first usable IP, to be used as a gateway.
+            rangeAddresses.reverse!           # Reverse the array in place.
+            rangeAddresses.shift              # Delete the "broadcast" address from the range.
+            rangeAddresses.reverse!           # Reverse back the array.
 
             @logger.debug("Gateway IP: #{gatewayIp.to_s}")
             @logger.debug("Netmask: #{cidr.wildcard_mask}")
@@ -134,21 +134,18 @@ module VagrantPlugins
               env[:machine].id = newVMProperties[:id]
 
               ### SET GUEST CONFIG
-              #env[:ui].info("Setting Guest Customization on ID: [#{vmName}] of vApp [#{newVApp[:name]}]")
+
+              @logger.info("Setting Guest Customization on ID: [#{vmName}] of vApp [#{newVApp[:name]}]")
+
               setCustom = cnx.set_vm_guest_customization(newVMProperties[:id], vmName, {
                 :enabled => true,
                 :admin_passwd_enabled => false
                 })
               cnx.wait_task_completion(setCustom)
 
-#              @logger.info("Starting VM [#{vmName}] - this will take a while as vShield Edge is getting deployed as well")
-#              env[:ui].info("Starting VM [#{vmName}] - this will take a while as vShield Edge is getting deployed as well")
-#              poweronVM = cnx.poweron_vm(newVMProperties[:id])
-#              cnx.wait_task_completion(poweronVM)
-
             else
               env[:ui].error("vApp #{newVApp[:name]} creation failed!")
-              raise
+              raise # FIXME: error handling missing.
            end 
           else
             env[:ui].info("Adding VM to existing vApp...")
@@ -172,26 +169,18 @@ module VagrantPlugins
 
             if newVApp
 
-              #env[:ui].success("VM #{vmName} added to #{newVApp[:name]} successfully!")
-              #@logger.info("VM #{vmName} added to #{newVApp[:name]} successfully!")
-
-              # Add the vm id as machine.id
               newVMProperties = newVApp[:vms_hash].fetch(vmName)
               env[:machine].id = newVMProperties[:id]
 
               ### SET GUEST CONFIG
-              #@logger.info("Setting Guest Customization on ID: [#{newVMProperties[:id]}] of vApp [#{newVApp[:name]}]")
-              #env[:ui].info("Setting Guest Customization on ID: [#{vmName}] of vApp [#{newVApp[:name]}]")
+              
+              @logger.info("Setting Guest Customization on ID: [#{newVMProperties[:id]}] of vApp [#{newVApp[:name]}]")
+              
               setCustom = cnx.set_vm_guest_customization(newVMProperties[:id], vmName, {
                 :enabled => true,
                 :admin_passwd_enabled => false
                 })
               cnx.wait_task_completion(setCustom)
-
-#              @logger.info("Starting VM [#{vmName}]")
-#              env[:ui].info("Starting VM [#{vmName}]")
-#              poweronVM = cnx.poweron_vm(newVMProperties[:id])
-#              cnx.wait_task_completion(poweronVM)
 
             else
 
