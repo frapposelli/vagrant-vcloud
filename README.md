@@ -1,12 +1,23 @@
 [Vagrant](http://www.vagrantup.com) provider for VMware vCloud Director®
 =============
 
-[Version 0.1.0](https://github.com/frapposelli/vagrant-vcloud/releases/tag/v0.1.0) has been released!
+[Version 0.1.1](https://github.com/frapposelli/vagrant-vcloud/releases/tag/v0.1.1) has been released!
 -------------
 
 Please note that this software is still Alpha/Beta quality and is not recommended for production usage.
 
 Right now a [Precise32](http://vagrant.tsugliani.fr/precise32.box) is available for use, or you can roll your own as you please, make sure to install VMware tools in it.
+
+Features of Version 0.1.1 are:
+
+  - bugfix multiple sub allocation pools ranges [ISSUE #24]
+  - Putting back Google DNS as default if not specified
+  - binding vCloud 5.5 API on 5.1 driver
+  - Debug cut and general cosmetic cleanup
+  - added DNS choice using the "ip_dns" Array config property.
+  - Updated sync_folders.rb with code from vagrant-aws, Will focus on a better sync engine later in the future.
+  - Removed dependency on rest-client gem, moved everything to httpclient.
+  - Fixed destroy vApp bug.
 
 Features of Version 0.1.0 are:
 
@@ -47,10 +58,10 @@ Here's a sample Multi-VM Vagrantfile, please note that ```vcloud.vdc_edge_gatewa
 precise32_vm_box_url = "http://vagrant.tsugliani.fr/precise32.box"
 
 nodes = [
-  { :hostname => "web-vm",  :box => "precise32", :box_url => precise32_vm_box_url},
-  { :hostname => "ssh-vm",  :box => "precise32" , :box_url => precise32_vm_box_url},
+  { :hostname => "web-vm",  :box => "precise32", :box_url => precise32_vm_box_url },
+  { :hostname => "ssh-vm",  :box => "precise32", :box_url => precise32_vm_box_url },
   { :hostname => "sql-vm",  :box => "precise32", :box_url => precise32_vm_box_url },
-  { :hostname => "lb-vm",  :box => "precise64", :box_url => precise32_vm_box_url },
+  { :hostname => "lb-vm",   :box => "precise64", :box_url => precise32_vm_box_url },
   { :hostname => "app-vm",  :box => "precise32", :box_url => precise32_vm_box_url },
 ]
 
@@ -89,3 +100,5 @@ Vagrant.configure("2") do |config|
   end
 end
 ```
+
+[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/frapposelli/vagrant-vcloud/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
