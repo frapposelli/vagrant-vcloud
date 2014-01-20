@@ -1078,23 +1078,27 @@ module VagrantPlugins
           }
 
           response, headers = send_request(params)
-
           response.css("EdgeGateway Configuration GatewayInterfaces GatewayInterface").each do |gw|
-            
-            if gw.css("InterfaceType").text == "internal"
-              next
+ 
+            # Only check uplinks, avoid another check           
+            if gw.css("InterfaceType").text == "uplink"
+              
+              # Loop on all sub-allocation pools
+              gw.css("SubnetParticipation IpRanges IpRange").each do |currentRange|
+
+                lowip = currentRange.css("StartAddress").first.text
+                highip = currentRange.css("EndAddress").first.text
+
+                rangeIpLow = NetAddr.ip_to_i(lowip)
+                rangeIpHigh = NetAddr.ip_to_i(highip)
+                testIp = NetAddr.ip_to_i(edge_gateway_ip)
+
+                if (rangeIpLow..rangeIpHigh) === testIp
+                  return gw.css("Network").first[:href]
+                end
+              end
             end
 
-            lowip = gw.css("SubnetParticipation IpRanges IpRange StartAddress").first.text
-            highip = gw.css("SubnetParticipation IpRanges IpRange EndAddress").first.text
-
-            rangeIpLow = NetAddr.ip_to_i(lowip)
-            rangeIpHigh = NetAddr.ip_to_i(highip)
-            testIp = NetAddr.ip_to_i(edge_gateway_ip)
-
-            if (rangeIpLow..rangeIpHigh) === testIp
-              return gw.css("Network").first[:href]
-            end
           end
 
         end
@@ -1135,6 +1139,7 @@ module VagrantPlugins
 
               interface = Nokogiri::XML::Node.new 'Interface', response
               interface["href"] = edge_network_id
+
               gatewayNatRule.add_child interface
 
               originalIp = Nokogiri::XML::Node.new 'OriginalIp', response
@@ -1157,9 +1162,12 @@ module VagrantPlugins
               protocol.content = "any"
               gatewayNatRule.add_child protocol
 
-              icmpSubType = Nokogiri::XML::Node.new 'IcmpSubType', response
-              icmpSubType.content = "any"
-              gatewayNatRule.add_child icmpSubType
+              # FIXME: frapposelli/tsugliani we should be able to remove this
+              # FIXME: test this against a vCloud Director 5.1.x installation
+              #icmpSubType = Nokogiri::XML::Node.new 'IcmpSubType', response
+              #icmpSubType.content = "any"
+              #gatewayNatRule.add_child icmpSubType
+
 
           natRule2 = Nokogiri::XML::Node.new 'NatRule', response
 
@@ -1176,6 +1184,7 @@ module VagrantPlugins
 
               interface = Nokogiri::XML::Node.new 'Interface', response
               interface["href"] = edge_network_id
+ 
               gatewayNatRule.add_child interface
 
               originalIp = Nokogiri::XML::Node.new 'OriginalIp', response
@@ -1245,7 +1254,6 @@ module VagrantPlugins
           nat_rules << natRule2
 
           fw_rules = set_edge_rules.at_css("FirewallService")
-
           fw_rules << firewallRule1
 
           xml1 = set_edge_rules.at_css "EdgeGatewayServiceConfiguration"
@@ -1516,7 +1524,7 @@ module VagrantPlugins
             task = get_task(taskid)
             @logger.debug("Evaluating taskid: #{taskid}, current status #{task[:status]}")
             break if task[:status] != 'running'
-            sleep 1
+            sleep 5
           end
 
           if task[:status] == 'error'
