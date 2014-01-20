@@ -1,5 +1,3 @@
-require "awesome_print"
-
 module VagrantPlugins
   module VCloud
     module Action
