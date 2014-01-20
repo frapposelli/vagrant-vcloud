@@ -21,13 +21,12 @@ module VagrantPlugins
           vmName = env[:machine].name
 
           if cfg.ip_dns.nil?
-            dnsAddress1 = nil
-            dnsAddress2 = nil
+            dnsAddress1 = "8.8.8.8"
+            dnsAddress2 = "8.8.4.4"
           else
             dnsAddress1 = cfg.ip_dns.shift
             dnsAddress2 = cfg.ip_dns.shift
           end
-
 
           if !cfg.ip_subnet.nil?
 
