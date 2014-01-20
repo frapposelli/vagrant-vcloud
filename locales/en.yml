@@ -4,9 +4,15 @@ en:
     will_not_destroy: "VM will not be destroyed"
     vm_already_running: "VM is already running"
     vm_halted_cannot_suspend: "VM is not running or already suspended, cannot suspend it."
+    rsync_not_found_warning: |-
+      Warning! Folder sync disabled because the rsync binary is missing.
+      Make sure rsync is installed and the binary can be found in the PATH.
+    rsync_folder: |-
+      Rsyncing folder: %{hostpath} => %{guestpath}
     config: 
       api_version: "Configuration must specify a vCloud API version (default=5.1)"
       catalog_name: "Configuration must specify a vCloud Director Catalog (for the VM templates images)"
+      ip_dns: "DNS configuration must be specified as an Array type"
       compute_resource: "Configuration must specify a compute resource name"
       hostname: "Configuration must specify a vCloud Director hostname"
       name: "Configuration must specify a VM name"
@@ -37,6 +43,20 @@ en:
       subnet_errors:
         invalid_subnet: "The specified subnet is invalid: %{message}"
         subnet_too_small: "The specified subnet is too small: %{message}, must contain at least 2 usable IPs (/30 or 255.255.255.252)"
+      rsync_error: |-
+        There was an error when attempting to rsync a share folder.
+        Please inspect the error message below for more info.
+
+        Host path: %{hostpath}
+        Guest path: %{guestpath}
+        Error: %{stderr}
+      mkdir_error: |-
+        There was an error when attempting to create a shared host folder.
+        Please inspect the error message below for more info.
+
+        Host path: %{hostpath}
+        Error: %{err}
+
     states: 
       not_created: |-
         The environment has not yet been created. Run `vagrant up` to

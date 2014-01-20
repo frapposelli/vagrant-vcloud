@@ -17,8 +17,8 @@
 
 require "forwardable"
 require "log4r"
-require "rest-client"
 require "nokogiri"
+require "httpclient"
 
 
 require File.expand_path("../base", __FILE__)
@@ -51,7 +51,8 @@ module VagrantPlugins
           # Instantiate the proper version driver for vCloud
           @logger.debug("Finding driver for vCloud version: #{@version}")
           driver_map   = {
-            "5.1" => Version_5_1
+            "5.1" => Version_5_1,
+            "5.5" => Version_5_1 # Binding vCloud 5.5 API on our current 5.1 implementation
           }
 
           if @version.start_with?("0.9") || @version.start_with?("1.0") || @version.start_with?("1.5")
@@ -121,30 +122,40 @@ module VagrantPlugins
 
         def get_api_version(host_url)
 
-          request = RestClient::Request.new(
-            :method => "GET",
-            :url => "#{host_url}/api/versions"
-          )
+          # Create a new HTTP client
+          clnt = HTTPClient.new
+
+          # Disable SSL cert verification
+          clnt.ssl_config.verify_mode=(OpenSSL::SSL::VERIFY_NONE)
+
+          # Suppress SSL depth message
+          clnt.ssl_config.verify_callback=proc{ |ok, ctx|; true };
           
+          url = "#{host_url}/api/versions"
+
           begin
-            response = request.execute
-            if ![200, 201, 202, 204].include?(response.code)
-              puts "Warning: unattended code #{response.code}"
+            response = clnt.request("GET", url, nil, nil, nil)
+            if !response.ok?
+              raise "Warning: unattended code #{response.status} #{response.reason}"
             end
 
-          versionInfo = Nokogiri.parse(response)
-          # FIXME: Find a smarter way to check for vCloud API version
-          # Changed from .first to .last because that's the way it's defined
-          # in the request answer.
-          apiVersion = versionInfo.css("VersionInfo Version")
-          
-          apiVersion.last.text
+            versionInfo = Nokogiri.parse(response.body)
+            # FIXME: Find a smarter way to check for vCloud API version
+            # Changed from .first to .last because that's the way it's defined
+            # in the request answer.
+            apiVersion = versionInfo.css("VersionInfo Version")
+            
+            apiVersion.last.text
 
-          rescue SocketError, Errno::ECONNREFUSED, RestClient::ResourceNotFound
+
+          rescue SocketError
+            raise Errors::HostNotFound, :message => host_url
+          rescue Errno::EADDRNOTAVAIL
             raise Errors::HostNotFound, :message => host_url
           end
 
         end
+
       end
     end
   end

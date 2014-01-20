@@ -20,6 +20,14 @@ module VagrantPlugins
           cnx = cfg.vcloud_cnx.driver
           vmName = env[:machine].name
 
+          if cfg.ip_dns.nil?
+            dnsAddress1 = "8.8.8.8"
+            dnsAddress2 = "8.8.4.4"
+          else
+            dnsAddress1 = cfg.ip_dns.shift
+            dnsAddress2 = cfg.ip_dns.shift
+          end
+
           if !cfg.ip_subnet.nil?
 
             @logger.debug("Input address: #{cfg.ip_subnet}")
@@ -38,15 +46,17 @@ module VagrantPlugins
 
             @logger.debug("Range: #{rangeAddresses}")
 
-            rangeAddresses.shift # Delete the "network" address from the range.
-            gatewayIp = rangeAddresses.shift # Retrieve the first usable IP, to be used as a gateway.
-            rangeAddresses.reverse! # Reverse the array in place.
-            rangeAddresses.shift # Delete the "broadcast" address from the range.
-            rangeAddresses.reverse! # Reverse back the array.
+            rangeAddresses.shift              # Delete the "network" address from the range.
+            gatewayIp = rangeAddresses.shift  # Retrieve the first usable IP, to be used as a gateway.
+            rangeAddresses.reverse!           # Reverse the array in place.
+            rangeAddresses.shift              # Delete the "broadcast" address from the range.
+            rangeAddresses.reverse!           # Reverse back the array.
 
             @logger.debug("Gateway IP: #{gatewayIp.to_s}")
             @logger.debug("Netmask: #{cidr.wildcard_mask}")
             @logger.debug("IP Pool: #{rangeAddresses.first}-#{rangeAddresses.last}")
+            @logger.debug("DNS1: #{dnsAddress1} DNS2: #{dnsAddress2}")
+
 
             network_options = { 
               :name => "Vagrant-vApp-Net", 
@@ -58,12 +68,13 @@ module VagrantPlugins
               :ip_allocation_mode => "POOL",
               :parent_network =>  cfg.vdc_network_id,
               :enable_firewall => "false",
-              :dns1 => "8.8.8.8", # FIXME: We should let the user choose DNS servers and then 
-              :dns2 => "8.8.4.4"  # fall back to Google's if they're not specified.
+              :dns1 => dnsAddress1,
+              :dns2 => dnsAddress2
             }
 
           else
 
+            @logger.debug("DNS1: #{dnsAddress1} DNS2: #{dnsAddress2}")
             # No IP subnet specified, reverting to defaults
             network_options = { 
               :name => "Vagrant-vApp-Net", 
@@ -75,8 +86,8 @@ module VagrantPlugins
               :ip_allocation_mode => "POOL",
               :parent_network =>  cfg.vdc_network_id,
               :enable_firewall => "false",
-              :dns1 => "8.8.8.8",
-              :dns2 => "8.8.4.4"
+              :dns1 => dnsAddress1,
+              :dns2 => dnsAddress2
             }
 
           end
@@ -115,28 +126,25 @@ module VagrantPlugins
             # FIXME: Add a lot of error handling for each step here !
 
             if newVApp
-              env[:ui].success("vApp #{newVApp[:name]} created successfully!")
+              env[:ui].success("vApp #{newVApp[:name]} successfully created.")
 
               # Add the vm id as machine.id
               newVMProperties = newVApp[:vms_hash].fetch(vmName)
               env[:machine].id = newVMProperties[:id]
 
               ### SET GUEST CONFIG
-              #env[:ui].info("Setting Guest Customization on ID: [#{vmName}] of vApp [#{newVApp[:name]}]")
+
+              @logger.info("Setting Guest Customization on ID: [#{vmName}] of vApp [#{newVApp[:name]}]")
+
               setCustom = cnx.set_vm_guest_customization(newVMProperties[:id], vmName, {
                 :enabled => true,
                 :admin_passwd_enabled => false
                 })
               cnx.wait_task_completion(setCustom)
 
-#              @logger.info("Starting VM [#{vmName}] - this will take a while as vShield Edge is getting deployed as well")
-#              env[:ui].info("Starting VM [#{vmName}] - this will take a while as vShield Edge is getting deployed as well")
-#              poweronVM = cnx.poweron_vm(newVMProperties[:id])
-#              cnx.wait_task_completion(poweronVM)
-
             else
               env[:ui].error("vApp #{newVApp[:name]} creation failed!")
-              raise
+              raise # FIXME: error handling missing.
            end 
           else
             env[:ui].info("Adding VM to existing vApp...")
@@ -160,26 +168,18 @@ module VagrantPlugins
 
             if newVApp
 
-              #env[:ui].success("VM #{vmName} added to #{newVApp[:name]} successfully!")
-              #@logger.info("VM #{vmName} added to #{newVApp[:name]} successfully!")
-
-              # Add the vm id as machine.id
               newVMProperties = newVApp[:vms_hash].fetch(vmName)
               env[:machine].id = newVMProperties[:id]
 
               ### SET GUEST CONFIG
-              #@logger.info("Setting Guest Customization on ID: [#{newVMProperties[:id]}] of vApp [#{newVApp[:name]}]")
-              #env[:ui].info("Setting Guest Customization on ID: [#{vmName}] of vApp [#{newVApp[:name]}]")
+              
+              @logger.info("Setting Guest Customization on ID: [#{newVMProperties[:id]}] of vApp [#{newVApp[:name]}]")
+              
               setCustom = cnx.set_vm_guest_customization(newVMProperties[:id], vmName, {
                 :enabled => true,
                 :admin_passwd_enabled => false
                 })
               cnx.wait_task_completion(setCustom)
-
-#              @logger.info("Starting VM [#{vmName}]")
-#              env[:ui].info("Starting VM [#{vmName}]")
-#              poweronVM = cnx.poweron_vm(newVMProperties[:id])
-#              cnx.wait_task_completion(poweronVM)
 
             else
 

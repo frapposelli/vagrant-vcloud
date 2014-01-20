@@ -27,7 +27,7 @@ module VagrantPlugins
 
           boxOVF = "#{boxDir}/#{boxFile}.ovf"
 
-          ### Still relying on ruby-progressbar because report_progress basically sucks.
+          # Still relying on ruby-progressbar because report_progress basically sucks.
 
           @logger.debug("OVF File: #{boxOVF}")
           uploadOVF = cnx.upload_ovf(
@@ -38,6 +38,7 @@ module VagrantPlugins
             cfg.catalog_id,
             {
               :progressbar_enable => true
+              # FIXME: export chunksize as a parameter and lower the default to 1M.
               #:chunksize => 262144
             }
           )
@@ -49,7 +50,7 @@ module VagrantPlugins
             raise Errors::CatalogAddError, :message => addOVFtoCatalog[:errormsg]
           end
 
-          ## Retrieve catalog_item ID
+          # Retrieve catalog_item ID
           cfg.catalog_item = cnx.get_catalog_item_by_name(cfg.catalog_id, env[:machine].box.name.to_s)
 
         end
@@ -63,7 +64,7 @@ module VagrantPlugins
 
           @logger.debug("Catalog Creation result: #{catalogCreation.inspect}")
 
-          env[:ui].info("Catalog [#{cfg.catalog_name}] created successfully.")
+          env[:ui].info("Catalog [#{cfg.catalog_name}] successfully created.")
 
           cfg.catalog_id = catalogCreation[:catalog_id]
 
@@ -83,11 +84,7 @@ module VagrantPlugins
 
           cfg.catalog = cnx.get_catalog_by_name(cfg.org, cfg.catalog_name)
           
-
-          @logger.debug("BEFORE get_catalog_id_by_name")          
           cfg.catalog_id = cnx.get_catalog_id_by_name(cfg.org, cfg.catalog_name)
-          @logger.debug("AFTER get_catalog_id_by_name: #{cfg.catalog_id}")
-
 
           if cfg.catalog_id.nil?
             env[:ui].warn("Catalog [#{cfg.catalog_name}] does not exist!")
@@ -96,12 +93,12 @@ module VagrantPlugins
               "Would you like to create the [#{cfg.catalog_name}] catalog?\nChoice (yes/no): "
             )
 
-            # FIXME: add an OR clause for just Y
-            if user_input.downcase == "yes"
+            if user_input.downcase == "yes" || user_input.downcase == "y" 
               vcloud_create_catalog(env)
             else
               env[:ui].error("Catalog not created, exiting...")
 
+              # FIXME: wrong error message
               raise VagrantPlugins::VCloud::Errors::VCloudError, 
                     :message => "Catalog not available, exiting..."
 
@@ -118,6 +115,8 @@ module VagrantPlugins
           # Checking Catalog mandatory requirements
           if !cfg.catalog_id
             @logger.info("Catalog [#{cfg.catalog_name}] STILL does not exist!")
+
+              # FIXME: wrong error message
               raise VagrantPlugins::VCloud::Errors::VCloudError, 
                     :message => "Catalog not available, exiting..."
 
@@ -133,20 +132,20 @@ module VagrantPlugins
               "[#{cfg.catalog_name}] Catalog?\nChoice (yes/no): "
             )
 
-            # FIXME: add an OR clause for just Y
-            if user_input.downcase == "yes"
+            if user_input.downcase == "yes" || user_input.downcase == "y" 
               env[:ui].info("Uploading [#{env[:machine].box.name.to_s}]...")
               vcloud_upload_box(env)
             else
               env[:ui].error("Catalog item not available, exiting...")
 
+              # FIXME: wrong error message
               raise VagrantPlugins::VCloud::Errors::VCloudError, 
                     :message => "Catalog item not available, exiting..."
 
             end
 
           else
-            #env[:ui].info("Using catalog item [#{env[:machine].box.name.to_s}] in Catalog [#{cfg.catalog_name}]...")
+            @logger.info("Using catalog item [#{env[:machine].box.name.to_s}] in Catalog [#{cfg.catalog_name}]...")
           end
         end
 

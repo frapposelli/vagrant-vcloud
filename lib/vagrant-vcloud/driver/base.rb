@@ -275,72 +275,53 @@ module VagrantPlugins
         end
 
         private
+
           ##
-          # Sends a synchronous request to the vCloud API and returns the response as parsed XML + headers.
+          # Sends a synchronous request to the vCloud API and returns the response as parsed XML + headers using HTTPClient.
           def send_request(params, payload=nil, content_type=nil)
-            headers = {:accept => "application/*+xml;version=#{@api_version}"}
+
+            # Create a new HTTP client
+            clnt = HTTPClient.new
+
+            # Disable SSL cert verification
+            clnt.ssl_config.verify_mode=(OpenSSL::SSL::VERIFY_NONE)
+
+            # Suppress SSL depth message
+            clnt.ssl_config.verify_callback=proc{ |ok, ctx|; true };
+            
+            extheader = {}
+
+            extheader["accept"] = "application/*+xml;version=#{@api_version}"
+
+            if !content_type.nil?
+              extheader['Content-Type'] = content_type
+            end
+
             if @auth_key
-              headers.merge!({:x_vcloud_authorization => @auth_key})
+              extheader['x-vcloud-authorization'] = @auth_key
+            else
+              clnt.set_auth(nil, "#{@username}@#{@org_name}", @password)
             end
 
-            if content_type
-              headers.merge!({:content_type => content_type})
-            end
-
-            # FIXME: get rid of RestClient and switch everything to HTTPClient, easier to use and we get rid of another dependency.
-
-            request = RestClient::Request.new(:method => params['method'],
-                                             :user => "#{@username}@#{@org_name}",
-                                             :password => @password,
-                                             :headers => headers,
-                                             :url => "#{@api_url}#{params['command']}",
-                                             :payload => payload)
-
+            url = "#{@api_url}#{params['command']}"
 
             begin
-              response = request.execute
-              if ![200, 201, 202, 204].include?(response.code)
-                puts "Warning: unattended code #{response.code}"
+              response = clnt.request(params['method'], url, nil, payload, extheader)
+              if !response.ok?
+                raise "Warning: unattended code #{response.status} #{response.reason}"
               end
 
-              # TODO: handle asynch properly, see TasksList
-              [Nokogiri.parse(response), response.headers]
-            rescue RestClient::ResourceNotFound => e
-              raise Errors::ObjectNotFound
-            rescue RestClient::Unauthorized => e
-              raise Errors::UnauthorizedAccess
-            rescue RestClient::BadRequest => e
-              body = Nokogiri.parse(e.http_body)
-              message = body.css("Error").first["message"]
+              [Nokogiri.parse(response.body), response.headers]
 
-              case message
-              when /The request has invalid accept header/
-                raise WrongAPIVersion, "Invalid accept header. Please verify that the server supports v.#{@api_version} or specify a different API Version."
-              when /validation error on field 'id': String value has invalid format or length/
-                raise WrongItemIDError, "Invalid ID specified. Please verify that the item exists and correctly typed."
-              when /The requested operation could not be executed on vApp "(.*)". Stop the vApp and try again/
-                raise Errors::InvalidStateError, :message => "Invalid request because vApp is running. Stop vApp '#{$1}' and try again."
-              when /The requested operation could not be executed since vApp "(.*)" is not running/
-                raise Errors::InvalidStateError, :message => "Invalid request because vApp is stopped. Start vApp '#{$1}' and try again."
-              when /The administrator password cannot be empty when it is enabled and automatic password generation is not selected/
-                raise Errors::InvalidConfigError
-              when /The reference "(.*)" cannot be parsed correctly/   # FIXME: doesn't work
-                raise Errors::InvalidNetSpecification
-              else
-                raise UnhandledError, "BadRequest - unhandled error: #{message}.\nPlease report this issue."
-              end
-            rescue RestClient::Forbidden => e
-              body = Nokogiri.parse(e.http_body)
-              message = body.css("Error").first["message"]
-              raise Errors::UnauthorizedAccess
-            rescue RestClient::InternalServerError => e
-              body = Nokogiri.parse(e.http_body)
-              message = body.css("Error").first["message"]
-              raise InternalServerError, "Internal Server Error: #{message}."
-            rescue RestClient::Found => e
-              raise Errors::HostRedirect
+            rescue SocketError
+              raise "Impossible to connect, verify endpoint"
+            rescue Errno::EADDRNOTAVAIL
+              raise "Impossible to connect, verify endpoint"
             end
+
+
           end
+
 
           ##
           # Upload a large file in configurable chunks, output an optional progressbar

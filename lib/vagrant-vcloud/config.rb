@@ -63,6 +63,11 @@ module VagrantPlugins
       # @return [String]
       attr_accessor :ip_subnet
 
+      # DNS
+      #
+      # @return [Array]
+      attr_accessor :ip_dns
+
       # Port forwarding rules
       #
       # @return [Hash]
@@ -116,14 +121,17 @@ module VagrantPlugins
         errors = _detected_errors
 
         # TODO: add blank?
-        errors << I18n.t("config.hostname") if hostname.nil?
-        errors << I18n.t("config.org_name") if org_name.nil?
-        errors << I18n.t("config.username") if username.nil?
-        errors << I18n.t("config.password") if password.nil?
+        errors << I18n.t("vagrant_vcloud.config.hostname") if hostname.nil?
+        errors << I18n.t("vagrant_vcloud.config.org_name") if org_name.nil?
+        errors << I18n.t("vagrant_vcloud.config.username") if username.nil?
+        errors << I18n.t("vagrant_vcloud.config.password") if password.nil?
         
-        errors << I18n.t("config.catalog_name") if catalog_name.nil?
-        errors << I18n.t("config.vdc_name") if vdc_name.nil?
-        errors << I18n.t("config.vdc_network_name") if vdc_network_name.nil?
+        if !ip_dns.nil?
+          errors << I18n.t("vagrant_vcloud.config.ip_dns") if !ip_dns.kind_of?(Array)
+        end
+        errors << I18n.t("vagrant_vcloud.config.catalog_name") if catalog_name.nil?
+        errors << I18n.t("vagrant_vcloud.config.vdc_name") if vdc_name.nil?
+        errors << I18n.t("vagrant_vcloud.config.vdc_network_name") if vdc_network_name.nil?
 
         { "vCloud Provider" => errors }
       end

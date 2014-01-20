@@ -13,11 +13,8 @@ Gem::Specification.new do |s|
   s.description = 'Enables Vagrant to manage machines with VMware vCloud Director®.'
   
   s.add_runtime_dependency 'i18n', '~> 0.6.4'
-  s.add_runtime_dependency 'ruby-unison', '~> 0.0.3'
   s.add_runtime_dependency 'log4r', '~> 1.1.10'
-  s.add_runtime_dependency 'awesome_print', '~> 1.1.0'
   s.add_runtime_dependency 'nokogiri', '~> 1.6.0'
-  s.add_runtime_dependency 'rest-client', '~> 1.6.7'
   s.add_runtime_dependency 'httpclient', '~> 2.3.4.1'
   s.add_runtime_dependency 'ruby-progressbar', '~> 1.1.1'
   s.add_runtime_dependency 'netaddr', '~> 1.5.0'
