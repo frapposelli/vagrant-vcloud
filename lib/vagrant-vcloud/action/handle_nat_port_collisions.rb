@@ -24,7 +24,9 @@ module VagrantPlugins
 
         def initialize(app, env)
           @app    = app
-          @logger = Log4r::Logger.new("vagrant_vcloud::action::handle_port_collisions")
+          @logger = Log4r::Logger.new(
+            "vagrant_vcloud::action::handle_port_collisions"
+          )
         end
 
         def call(env)
@@ -73,7 +75,10 @@ module VagrantPlugins
 
                 # If the port is in use, then we can't use this either...
                 if rules.include?(repaired_port)
-                  @logger.info("Repaired port also in use: #{repaired_port}. Trying another...")
+                  @logger.info(
+                    "Repaired port also in use: #{repaired_port}." + 
+                    "Trying another..."
+                  )
                   next
                 end
 
@@ -92,13 +97,19 @@ module VagrantPlugins
               # Modify the args in place
               options[:host] = repaired_port
 
-              @logger.info("Repaired FP collision: #{host_port} to #{repaired_port}")
+              @logger.info(
+                "Repaired FP collision: #{host_port} to #{repaired_port}"
+              )
 
               # Notify the user
-              env[:ui].info(I18n.t("vagrant.actions.vm.forward_ports.fixed_collision",
-                                   :host_port  => host_port.to_s,
-                                   :guest_port => guest_port.to_s,
-                                   :new_port   => repaired_port.to_s))
+              env[:ui].info(
+                I18n.t(
+                  "vagrant.actions.vm.forward_ports.fixed_collision",
+                  :host_port  => host_port.to_s,
+                  :guest_port => guest_port.to_s,
+                  :new_port   => repaired_port.to_s
+                )
+              )
             end
           end
 

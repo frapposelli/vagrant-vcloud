@@ -41,21 +41,24 @@ module VagrantPlugins
 
           @env[:forwarded_ports].each do |fp|
             message_attributes = {
-              :guest_port => fp.guest_port,
-              :host_port => fp.host_port
+              :guest_port   => fp.guest_port,
+              :host_port    => fp.host_port
             }
 
-            @env[:ui].info("Forwarding Ports: VM port #{fp.guest_port} -> vShield Edge port #{fp.host_port}")
+            @env[:ui].info(
+              "Forwarding Ports: VM port #{fp.guest_port} -> " +
+              "vShield Edge port #{fp.host_port}"
+            )
 
             # Add the options to the ports array to send to the driver later
             ports << {
-              :guestip   => fp.guest_ip,
-              :nat_internal_port => fp.guest_port,
-              :hostip    => fp.host_ip,
-              :nat_external_port  => fp.host_port,
-              :name      => fp.id,
-              :nat_protocol  => fp.protocol.upcase,
-              :vapp_scoped_local_id => vmInfo[:vapp_scoped_local_id]
+              :guestip                => fp.guest_ip,
+              :nat_internal_port      => fp.guest_port,
+              :hostip                 => fp.host_ip,
+              :nat_external_port      => fp.host_port,
+              :name                   => fp.id,
+              :nat_protocol           => fp.protocol.upcase,
+              :vapp_scoped_local_id   => vmInfo[:vapp_scoped_local_id]
             }
           end
 
@@ -65,7 +68,6 @@ module VagrantPlugins
             @logger.debug("Current network id #{cfg.vdc_network_id}")
 
             ### Here we apply the nat_rules to the vApp we just built
-
             addports = cnx.add_vapp_port_forwarding_rules(
               vAppId,
               "Vagrant-vApp-Net",
@@ -74,7 +76,8 @@ module VagrantPlugins
                 :parent_network => cfg.vdc_network_id,
                 :nat_policy_type => "allowTraffic",
                 :nat_rules => ports
-              })
+              }
+            )
 
             wait = cnx.wait_task_completion(addports)
 

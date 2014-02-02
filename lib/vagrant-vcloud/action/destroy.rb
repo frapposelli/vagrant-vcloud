@@ -22,15 +22,27 @@ module VagrantPlugins
 
           testvApp = cnx.get_vapp(vAppId)
 
-          @logger.debug("Number of VMs in the vApp: #{testvApp[:vms_hash].count}")
+          @logger.debug(
+            "Number of VMs in the vApp: #{testvApp[:vms_hash].count}"
+          )
 
           if testvApp[:vms_hash].count == 1
             env[:ui].info("Single VM left in the vApp, destroying the vApp...")
 
             if cfg.vdc_edge_gateway_ip && cfg.vdc_edge_gateway
-              env[:ui].info("Removing NAT rules on [#{cfg.vdc_edge_gateway}] for IP [#{cfg.vdc_edge_gateway_ip}].")
-              @logger.debug("Deleting Edge Gateway rules - vdc id: #{cfg.vdc_id}")
-              edge_remove = cnx.remove_edge_gateway_rules(cfg.vdc_edge_gateway, cfg.vdc_id, cfg.vdc_edge_gateway_ip, vAppId)
+              env[:ui].info(
+                "Removing NAT rules on [#{cfg.vdc_edge_gateway}] " + 
+                "for IP [#{cfg.vdc_edge_gateway_ip}]."
+              )
+              @logger.debug(
+                "Deleting Edge Gateway rules - vdc id: #{cfg.vdc_id}"
+              )
+              edge_remove = cnx.remove_edge_gateway_rules(
+                cfg.vdc_edge_gateway, 
+                cfg.vdc_id, 
+                cfg.vdc_edge_gateway_ip, 
+                vAppId
+              )
               cnx.wait_task_completion(edge_remove)
             end
 
@@ -42,14 +54,14 @@ module VagrantPlugins
 
             # FIXME: Look into this.
             ####env[:machine].provider.driver.delete
-            env[:machine].id=nil
-            env[:machine].vappid=nil
+            env[:machine].id = nil
+            env[:machine].vappid = nil
           else
             env[:ui].info("Destroying VM...")
             vmDeleteTask = cnx.delete_vm(vmId)
             @logger.debug("VM Delete task id #{vmDeleteTask}")
             cnx.wait_task_completion(vmDeleteTask)
-            env[:machine].id=nil
+            env[:machine].id = nil
           end
 
           @app.call env
