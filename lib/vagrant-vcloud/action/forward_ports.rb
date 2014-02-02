@@ -9,9 +9,6 @@ module VagrantPlugins
           @logger = Log4r::Logger.new("vagrant_vcloud::action::forward_ports")
         end
 
-        #--------------------------------------------------------------
-        # Execution
-        #--------------------------------------------------------------
         def call(env)
           @env = env
 
@@ -31,8 +28,12 @@ module VagrantPlugins
           vmName = @env[:machine].name
           vAppId = @env[:machine].get_vapp_id
 
-          cfg.org = cnx.get_organization_by_name(cfg.org_name)
-          cfg.vdc_network_id = cfg.org[:networks][cfg.vdc_network_name]
+          # FIXME: why are we overriding this here ? 
+          #        It's already been taken care during the initial InventoryCheck. 
+          #        (tsugliani)
+          #        
+          # cfg.org = cnx.get_organization_by_name(cfg.org_name)
+          # cfg.vdc_network_id = cfg.org[:networks][cfg.vdc_network_name]
 
           @logger.debug("Getting VM info...")
           vm = cnx.get_vapp(vAppId)
@@ -72,10 +73,10 @@ module VagrantPlugins
               vAppId,
               "Vagrant-vApp-Net",
               {
-                :fence_mode => "natRouted",
-                :parent_network => cfg.vdc_network_id,
-                :nat_policy_type => "allowTraffic",
-                :nat_rules => ports
+                :fence_mode       => "natRouted",
+                :parent_network   => cfg.vdc_network_id,
+                :nat_policy_type  => "allowTraffic",
+                :nat_rules        => ports
               }
             )
 
