@@ -136,6 +136,9 @@ module VagrantPlugins
           }
 
           response, headers = send_request(params)
+
+
+
           catalogs = {}
           response.css("Link[type='application/vnd.vmware.vcloud.catalog+xml']").each do |item|
             catalogs[item['name']] = item['href'].gsub("#{@api_url}/catalog/", "")
@@ -956,7 +959,11 @@ module VagrantPlugins
             'command' => "/vApp/vapp-#{vappid}/networkConfigSection"
           }
 
-          response, headers = send_request(params, builder.to_xml, "application/vnd.vmware.vcloud.networkConfigSection+xml")
+          response, headers = send_request(
+            params, 
+            builder.to_xml, 
+            "application/vnd.vmware.vcloud.networkConfigSection+xml"
+          )
 
           task_id = headers["Location"].gsub("#{@api_url}/task/", "")
           task_id
@@ -1116,14 +1123,20 @@ module VagrantPlugins
           edge_network_id = find_edge_gateway_network(edge_gateway_name, vdc_id, edge_gateway_ip)
           edge_gateway_id = find_edge_gateway_id(edge_gateway_name, vdc_id)
 
+          ### FIXME: tsugliani
+          # We need to check the previous variables, especially (edge_*)
+          # which can fail in some *weird* situations.
+
           params = {
-             'method' => :get,
-             'command' => "/admin/edgeGateway/#{edge_gateway_id}"
+             'method'   => :get,
+             'command'  => "/admin/edgeGateway/#{edge_gateway_id}"
            }
 
           response, headers = send_request(params)
 
-          interesting = response.css("EdgeGateway Configuration EdgeGatewayServiceConfiguration")
+          interesting = response.css(
+            "EdgeGateway Configuration EdgeGatewayServiceConfiguration"
+          )
 
           natRule1 = Nokogiri::XML::Node.new 'NatRule', response
             ruleType = Nokogiri::XML::Node.new 'RuleType', response
@@ -1241,6 +1254,7 @@ module VagrantPlugins
             enableLogging.content = "false"
             firewallRule1.add_child enableLogging
 
+
           builder = Nokogiri::XML::Builder.new
           builder << interesting
 
@@ -1249,7 +1263,6 @@ module VagrantPlugins
           end
 
           nat_rules = set_edge_rules.at_css("NatService")
-
           nat_rules << natRule1
           nat_rules << natRule2
 
@@ -1258,21 +1271,24 @@ module VagrantPlugins
 
           xml1 = set_edge_rules.at_css "EdgeGatewayServiceConfiguration"
           xml1["xmlns"] = "http://www.vmware.com/vcloud/v1.5"
-
  
         params = {
-          'method' => :post,
+          'method'  => :post,
           'command' => "/admin/edgeGateway/#{edge_gateway_id}/action/configureServices"
         }
 
-        response, headers = send_request(params, set_edge_rules.to_xml(:indent => 2), "application/vnd.vmware.admin.edgeGatewayServiceConfiguration+xml")
+        response, headers = send_request(
+          params, 
+          set_edge_rules.to_xml, 
+          "application/vnd.vmware.admin.edgeGatewayServiceConfiguration+xml"
+        )
 
         task_id = headers["Location"].gsub("#{@api_url}/task/", "")
         task_id
 
       end
 
-      def remove_edge_gateway_rules(edge_gateway_name, vdc_id, edge_gateway_ip, vAppId)
+        def remove_edge_gateway_rules(edge_gateway_name, vdc_id, edge_gateway_ip, vAppId)
 
           edge_vapp_ip = get_vapp_edge_public_ip(vAppId)
           edge_gateway_id = find_edge_gateway_id(edge_gateway_name, vdc_id)
@@ -1286,16 +1302,22 @@ module VagrantPlugins
           
           interesting = response.css("EdgeGateway Configuration EdgeGatewayServiceConfiguration")
           interesting.css("NatService NatRule").each do |node|
-            if node.css("RuleType").text == "DNAT" && node.css("GatewayNatRule/OriginalIp").text == edge_gateway_ip && node.css("GatewayNatRule/TranslatedIp").text == edge_vapp_ip
+            if node.css("RuleType").text == "DNAT" && 
+               node.css("GatewayNatRule/OriginalIp").text == edge_gateway_ip && 
+               node.css("GatewayNatRule/TranslatedIp").text == edge_vapp_ip
               node.remove
             end 
-            if node.css("RuleType").text == "SNAT" && node.css("GatewayNatRule/OriginalIp").text == edge_vapp_ip && node.css("GatewayNatRule/TranslatedIp").text == edge_gateway_ip
+            if node.css("RuleType").text == "SNAT" && 
+               node.css("GatewayNatRule/OriginalIp").text == edge_vapp_ip && 
+               node.css("GatewayNatRule/TranslatedIp").text == edge_gateway_ip
               node.remove
             end 
           end
 
           interesting.css("FirewallService FirewallRule").each do |node|
-            if node.css("Port").text == "-1" && node.css("DestinationIp").text == edge_gateway_ip && node.css("DestinationPortRange").text == "Any"
+            if node.css("Port").text == "-1" && 
+               node.css("DestinationIp").text == edge_gateway_ip && 
+               node.css("DestinationPortRange").text == "Any"
               node.remove
             end 
           end
@@ -1313,14 +1335,15 @@ module VagrantPlugins
             'command' => "/admin/edgeGateway/#{edge_gateway_id}/action/configureServices"
           }
 
-          response, headers = send_request(params, remove_edge_rules.to_xml, "application/vnd.vmware.admin.edgeGatewayServiceConfiguration+xml")
+          response, headers = send_request(
+            params, 
+            remove_edge_rules.to_xml, 
+            "application/vnd.vmware.admin.edgeGatewayServiceConfiguration+xml"
+          )
 
           task_id = headers["Location"].gsub("#{@api_url}/task/", "")
           task_id
-      end
-
-
-
+        end
 
         ##
         # get vApp edge public IP from the vApp ID
@@ -1612,11 +1635,15 @@ module VagrantPlugins
           end
 
           params = {
-            'method' => :put,
+            'method'  => :put,
             'command' => "/vApp/vm-#{vmid}/guestCustomizationSection"
           }
 
-          response, headers = send_request(params, builder.to_xml, "application/vnd.vmware.vcloud.guestCustomizationSection+xml")
+          response, headers = send_request(
+            params, 
+            builder.to_xml, 
+            "application/vnd.vmware.vcloud.guestCustomizationSection+xml"
+          )
           task_id = headers["Location"].gsub("#{@api_url}/task/", "")
           task_id
         end
