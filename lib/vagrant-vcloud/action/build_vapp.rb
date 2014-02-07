@@ -59,17 +59,17 @@ module VagrantPlugins
 
 
             network_options = { 
-              :name => "Vagrant-vApp-Net", 
-              :gateway => gatewayIp.to_s, 
-              :netmask => cidr.wildcard_mask, 
-              :start_address => rangeAddresses.first, 
-              :end_address => rangeAddresses.last, 
-              :fence_mode => "natRouted",
+              :name               => "Vagrant-vApp-Net", 
+              :gateway            => gatewayIp.to_s, 
+              :netmask            => cidr.wildcard_mask, 
+              :start_address      => rangeAddresses.first, 
+              :end_address        => rangeAddresses.last, 
+              :fence_mode         => "natRouted",
               :ip_allocation_mode => "POOL",
-              :parent_network =>  cfg.vdc_network_id,
-              :enable_firewall => "false",
-              :dns1 => dnsAddress1,
-              :dns2 => dnsAddress2
+              :parent_network     => cfg.vdc_network_id,
+              :enable_firewall    => "false",
+              :dns1               => dnsAddress1,
+              :dns2               => dnsAddress2
             }
 
           else
@@ -77,17 +77,17 @@ module VagrantPlugins
             @logger.debug("DNS1: #{dnsAddress1} DNS2: #{dnsAddress2}")
             # No IP subnet specified, reverting to defaults
             network_options = { 
-              :name => "Vagrant-vApp-Net", 
-              :gateway => "10.1.1.1", 
-              :netmask => "255.255.255.0", 
-              :start_address => "10.1.1.2", 
-              :end_address => "10.1.1.254", 
-              :fence_mode => "natRouted",
+              :name               => "Vagrant-vApp-Net", 
+              :gateway            => "10.1.1.1", 
+              :netmask            => "255.255.255.0", 
+              :start_address      => "10.1.1.2", 
+              :end_address        => "10.1.1.254", 
+              :fence_mode         => "natRouted",
               :ip_allocation_mode => "POOL",
-              :parent_network =>  cfg.vdc_network_id,
-              :enable_firewall => "false",
-              :dns1 => dnsAddress1,
-              :dns2 => dnsAddress2
+              :parent_network     => cfg.vdc_network_id,
+              :enable_firewall    => "false",
+              :dns1               => dnsAddress1,
+              :dns2               => dnsAddress2
             }
 
           end
@@ -98,8 +98,11 @@ module VagrantPlugins
 
             compose = cnx.compose_vapp_from_vm(
               cfg.vdc_id, 
-              "Vagrant-#{Etc.getlogin}-#{Socket.gethostname.downcase}-#{SecureRandom.hex(4)}",
-              "vApp created by #{Etc.getlogin} running on #{Socket.gethostname.downcase} using vagrant-vcloud on #{Time.now.strftime("%B %d, %Y")}",
+              "Vagrant-#{Etc.getlogin}-#{Socket.gethostname.downcase}-" + 
+              "#{SecureRandom.hex(4)}",
+              "vApp created by #{Etc.getlogin} running on " + 
+              "#{Socket.gethostname.downcase} using vagrant-vcloud on " +
+              "#{Time.now.strftime("%B %d, %Y")}",
               { 
                 vmName => cfg.catalog_item[:vms_hash][env[:machine].box.name.to_s][:id]
               }, 
@@ -134,12 +137,18 @@ module VagrantPlugins
 
               ### SET GUEST CONFIG
 
-              @logger.info("Setting Guest Customization on ID: [#{vmName}] of vApp [#{newVApp[:name]}]")
+              @logger.info(
+                "Setting Guest Customization on ID: [#{vmName}] " + 
+                "of vApp [#{newVApp[:name]}]"
+              )
 
-              setCustom = cnx.set_vm_guest_customization(newVMProperties[:id], vmName, {
-                :enabled => true,
-                :admin_passwd_enabled => false
-                })
+              setCustom = cnx.set_vm_guest_customization(
+                newVMProperties[:id], 
+                vmName, {
+                  :enabled              => true,
+                  :admin_passwd_enabled => false
+                }
+              )
               cnx.wait_task_completion(setCustom)
 
             else
@@ -173,12 +182,18 @@ module VagrantPlugins
 
               ### SET GUEST CONFIG
               
-              @logger.info("Setting Guest Customization on ID: [#{newVMProperties[:id]}] of vApp [#{newVApp[:name]}]")
+              @logger.info(
+                "Setting Guest Customization on ID: " +
+                "[#{newVMProperties[:id]}] of vApp [#{newVApp[:name]}]"
+              )
               
-              setCustom = cnx.set_vm_guest_customization(newVMProperties[:id], vmName, {
-                :enabled => true,
-                :admin_passwd_enabled => false
-                })
+              setCustom = cnx.set_vm_guest_customization(
+                newVMProperties[:id], 
+                vmName, {
+                  :enabled              => true,
+                  :admin_passwd_enabled => false
+                }
+              )
               cnx.wait_task_completion(setCustom)
 
             else
