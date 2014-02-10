@@ -18,6 +18,9 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency 'httpclient', '~> 2.3.4.1'
   s.add_runtime_dependency 'ruby-progressbar', '~> 1.1.1'
   s.add_runtime_dependency 'netaddr', '~> 1.5.0'
+  # Adding awesome_print because it's just awesome to read XML
+  s.add_runtime_dependency 'awesome_print', '~> 1.2.0'
+
 
   s.add_development_dependency "rake"
   s.add_development_dependency "rspec-core", "~> 2.12.2"
