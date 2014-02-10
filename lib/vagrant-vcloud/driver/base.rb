@@ -20,6 +20,8 @@ require "vagrant/util/busy"
 require "vagrant/util/platform"
 require "vagrant/util/retryable"
 require "vagrant/util/subprocess"
+require "awesome_print"
+
 
 
 module VagrantPlugins
@@ -211,7 +213,8 @@ module VagrantPlugins
         #
         # - vappid: id of the vapp to be modified
         # - network_name: name of the vapp network to be modified
-        # - config: hash with network configuration specifications, must contain an array inside :nat_rules with the nat rules to be applied.
+        # - config: hash with network configuration specifications, must contain 
+        #   an array inside :nat_rules with the nat rules to be applied.
         def set_vapp_port_forwarding_rules(vappid, network_name, config={})
         end
 
@@ -277,7 +280,8 @@ module VagrantPlugins
         private
 
           ##
-          # Sends a synchronous request to the vCloud API and returns the response as parsed XML + headers using HTTPClient.
+          # Sends a synchronous request to the vCloud API and returns the 
+          # response as parsed XML + headers using HTTPClient.
           def send_request(params, payload=nil, content_type=nil)
 
             # Create a new HTTP client
@@ -290,7 +294,6 @@ module VagrantPlugins
             clnt.ssl_config.verify_callback=proc{ |ok, ctx|; true };
             
             extheader = {}
-
             extheader["accept"] = "application/*+xml;version=#{@api_version}"
 
             if !content_type.nil?
@@ -305,23 +308,42 @@ module VagrantPlugins
 
             url = "#{@api_url}#{params['command']}"
 
+            # Massive debug when LOG=DEBUG 
+            # Using awesome_print to get nice XML output for better readability
+            if @logger.level == 1
+                ap "SEND #{url}"
+                if payload
+                    payloadXML = Nokogiri.XML(payload)
+                    ap payloadXML
+                end
+            end
+
             begin
               response = clnt.request(params['method'], url, nil, payload, extheader)
+              
               if !response.ok?
                 raise "Warning: unattended code #{response.status} #{response.reason}"
               end
 
-              [Nokogiri.parse(response.body), response.headers]
+              nicexml = Nokogiri.XML(response.body)
 
+              # Massive debug when LOG=DEBUG 
+              # Using awesome_print to get nice XML output for better readability
+              if @logger.level == 1
+                  ap "RECV #{response.status}" 
+                  # Just avoid the task spam.
+                  if !url.index("/task/")
+                      ap nicexml
+                  end
+              end
+
+              [Nokogiri.parse(response.body), response.headers]
             rescue SocketError
               raise "Impossible to connect, verify endpoint"
             rescue Errno::EADDRNOTAVAIL
               raise "Impossible to connect, verify endpoint"
             end
-
-
           end
-
 
           ##
           # Upload a large file in configurable chunks, output an optional progressbar
