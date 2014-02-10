@@ -144,7 +144,8 @@ module VagrantPlugins
 
               setCustom = cnx.set_vm_guest_customization(
                 newVMProperties[:id], 
-                vmName, {
+                vmName, 
+                {
                   :enabled              => true,
                   :admin_passwd_enabled => false
                 }
@@ -189,7 +190,8 @@ module VagrantPlugins
               
               setCustom = cnx.set_vm_guest_customization(
                 newVMProperties[:id], 
-                vmName, {
+                vmName, 
+                {
                   :enabled              => true,
                   :admin_passwd_enabled => false
                 }
