@@ -40,7 +40,8 @@ module VagrantPlugins
           rules = cnx.get_vapp_port_forwarding_rules(vAppId)
           
           rules.each do |rule|
-            if rule[:vapp_scoped_local_id] == myhash[:vapp_scoped_local_id] && rule[:nat_internal_port] == "22"              
+            if rule[:vapp_scoped_local_id] == myhash[:vapp_scoped_local_id] && 
+               rule[:nat_internal_port] == "22"              
               @externalIP = rule[:nat_external_ip]
               @externalPort = rule[:nat_external_port]
               break
@@ -48,7 +49,7 @@ module VagrantPlugins
           end
 
           if cfg.vdc_edge_gateway_ip && cfg.vdc_edge_gateway
-            @logger.debug("We're running vagrant behind an org edge")
+            @logger.debug("We're running vagrant behind an Organization vDC edge")
             @externalIP = cfg.vdc_edge_gateway_ip
           end
 
@@ -56,7 +57,7 @@ module VagrantPlugins
           # @logger.debug("Our variables: IP #{@externalIP} and Port #{@externalPort}")
 
           return {
-            # FIXME: these shouldn't be self
+              # FIXME: these shouldn't be self
               :host => @externalIP,
               :port => @externalPort
           }

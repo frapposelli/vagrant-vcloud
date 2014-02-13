@@ -17,7 +17,6 @@ module VagrantPlugins
 
           vAppId = env[:machine].get_vapp_id
           vmId = env[:machine].id
-          vmName = env[:machine].name
 
           testvApp = cnx.get_vapp(vAppId)
 

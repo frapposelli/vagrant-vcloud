@@ -54,10 +54,10 @@ module VagrantPlugins
             vAppId,
             "Vagrant-vApp-Net",
             {
-              :fence_mode => "natRouted",
-              :parent_network => cfg.vdc_network_id,
-              :nat_policy_type => "allowTraffic",
-              :nat_rules => newRuleSet
+              :fence_mode       => "natRouted",
+              :parent_network   => cfg.vdc_network_id,
+              :nat_policy_type  => "allowTraffic",
+              :nat_rules        => newRuleSet
             })
 
           wait = cnx.wait_task_completion(removePorts)
