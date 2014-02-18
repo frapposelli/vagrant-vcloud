@@ -288,10 +288,10 @@ module VagrantPlugins
             clnt = HTTPClient.new
 
             # Disable SSL cert verification
-            clnt.ssl_config.verify_mode=(OpenSSL::SSL::VERIFY_NONE)
+            clnt.ssl_config.verify_mode = (OpenSSL::SSL::VERIFY_NONE)
 
             # Suppress SSL depth message
-            clnt.ssl_config.verify_callback=proc{ |ok, ctx|; true };
+            clnt.ssl_config.verify_callback = proc{ |ok, ctx|; true };
             
             extheader = {}
             extheader["accept"] = "application/*+xml;version=#{@api_version}"
@@ -311,11 +311,11 @@ module VagrantPlugins
             # Massive debug when LOG=DEBUG 
             # Using awesome_print to get nice XML output for better readability
             if @logger.level == 1
-                ap "SEND #{url}"
-                if payload
-                    payloadXML = Nokogiri.XML(payload)
-                    ap payloadXML
-                end
+              ap "SEND #{url}"
+              if payload
+                payloadXML = Nokogiri.XML(payload)
+                ap payloadXML
+              end
             end
 
             begin
@@ -330,11 +330,11 @@ module VagrantPlugins
               # Massive debug when LOG=DEBUG 
               # Using awesome_print to get nice XML output for better readability
               if @logger.level == 1
-                  ap "RECV #{response.status}" 
-                  # Just avoid the task spam.
-                  if !url.index("/task/")
-                      ap nicexml
-                  end
+                ap "RECV #{response.status}" 
+                # Just avoid the task spam.
+                if !url.index("/task/")
+                  ap nicexml
+                end
               end
 
               [Nokogiri.parse(response.body), response.headers]
@@ -365,13 +365,14 @@ module VagrantPlugins
             progressBarTitle = "Uploading: " + fileName.to_s
 
             # Create a progressbar object if progress bar is enabled
-            if config[:progressbar_enable] == true && uploadFileHandle.size.to_i > chunkSize
+            if config[:progressbar_enable] == true && 
+               uploadFileHandle.size.to_i > chunkSize
               progressbar = ProgressBar.create(
-                :title => progressBarTitle,
-                :starting_at => 0,
-                :total => uploadFileHandle.size.to_i,
+                :title        => progressBarTitle,
+                :starting_at  => 0,
+                :total        => uploadFileHandle.size.to_i,
                 ##:length => progressBarLength,
-                :format => progressBarFormat
+                :format       => progressBarFormat
               )
             else
               puts progressBarTitle
@@ -380,10 +381,10 @@ module VagrantPlugins
             clnt = HTTPClient.new
 
             # Disable SSL cert verification
-            clnt.ssl_config.verify_mode=(OpenSSL::SSL::VERIFY_NONE)
+            clnt.ssl_config.verify_mode = (OpenSSL::SSL::VERIFY_NONE)
 
             # Suppress SSL depth message
-            clnt.ssl_config.verify_callback=proc{ |ok, ctx|; true };
+            clnt.ssl_config.verify_callback = proc{ |ok, ctx|; true };
 
             # Perform ranged upload until the file reaches its end
             until uploadFileHandle.eof?
@@ -406,9 +407,9 @@ module VagrantPlugins
 
               # Build headers
               extheader = {
-                'x-vcloud-authorization' => @auth_key,
-                'Content-Range' => contentRange,
-                'Content-Length' => rangeLen.to_s
+                'x-vcloud-authorization'  => @auth_key,
+                'Content-Range'           => contentRange,
+                'Content-Length'          => rangeLen.to_s
               }
 
               begin
@@ -417,7 +418,7 @@ module VagrantPlugins
 
                 if config[:progressbar_enable] == true && uploadFileHandle.size.to_i > chunkSize
                   params = {
-                    'method' => :get,
+                    'method'  => :get,
                     'command' => "/vAppTemplate/vappTemplate-#{vAppTemplate}"
                   }
                   response, headers = send_request(params)

@@ -128,10 +128,10 @@ module VagrantPlugins
           clnt = HTTPClient.new
 
           # Disable SSL cert verification
-          clnt.ssl_config.verify_mode=(OpenSSL::SSL::VERIFY_NONE)
+          clnt.ssl_config.verify_mode = (OpenSSL::SSL::VERIFY_NONE)
 
           # Suppress SSL depth message
-          clnt.ssl_config.verify_callback=proc{ |ok, ctx|; true };
+          clnt.ssl_config.verify_callback = proc{ |ok, ctx|; true };
           
           url = "#{host_url}/api/versions"
 
