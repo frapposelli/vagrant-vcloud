@@ -1344,7 +1344,6 @@ module VagrantPlugins
         def get_edge_gateway_rules(edge_gateway_name, vdc_id)
           
           edge_gateway_id = find_edge_gateway_id(edge_gateway_name, vdc_id)
-          ap edge_gateway_id
 
            params = {
              'method'  => :get,
