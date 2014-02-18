@@ -1,5 +1,5 @@
-require "pathname"
-require "vagrant/action/builder"
+require 'pathname'
+require 'vagrant/action/builder'
 
 module VagrantPlugins
   module VCloud
