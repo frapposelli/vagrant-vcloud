@@ -27,6 +27,8 @@ module VagrantPlugins
       class Version_5_1 < Base
         attr_reader :auth_key, :id
         
+        ## 
+        # Init the driver with the Vagrantfile information
         def initialize(host, username, password, org_name)
 
           @logger = Log4r::Logger.new("vagrant::provider::vcloud::driver_5_1")
@@ -45,7 +47,7 @@ module VagrantPlugins
         # Authenticate against the specified server
         def login
           params = {
-            'method' => :post,
+            'method'  => :post,
             'command' => '/sessions'
           }
 
@@ -62,7 +64,7 @@ module VagrantPlugins
         # Destroy the current session
         def logout
           params = {
-            'method' => :delete,
+            'method'  => :delete,
             'command' => '/session'
           }
 
@@ -75,7 +77,7 @@ module VagrantPlugins
         # Fetch existing organizations and their IDs
         def get_organizations
           params = {
-            'method' => :get,
+            'method'  => :get,
             'command' => '/org'
           }
 
@@ -131,13 +133,11 @@ module VagrantPlugins
         # - networks
         def get_organization(orgId)
           params = {
-            'method' => :get,
+            'method'  => :get,
             'command' => "/org/#{orgId}"
           }
 
           response, headers = send_request(params)
-
-
 
           catalogs = {}
           response.css("Link[type='application/vnd.vmware.vcloud.catalog+xml']").each do |item|
@@ -166,7 +166,7 @@ module VagrantPlugins
         # Fetch details about a given catalog
         def get_catalog(catalogId)
           params = {
-            'method' => :get,
+            'method'  => :get,
             'command' => "/catalog/#{catalogId}"
           }
 
@@ -220,7 +220,7 @@ module VagrantPlugins
         # - networks
         def get_vdc(vdcId)
           params = {
-            'method' => :get,
+            'method'  => :get,
             'command' => "/vdc/#{vdcId}"
           }
 
@@ -278,7 +278,7 @@ module VagrantPlugins
         # - vApp templates
         def get_catalog_item(catalogItemId)
           params = {
-            'method' => :get,
+            'method'  => :get,
             'command' => "/catalogItem/#{catalogItemId}"
           }
 
@@ -312,7 +312,7 @@ module VagrantPlugins
 
               # Fetch the catalogItemId information
               params = {
-                'method' => :get,
+                'method'  => :get,
                 'command' => "/vAppTemplate/vappTemplate-#{catalogItemId}"
               }
               response, headers = send_request(params)
@@ -344,7 +344,7 @@ module VagrantPlugins
         #   -- ID
         def get_vapp(vAppId)
           params = {
-            'method' => :get,
+            'method'  => :get,
             'command' => "/vApp/vapp-#{vAppId}"
           }
 
@@ -370,9 +370,9 @@ module VagrantPlugins
             vapp_local_id = vm.css('VAppScopedLocalId')
             addresses = vm.css('rasd|Connection').collect{|n| n['vcloud:ipAddress'] || n['ipAddress'] }
             vms_hash[vm['name'].to_sym] = {
-              :addresses => addresses,
-              :status => convert_vapp_status(vm['status']),
-              :id => vm['href'].gsub("#{@api_url}/vApp/vm-", ''),
+              :addresses            => addresses,
+              :status               => convert_vapp_status(vm['status']),
+              :id                   => vm['href'].gsub("#{@api_url}/vApp/vm-", ''),
               :vapp_scoped_local_id => vapp_local_id.text
             }
           end
@@ -386,7 +386,7 @@ module VagrantPlugins
         # NOTE: It doesn't verify that the vapp is shutdown
         def delete_vapp(vAppId)
           params = {
-            'method' => :delete,
+            'method'  => :delete,
             'command' => "/vApp/vapp-#{vAppId}"
           }
 
@@ -406,12 +406,15 @@ module VagrantPlugins
           end
 
           params = {
-            'method' => :post,
+            'method'  => :post,
             'command' => "/vApp/vapp-#{vAppId}/action/undeploy"
           }
 
-          response, headers = send_request(params, builder.to_xml,
-                          "application/vnd.vmware.vcloud.undeployVAppParams+xml")
+          response, headers = send_request(
+            params, 
+            builder.to_xml,
+            "application/vnd.vmware.vcloud.undeployVAppParams+xml"
+          )
           task_id = headers["Location"].gsub("#{@api_url}/task/", "")
           task_id
         end
@@ -420,7 +423,7 @@ module VagrantPlugins
         # Suspend a given vapp
         def suspend_vapp(vAppId)
           params = {
-            'method' => :post,
+            'method'  => :post,
             'command' => "/vApp/vapp-#{vAppId}/power/action/suspend"
           }
 
@@ -436,7 +439,7 @@ module VagrantPlugins
         # vShield Edge devices are not affected
         def reboot_vapp(vAppId)
           params = {
-            'method' => :post,
+            'method'  => :post,
             'command' => "/vApp/vapp-#{vAppId}/power/action/reboot"
           }
 
@@ -451,7 +454,7 @@ module VagrantPlugins
         # vShield Edge devices are not affected.
         def reset_vapp(vAppId)
           params = {
-            'method' => :post,
+            'method'  => :post,
             'command' => "/vApp/vapp-#{vAppId}/power/action/reset"
           }
 
@@ -464,7 +467,7 @@ module VagrantPlugins
         # Boot a given vapp
         def poweron_vapp(vAppId)
           params = {
-            'method' => :post,
+            'method'  => :post,
             'command' => "/vApp/vapp-#{vAppId}/power/action/powerOn"
           }
 
@@ -479,7 +482,7 @@ module VagrantPlugins
         # NOTE: It doesn't verify that the vm is shutdown
         def delete_vm(vmId)
           params = {
-            'method' => :delete,
+            'method'  => :delete,
             'command' => "/vApp/vm-#{vmId}"
           }
 
@@ -501,12 +504,15 @@ module VagrantPlugins
           end
 
           params = {
-            'method' => :post,
+            'method'  => :post,
             'command' => "/vApp/vm-#{vmId}/action/undeploy"
           }
 
-          response, headers = send_request(params, builder.to_xml,
-                          "application/vnd.vmware.vcloud.undeployVAppParams+xml")
+          response, headers = send_request(
+            params, 
+            builder.to_xml,
+            "application/vnd.vmware.vcloud.undeployVAppParams+xml"
+          )
           task_id = headers["Location"].gsub("#{@api_url}/task/", "")
           task_id
         end
@@ -522,12 +528,15 @@ module VagrantPlugins
           end
 
           params = {
-            'method' => :post,
+            'method'  => :post,
             'command' => "/vApp/vm-#{vmId}/action/undeploy"
           }
 
-          response, headers = send_request(params, builder.to_xml,
-                          "application/vnd.vmware.vcloud.undeployVAppParams+xml")
+          response, headers = send_request(
+            params, 
+            builder.to_xml,
+            "application/vnd.vmware.vcloud.undeployVAppParams+xml"
+          )
           task_id = headers["Location"].gsub("#{@api_url}/task/", "")
           task_id
         end
@@ -539,7 +548,7 @@ module VagrantPlugins
         # vShield Edge devices are not affected
         def reboot_vm(vmId)
           params = {
-            'method' => :post,
+            'method'  => :post,
             'command' => "/vApp/vm-#{vmId}/power/action/reboot"
           }
 
@@ -554,7 +563,7 @@ module VagrantPlugins
         # vShield Edge devices are not affected.
         def reset_vm(vmId)
           params = {
-            'method' => :post,
+            'method'  => :post,
             'command' => "/vApp/vm-#{vmId}/power/action/reset"
           }
 
@@ -567,7 +576,7 @@ module VagrantPlugins
         # Boot a given VM
         def poweron_vm(vmId)
           params = {
-            'method' => :post,
+            'method'  => :post,
             'command' => "/vApp/vm-#{vmId}/power/action/powerOn"
           }
 
@@ -584,7 +593,7 @@ module VagrantPlugins
         # Boot a given vm
         def poweron_vm(vmId)
           params = {
-            'method' => :post,
+            'method'  => :post,
             'command' => "/vApp/vm-#{vmId}/power/action/powerOn"
           }
 
@@ -609,20 +618,20 @@ module VagrantPlugins
           end
 
           params = {
-            'method' => :post,
+            'method'  => :post,
             'command' => "/admin/org/#{orgId}/catalogs"
 
           }
 
-          response, headers = send_request(params, builder.to_xml,
-                          "application/vnd.vmware.admin.catalog+xml")
+          response, headers = send_request(
+            params, 
+            builder.to_xml,
+            "application/vnd.vmware.admin.catalog+xml"
+          )
           task_id = response.css("AdminCatalog Tasks Task[operationName='catalogCreateCatalog']").first[:href].gsub("#{@api_url}/task/","")
           catalog_id = response.css("AdminCatalog Link [type='application/vnd.vmware.vcloud.catalog+xml']").first[:href].gsub("#{@api_url}/catalog/","")
           { :task_id => task_id, :catalog_id => catalog_id }
         end
-
-
-
 
         ##
         # Create a vapp starting from a template
@@ -647,11 +656,15 @@ module VagrantPlugins
           end
 
           params = {
-            "method" => :post,
+            "method"  => :post,
             "command" => "/vdc/#{vdc}/action/instantiateVAppTemplate"
           }
 
-          response, headers = send_request(params, builder.to_xml, "application/vnd.vmware.vcloud.instantiateVAppTemplateParams+xml")
+          response, headers = send_request(
+            params, 
+            builder.to_xml, 
+            "application/vnd.vmware.vcloud.instantiateVAppTemplateParams+xml"
+          )
 
           vapp_id = headers["Location"].gsub("#{@api_url}/vApp/vapp-", "")
 
@@ -742,11 +755,15 @@ module VagrantPlugins
           end
 
           params = {
-            "method" => :post,
+            "method"  => :post,
             "command" => "/vdc/#{vdc}/action/composeVApp"
           }
 
-          response, headers = send_request(params, builder.to_xml, "application/vnd.vmware.vcloud.composeVAppParams+xml")
+          response, headers = send_request(
+            params, 
+            builder.to_xml, 
+            "application/vnd.vmware.vcloud.composeVAppParams+xml"
+          )
 
           vapp_id = headers["Location"].gsub("#{@api_url}/vApp/vapp-", "")
 
@@ -802,11 +819,15 @@ module VagrantPlugins
           end
 
           params = {
-            "method" => :post,
+            "method"  => :post,
             "command" => "/vApp/vapp-#{vAppId}/action/recomposeVApp"
           }
 
-          response, headers = send_request(params, builder.to_xml, "application/vnd.vmware.vcloud.recomposeVAppParams+xml")
+          response, headers = send_request(
+            params, 
+            builder.to_xml, 
+            "application/vnd.vmware.vcloud.recomposeVAppParams+xml"
+          )
 
           vapp_id = headers["Location"].gsub("#{@api_url}/vApp/vapp-", "")
 
@@ -826,7 +847,7 @@ module VagrantPlugins
         #   -- ID
         def get_vapp_template(vAppId)
           params = {
-            'method' => :get,
+            'method'  => :get,
             'command' => "/vAppTemplate/vappTemplate-#{vAppId}"
           }
 
@@ -897,11 +918,15 @@ module VagrantPlugins
           end
 
           params = {
-            'method' => :put,
+            'method'  => :put,
             'command' => "/vApp/vapp-#{vappid}/networkConfigSection"
           }
 
-          response, headers = send_request(params, builder.to_xml, "application/vnd.vmware.vcloud.networkConfigSection+xml")
+          response, headers = send_request(
+            params, 
+            builder.to_xml, 
+            "application/vnd.vmware.vcloud.networkConfigSection+xml"
+          )
 
           task_id = headers["Location"].gsub("#{@api_url}/task/", "")
           task_id
@@ -955,7 +980,7 @@ module VagrantPlugins
           end
 
           params = {
-            'method' => :put,
+            'method'  => :put,
             'command' => "/vApp/vapp-#{vappid}/networkConfigSection"
           }
 
@@ -980,7 +1005,7 @@ module VagrantPlugins
         
         def get_vapp_port_forwarding_rules(vAppId)
           params = {
-            'method' => :get,
+            'method'  => :get,
             'command' => "/vApp/vapp-#{vAppId}/networkConfigSection"
           }
 
@@ -1020,7 +1045,7 @@ module VagrantPlugins
         # - vappid: id of the vApp
         def get_vapp_port_forwarding_external_ports(vAppId)
           params = {
-            'method' => :get,
+            'method'  => :get,
             'command' => "/vApp/vapp-#{vAppId}/networkConfigSection"
           }
 
@@ -1046,11 +1071,19 @@ module VagrantPlugins
           nat_rules
         end
 
-
+        ##
+        # Find an edge gateway id from the edge name and vdc_id
+        # 
+        # - edge_gateway_name: Name of the vSE
+        # - vdc_id: virtual datacenter id
+        # 
         def find_edge_gateway_id(edge_gateway_name, vdc_id)
           params = {
-            'method' => :get,
-            'command' => "/query?type=edgeGateway&format=records&filter=vdc==#{@api_url}/vdc/#{vdc_id}&filter=name==#{edge_gateway_name}"
+            'method'  => :get,
+            'command' => "/query?type=edgeGateway&" +
+                         "format=records&" +
+                         "filter=vdc==#{@api_url}/vdc/#{vdc_id}&" +
+                         "filter=name==#{edge_gateway_name}"
           }
 
           response, headers = send_request(params)
@@ -1064,11 +1097,22 @@ module VagrantPlugins
           end
         end
 
+        ##
+        # Find an edge gateway network from the edge name and vdc_id, and ip
+        # 
+        # - edge_gateway_name: Name of the vSE
+        # - vdc_id: virtual datacenter id
+        # - edge_gateway_ip: public ip associated to that vSE
+        # 
+
         def find_edge_gateway_network(edge_gateway_name, vdc_id, edge_gateway_ip)
 
           params = {
-            'method' => :get,
-            'command' => "/query?type=edgeGateway&format=records&filter=vdc==#{@api_url}/vdc/#{vdc_id}&filter=name==#{edge_gateway_name}"
+            'method'  => :get,
+            'command' => "/query?type=edgeGateway&" + 
+                         "format=records&" + 
+                         "filter=vdc==#{@api_url}/vdc/#{vdc_id}&" + 
+                         "filter=name==#{edge_gateway_name}"
           }
 
           response, headers = send_request(params)
@@ -1080,7 +1124,7 @@ module VagrantPlugins
           end
 
           params = {
-            'method' => :get,
+            'method'  => :get,
             'command' => "/admin/edgeGateway/#{edgeGatewayId}"
           }
 
@@ -1254,6 +1298,8 @@ module VagrantPlugins
             enableLogging.content = "false"
             firewallRule1.add_child enableLogging
 
+          # FIXME: Think about adding an outgoing rule (which could not be available)
+          #        by default in all cases vapp_edge_ip -> any
 
           builder = Nokogiri::XML::Builder.new
           builder << interesting
@@ -1288,13 +1334,86 @@ module VagrantPlugins
 
       end
 
+
+        ##
+        # Get Org Edge port forwarding and firewall rules
+        #
+        # - vappid: id of the vapp to be modified
+        # - network_name: name of the vapp network to be modified
+        # - config: hash with network configuration specifications, must contain an array inside :nat_rules with the nat rules to be applied.
+        def get_edge_gateway_rules(edge_gateway_name, vdc_id)
+          
+          edge_gateway_id = find_edge_gateway_id(edge_gateway_name, vdc_id)
+
+           params = {
+             'method'  => :get,
+             'command' => "/admin/edgeGateway/#{edge_gateway_id}"
+           }
+
+          response, headers = send_request(params)
+
+          nat_fw_rules = []
+
+          interesting = response.css("EdgeGateway Configuration EdgeGatewayServiceConfiguration")
+          interesting.css("NatService NatRule").each do |node|
+            if node.css("RuleType").text == "DNAT"
+              nat_fw_rules << {
+                :rule_type        => "DNAT",
+                :original_ip      => node.css("GatewayNatRule/OriginalIp").text,
+                :original_port    => node.css("GatewayNatRule/OriginalPort").text,
+                :translated_ip    => node.css("GatewayNatRule/TranslatedIp").text,
+                :translated_port  => node.css("GatewayNatRule/TranslatedPort").text,
+                :protocol         => node.css("GatewayNatRule/Protocol").text,
+                :is_enabled       => node.css("IsEnabled").text,
+              }
+
+            end 
+            if node.css("RuleType").text == "SNAT"
+              nat_fw_rules << {
+                :rule_type      => "SNAT",
+                :interface_name => node.css("GatewayNatRule/Interface").first["name"],
+                :original_ip    => node.css("GatewayNatRule/OriginalIp").text,
+                :translated_ip  => node.css("GatewayNatRule/TranslatedIp").text,
+                :is_enabled     => node.css("IsEnabled").text,
+              }
+
+            end 
+          end
+
+          interesting.css("FirewallService FirewallRule").each do |node|
+            if node.css("Port").text == "-1"
+              nat_fw_rules << {
+                :rule_type             => "Firewall",
+                :id                    => node.css("Id").text,
+                :policy                => node.css("Policy").text,
+                :description           => node.css("Description").text,
+                :destination_ip        => node.css("DestinationIp").text,
+                :destination_portrange => node.css("DestinationPortRange").text,
+                :source_ip             => node.css("SourceIp").text,
+                :source_portrange      => node.css("SourcePortRange").text,
+                :is_enabled            => node.css("IsEnabled").text,
+              }
+            end 
+          end
+
+          nat_fw_rules
+        end
+
+        ##
+        # Remove NAT/FW rules from a edge gateway device
+        #
+        # - edge_gateway_name: Name of the vSE
+        # - vdc_id: virtual datacenter id
+        # - edge_gateway_ip: public ip associated the vSE
+        # - vAppId: vApp identifier to correlate with the vApp Edge
+
         def remove_edge_gateway_rules(edge_gateway_name, vdc_id, edge_gateway_ip, vAppId)
 
           edge_vapp_ip = get_vapp_edge_public_ip(vAppId)
           edge_gateway_id = find_edge_gateway_id(edge_gateway_name, vdc_id)
 
            params = {
-             'method' => :get,
+             'method'  => :get,
              'command' => "/admin/edgeGateway/#{edge_gateway_id}"
            }
 
@@ -1331,7 +1450,7 @@ module VagrantPlugins
           xml1["xmlns"] = "http://www.vmware.com/vcloud/v1.5"
   
           params = {
-            'method' => :post,
+            'method'  => :post,
             'command' => "/admin/edgeGateway/#{edge_gateway_id}/action/configureServices"
           }
 
@@ -1408,7 +1527,7 @@ module VagrantPlugins
           end
 
           params = {
-            'method' => :post,
+            'method'  => :post,
             'command' => "/vdc/#{vdcId}/action/uploadVAppTemplate"
           }
 
@@ -1438,7 +1557,7 @@ module VagrantPlugins
           # Begin the catch for upload interruption
           begin
             params = {
-              'method' => :get,
+              'method'  => :get,
               'command' => "/vAppTemplate/vappTemplate-#{vAppTemplate}"
             }
 
@@ -1464,7 +1583,7 @@ module VagrantPlugins
 
             # Start uploading OVF VMDK files
             params = {
-              'method' => :get,
+              'method'  => :get,
               'command' => "/vAppTemplate/vappTemplate-#{vAppTemplate}"
             }
             response, headers = send_request(params)
@@ -1489,11 +1608,14 @@ module VagrantPlugins
             end
 
             params = {
-              'method' => :post,
+              'method'  => :post,
               'command' => "/catalog/#{catalogId}/catalogItems"
             }
-            response, headers = send_request(params, builder.to_xml,
-                            "application/vnd.vmware.vcloud.catalogItem+xml")
+            response, headers = send_request(
+              params, 
+              builder.to_xml,
+              "application/vnd.vmware.vcloud.catalogItem+xml"
+            )
 
             task_id
 
@@ -1505,7 +1627,7 @@ module VagrantPlugins
 
             # Get vAppTemplate Task
             params = {
-              'method' => :get,
+              'method'  => :get,
               'command' => "/vAppTemplate/vappTemplate-#{vAppTemplate}"
             }
             response, headers = send_request(params)
@@ -1513,7 +1635,7 @@ module VagrantPlugins
             # Cancel Task
             cancelHook = response.css("Tasks Task Link [rel='task:cancel']").first[:href].gsub("#{@api_url}","")
             params = {
-              'method' => :post,
+              'method'  => :post,
               'command' => cancelHook
             }
             response, headers = send_request(params)
@@ -1525,7 +1647,7 @@ module VagrantPlugins
         # Fetch information for a given task
         def get_task(taskid)
           params = {
-            'method' => :get,
+            'method'  => :get,
             'command' => "/task/#{taskid}"
           }
 
@@ -1536,7 +1658,12 @@ module VagrantPlugins
           start_time = task['startTime']
           end_time = task['endTime']
 
-          { :status => status, :start_time => start_time, :end_time => end_time, :response => response }
+          { 
+            :status     => status, 
+            :start_time => start_time, 
+            :end_time   => end_time, 
+            :response   => response 
+          }
         end
 
         ##
@@ -1557,7 +1684,12 @@ module VagrantPlugins
             errormsg = "Error code #{errormsg['majorErrorCode']} - #{errormsg['message']}"
           end
 
-          { :status => task[:status], :errormsg => errormsg, :start_time => task[:start_time], :end_time => task[:end_time] }
+          { 
+            :status     => task[:status], 
+            :errormsg   => errormsg, 
+            :start_time => task[:start_time], 
+            :end_time   => task[:end_time] 
+          }
         end
 
         ##
@@ -1579,11 +1711,15 @@ module VagrantPlugins
           end
 
           params = {
-            'method' => :put,
+            'method'  => :put,
             'command' => "/vApp/vapp-#{vappid}/networkConfigSection"
           }
 
-          response, headers = send_request(params, builder.to_xml, "application/vnd.vmware.vcloud.networkConfigSection+xml")
+          response, headers = send_request(
+            params, 
+            builder.to_xml, 
+            "application/vnd.vmware.vcloud.networkConfigSection+xml"
+          )
 
           task_id = headers["Location"].gsub("#{@api_url}/task/", "")
           task_id
@@ -1608,11 +1744,15 @@ module VagrantPlugins
           end
 
           params = {
-            'method' => :put,
+            'method'  => :put,
             'command' => "/vApp/vm-#{vmid}/networkConnectionSection"
           }
 
-          response, headers = send_request(params, builder.to_xml, "application/vnd.vmware.vcloud.networkConnectionSection+xml")
+          response, headers = send_request(
+            params, 
+            builder.to_xml, 
+            "application/vnd.vmware.vcloud.networkConnectionSection+xml"
+          )
 
           task_id = headers["Location"].gsub("#{@api_url}/task/", "")
           task_id
@@ -1652,7 +1792,7 @@ module VagrantPlugins
         # Fetch details about a given VM
         def get_vm(vmId)
           params = {
-            'method' => :get,
+            'method'  => :get,
             'command' => "/vApp/vm-#{vmId}"
           }
 

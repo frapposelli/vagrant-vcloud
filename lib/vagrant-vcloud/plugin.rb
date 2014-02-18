@@ -29,6 +29,14 @@ module VagrantPlugins
         Provider
       end
 
+      # Added a vagrant vcloud-status command to enhance troubleshooting and
+      # visibility.
+      command('vcloud-status') do
+        require_relative 'command'
+        Command
+      end
+
+
       def self.setup_i18n
         I18n.load_path << File.expand_path("locales/en.yml", VCloud.source_root)
         I18n.reload!

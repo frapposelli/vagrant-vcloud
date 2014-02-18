@@ -55,7 +55,9 @@ module VagrantPlugins
             "5.5" => Version_5_1 # Binding vCloud 5.5 API on our current 5.1 implementation
           }
 
-          if @version.start_with?("0.9") || @version.start_with?("1.0") || @version.start_with?("1.5")
+          if @version.start_with?("0.9") || 
+             @version.start_with?("1.0") || 
+             @version.start_with?("1.5")
             # We support only vCloud Director 5.1 or higher so show error.
             raise Errors::VCloudOldVersion, :version => @version
           end
@@ -126,10 +128,10 @@ module VagrantPlugins
           clnt = HTTPClient.new
 
           # Disable SSL cert verification
-          clnt.ssl_config.verify_mode=(OpenSSL::SSL::VERIFY_NONE)
+          clnt.ssl_config.verify_mode = (OpenSSL::SSL::VERIFY_NONE)
 
           # Suppress SSL depth message
-          clnt.ssl_config.verify_callback=proc{ |ok, ctx|; true };
+          clnt.ssl_config.verify_callback = proc{ |ok, ctx|; true };
           
           url = "#{host_url}/api/versions"
 

@@ -64,9 +64,13 @@ module VagrantPlugins
               hostpath = hostpath.gsub(/^(\w):/) { "/cygdrive/#{$1}" }
             end
 
-            env[:ui].info(I18n.t("vagrant_vcloud.rsync_folder",
-                                :hostpath => hostpath,
-                                :guestpath => guestpath))
+            env[:ui].info(
+              I18n.t(
+                "vagrant_vcloud.rsync_folder",
+                :hostpath   => hostpath,
+                :guestpath  => guestpath
+              )
+            )
 
             # Create the host path if it doesn't exist and option flag is set
             if data[:create]

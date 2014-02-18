@@ -51,9 +51,6 @@ module VagrantPlugins
             @logger.debug("vApp Delete task id #{vAppDeleteTask}")
             cnx.wait_task_completion(vAppDeleteTask)
 
-
-            # FIXME: Look into this.
-            ####env[:machine].provider.driver.delete
             env[:machine].id = nil
             env[:machine].vappid = nil
           else
@@ -61,6 +58,7 @@ module VagrantPlugins
             vmDeleteTask = cnx.delete_vm(vmId)
             @logger.debug("VM Delete task id #{vmDeleteTask}")
             cnx.wait_task_completion(vmDeleteTask)
+
             env[:machine].id = nil
           end
 
