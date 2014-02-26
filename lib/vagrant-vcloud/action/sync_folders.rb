@@ -83,12 +83,16 @@ module VagrantPlugins
             env[:machine].communicate.sudo("mkdir -p '#{guestpath}'")
             env[:machine].communicate.sudo(
               "chown #{ssh_info[:username]} '#{guestpath}'")
+              
+            # Since Vagrant 1.4 the private key path may be an array
+            ssh_key_paths = ssh_info[:private_key_path].is_a?(Array) ? ssh_info[:private_key_path] : [ ssh_info[:private_key_path] ]
+            ssh_keys = ssh_key_paths.map {|p| "-i '#{p}'"}.join(" ")
 
             # Rsync over to the guest path using the SSH info
             command = [
               "rsync", "--verbose", "--archive", "-z",
               "--exclude", ".vagrant/", "--exclude", "Vagrantfile",
-              "-e", "ssh -p #{ssh_info[:port]} -o StrictHostKeyChecking=no -i '#{ssh_info[:private_key_path]}'",
+              "-e", "ssh -p #{ssh_info[:port]} -o StrictHostKeyChecking=no #{ssh_keys}",
               hostpath,
               "#{ssh_info[:username]}@#{ssh_info[:host]}:#{guestpath}"]
 
