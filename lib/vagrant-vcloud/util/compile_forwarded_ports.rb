@@ -1,4 +1,4 @@
-require "vagrant/util/scoped_hash_override"
+require 'vagrant/util/scoped_hash_override'
 
 module VagrantPlugins
   module VCloud

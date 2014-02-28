@@ -15,9 +15,9 @@
 #  limitations under the License.
 #
 
-require "ruby-progressbar"
-require "set"
-require "netaddr"
+require 'ruby-progressbar'
+require 'set'
+require 'netaddr'
 
 module VagrantPlugins
   module VCloud
@@ -31,7 +31,7 @@ module VagrantPlugins
         # Init the driver with the Vagrantfile information
         def initialize(host, username, password, org_name)
 
-          @logger = Log4r::Logger.new("vagrant::provider::vcloud::driver_5_1")
+          @logger = Log4r::Logger.new('vagrant::provider::vcloud::driver_5_1')
 
           @host = host
           @api_url = "#{host}/api"
@@ -68,7 +68,7 @@ module VagrantPlugins
             'command' => '/session'
           }
 
-          response, headers = send_request(params)
+          response, _headers = send_request(params)
           # reset auth key to nil
           @auth_key = nil
         end
@@ -81,12 +81,12 @@ module VagrantPlugins
             'command' => '/org'
           }
 
-          response, headers = send_request(params)
+          response, _headers = send_request(params)
           orgs = response.css('OrgList Org')
 
           results = {}
           orgs.each do |org|
-            results[org['name']] = org['href'].gsub("#{@api_url}/org/", "")
+            results[org['name']] = org['href'].gsub("#{@api_url}/org/", '')
           end
           results
         end
@@ -98,7 +98,7 @@ module VagrantPlugins
           result = nil
 
           # Fetch all organizations
-          organizations = get_organizations()
+          organizations = get_organizations
 
           organizations.each do |organization|
             if organization[0].downcase == name.downcase
@@ -108,7 +108,6 @@ module VagrantPlugins
           result
         end
 
-
         ##
         # friendly helper method to fetch an Organization by name
         # - name (this isn't case sensitive)
@@ -116,7 +115,7 @@ module VagrantPlugins
           result = nil
 
           # Fetch all organizations
-          organizations = get_organizations()
+          organizations = get_organizations
 
           organizations.each do |organization|
             if organization[0].downcase == name.downcase
