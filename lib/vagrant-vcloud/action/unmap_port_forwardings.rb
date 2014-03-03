@@ -1,6 +1,4 @@
-require "set"
-
-require "log4r"
+require 'set'
 
 module VagrantPlugins
   module VCloud
@@ -22,50 +20,52 @@ module VagrantPlugins
       #     to other host ports.
       #
       class UnmapPortForwardings
-
-
         def initialize(app, env)
           @app    = app
-          @logger = Log4r::Logger.new("vagrant_vcloud::action::unmap_port_forwardings")
+          @logger = Log4r::Logger.new(
+            'vagrant_vcloud::action::unmap_port_forwardings'
+          )
         end
 
         def call(env)
-          
           cfg = env[:machine].provider_config
           cnx = cfg.vcloud_cnx.driver
-          vmName = env[:machine].name
-          vAppId = env[:machine].get_vapp_id
+          vapp_id = env[:machine].get_vapp_id
+          vm_name = env[:machine].name
 
           cfg.org = cnx.get_organization_by_name(cfg.org_name)
           cfg.vdc_network_id = cfg.org[:networks][cfg.vdc_network_name]
 
-          @logger.debug("Getting vapp info...")
-          vm = cnx.get_vapp(vAppId)
-          myhash = vm[:vms_hash][vmName.to_sym]
+          @logger.debug('Getting vApp information...')
+          vm = cnx.get_vapp(vapp_id)
+          myhash = vm[:vms_hash][vm_name.to_sym]
 
-          @logger.debug("Getting port forwarding rules...")
+          @logger.debug('Getting port forwarding rules...')
           rules = cnx.get_vapp_port_forwarding_rules(vAppId)
 
-          newRuleSet = rules.select { |h| !myhash[:vapp_scoped_local_id].include? h[:vapp_scoped_local_id] }
+          # FIXME: not familiar with this syntax (tsugliani)
+          new_rule_set = rules.select {
+            |h| !myhash[:vapp_scoped_local_id].include? h[:vapp_scoped_local_id]
+          }
 
           @logger.debug("OUR NEW RULE SET, PURGED: #{newRuleSet}")
 
-          removePorts = cnx.set_vapp_port_forwarding_rules(
-            vAppId,
-            "Vagrant-vApp-Net",
+          remove_ports = cnx.set_vapp_port_forwarding_rules(
+            vapp_id,
+            'Vagrant-vApp-Net',
             {
-              :fence_mode       => "natRouted",
+              :fence_mode       => 'natRouted',
               :parent_network   => cfg.vdc_network_id,
-              :nat_policy_type  => "allowTraffic",
-              :nat_rules        => newRuleSet
-            })
+              :nat_policy_type  => 'allowTraffic',
+              :nat_rules        => new_rule_set
+            }
+          )
 
-          wait = cnx.wait_task_completion(removePorts)
+          wait = cnx.wait_task_completion(remove_ports)
 
           if !wait[:errormsg].nil?
             raise Errors::ComposeVAppError, :message => wait[:errormsg]
           end
-
 
           @app.call(env)
         end

@@ -6,14 +6,16 @@ module VagrantPlugins
 
         def initialize(app, env)
           @app = app
-          @logger = Log4r::Logger.new("vagrant_vcloud::action::forward_ports")
+          @logger = Log4r::Logger.new('vagrant_vcloud::action::forward_ports')
         end
 
         def call(env)
           @env = env
 
-          # Get the ports we're forwarding
-          env[:forwarded_ports] ||= compile_forwarded_ports(env[:machine].config)
+          # Get the ports we are forwarding
+          env[:forwarded_ports] ||= compile_forwarded_ports(
+            env[:machine].config
+          )
 
           forward_ports
 
@@ -25,22 +27,22 @@ module VagrantPlugins
 
           cfg = @env[:machine].provider_config
           cnx = cfg.vcloud_cnx.driver
-          vmName = @env[:machine].name
-          vAppId = @env[:machine].get_vapp_id
+          vm_name = @env[:machine].name
+          vapp_id = @env[:machine].get_vapp_id
 
-          # FIXME: why are we overriding this here ? 
-          #        It's already been taken care during the initial InventoryCheck. 
-          #        (tsugliani)
-          #        
+          # FIXME: why are we overriding this here ?
+          #        It's already been taken care during the initial
+          #        InventoryCheck. (tsugliani)
+          #
           # cfg.org = cnx.get_organization_by_name(cfg.org_name)
           # cfg.vdc_network_id = cfg.org[:networks][cfg.vdc_network_name]
 
-          @logger.debug("Getting VM info...")
-          vm = cnx.get_vapp(vAppId)
-          vmInfo = vm[:vms_hash][vmName.to_sym]
-
+          @logger.debug('Getting VM info...')
+          vm = cnx.get_vapp(vapp_id)
+          vm_info = vm[:vms_hash][vm_name.to_sym]
 
           @env[:forwarded_ports].each do |fp|
+            # FIXME: Useless variable assignement 'message_attributes'
             message_attributes = {
               :guest_port   => fp.guest_port,
               :host_port    => fp.host_port
@@ -59,7 +61,7 @@ module VagrantPlugins
               :nat_external_port      => fp.host_port,
               :name                   => fp.id,
               :nat_protocol           => fp.protocol.upcase,
-              :vapp_scoped_local_id   => vmInfo[:vapp_scoped_local_id]
+              :vapp_scoped_local_id   => vm_info[:vapp_scoped_local_id]
             }
           end
 
@@ -69,18 +71,18 @@ module VagrantPlugins
             @logger.debug("Current network id #{cfg.vdc_network_id}")
 
             ### Here we apply the nat_rules to the vApp we just built
-            addports = cnx.add_vapp_port_forwarding_rules(
-              vAppId,
-              "Vagrant-vApp-Net",
+            add_ports = cnx.add_vapp_port_forwarding_rules(
+              vapp_id,
+              'Vagrant-vApp-Net',
               {
-                :fence_mode       => "natRouted",
+                :fence_mode       => 'natRouted',
                 :parent_network   => cfg.vdc_network_id,
-                :nat_policy_type  => "allowTraffic",
+                :nat_policy_type  => 'allowTraffic',
                 :nat_rules        => ports
               }
             )
 
-            wait = cnx.wait_task_completion(addports)
+            wait = cnx.wait_task_completion(add_ports)
 
             if !wait[:errormsg].nil?
               raise Errors::ComposeVAppError, :message => wait[:errormsg]

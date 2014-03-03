@@ -10,7 +10,7 @@ module VagrantPlugins
           # FIXME: This error should be categorized
           env[:ui].info(
             I18n.t(
-              "vagrant_vcloud.will_not_destroy", 
+              'vagrant_vcloud.will_not_destroy',
               name: env[:machine].name
             )
           )

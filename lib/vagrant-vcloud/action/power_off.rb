@@ -1,46 +1,42 @@
-require "i18n"
-
 module VagrantPlugins
   module VCloud
     module Action
       class PowerOff
-
         def initialize(app, env)
           @app = app
-          @logger = Log4r::Logger.new("vagrant_vcloud::action::poweroff")
+          @logger = Log4r::Logger.new('vagrant_vcloud::action::poweroff')
         end
 
         def call(env)
-
           cfg = env[:machine].provider_config
           cnx = cfg.vcloud_cnx.driver
 
-          vAppId = env[:machine].get_vapp_id
-          vmId = env[:machine].id
+          vapp_id = env[:machine].get_vapp_id
+          vm_id = env[:machine].id
 
-          testvApp = cnx.get_vapp(vAppId)
+          test_vapp = cnx.get_vapp(vapp_id)
 
-          @logger.debug("Number of VMs in the vApp: #{testvApp[:vms_hash].count}")
+          @logger.debug(
+            "Number of VMs in the vApp: #{test_vapp[:vms_hash].count}"
+          )
 
-          if testvApp[:vms_hash].count == 1
+          if test_vapp[:vms_hash].count == 1
 
             # Poweroff vApp
-            env[:ui].info("Powering off vApp...")
-            vAppStopTask = cnx.poweroff_vapp(vAppId)
-            vAppStopWait = cnx.wait_task_completion(vAppStopTask)
+            env[:ui].info('Powering off vApp...')
+            vapp_stop_task = cnx.poweroff_vapp(vapp_id)
+            vapp_stop_wait = cnx.wait_task_completion(vapp_stop_task)
 
             if !vAppStopWait[:errormsg].nil?
-              raise Errors::StopVAppError, :message => vAppStopWait[:errormsg]
+              raise Errors::StopVAppError, :message => vapp_stop_wait[:errormsg]
             end
 
           else
             # Poweroff VM
-            env[:ui].info("Powering off VM...")
-            task_id = cnx.poweroff_vm(vmId)
-            wait = cnx.wait_task_completion(task_id)
+            env[:ui].info('Powering off VM...')
+            task_id = cnx.poweroff_vm(vm_id)
+            cnx.wait_task_completion(task_id)
           end
-
-          true
 
           @app.call env
         end

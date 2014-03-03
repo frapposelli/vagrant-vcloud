@@ -1,5 +1,4 @@
-require "set"
-require "log4r"
+require 'set'
 
 module VagrantPlugins
   module VCloud
@@ -21,16 +20,15 @@ module VagrantPlugins
       #     to other host ports.
       #
       class HandleNATPortCollisions
-
         def initialize(app, env)
           @app    = app
           @logger = Log4r::Logger.new(
-            "vagrant_vcloud::action::handle_port_collisions"
+            'vagrant_vcloud::action::handle_port_collisions'
           )
         end
 
         def call(env)
-          @logger.info("Detecting any forwarded port collisions...")
+          @logger.info('Detecting any forwarded port collisions...')
 
           # Determine a list of usable ports for repair
           usable_ports = Set.new(env[:machine].config.vm.usable_port_range)
@@ -42,14 +40,12 @@ module VagrantPlugins
 
           cfg = env[:machine].provider_config
           cnx = cfg.vcloud_cnx.driver
-          vmName = env[:machine].name
-          vAppId = env[:machine].get_vapp_id
+          vapp_id = env[:machine].get_vapp_id
 
-          @logger.debug("Getting vapp info...")
-          vm = cnx.get_vapp(vAppId)
-          myhash = vm[:vms_hash][vmName.to_sym]
+          @logger.debug('Getting vApp information...')
+          vm = cnx.get_vapp(vapp_id)
 
-          @logger.debug("Getting port forwarding rules...")
+          @logger.debug('Getting port forwarding rules...')
           rules = cnx.get_vapp_port_forwarding_external_ports(vAppId)
 
           # Pass two, detect/handle any collisions
@@ -76,8 +72,8 @@ module VagrantPlugins
                 # If the port is in use, then we can't use this either...
                 if rules.include?(repaired_port)
                   @logger.info(
-                    "Repaired port also in use: #{repaired_port}." + 
-                    "Trying another..."
+                    "Repaired port also in use: #{repaired_port}." +
+                    'Trying another...'
                   )
                   next
                 end
@@ -89,9 +85,9 @@ module VagrantPlugins
               # If we have no usable ports then we can't repair
               if !repaired_port && usable_ports.empty?
                 raise Errors::ForwardPortAutolistEmpty,
-                  :vm_name    => env[:machine].name,
-                  :guest_port => guest_port.to_s,
-                  :host_port  => host_port.to_s
+                      :vm_name    => env[:machine].name,
+                      :guest_port => guest_port.to_s,
+                      :host_port  => host_port.to_s
               end
 
               # Modify the args in place
@@ -104,7 +100,7 @@ module VagrantPlugins
               # Notify the user
               env[:ui].info(
                 I18n.t(
-                  "vagrant.actions.vm.forward_ports.fixed_collision",
+                  'vagrant.actions.vm.forward_ports.fixed_collision',
                   :host_port  => host_port.to_s,
                   :guest_port => guest_port.to_s,
                   :new_port   => repaired_port.to_s

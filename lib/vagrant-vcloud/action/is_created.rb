@@ -4,27 +4,26 @@ module VagrantPlugins
       class IsCreated
         def initialize(app, env)
           @app = app
-          @logger = Log4r::Logger.new("vagrant_vcloud::action::is_created")
+          @logger = Log4r::Logger.new('vagrant_vcloud::action::is_created')
         end
 
         def call(env)
-         
-          vAppId = env[:machine].get_vapp_id
-          
-          if vAppId.nil?
-            @logger.warn("vApp has not been created")
+          vapp_id = env[:machine].get_vapp_id
+
+          if vapp_id.nil?
+            @logger.warn('vApp has not been created')
             env[:result] = false
           else
-            @logger.info("vApp has been created and ID is: [#{vAppId}]")
-            
-            vmId = env[:machine].id
-            if vmId
-              @logger.info("VM has been added to vApp and ID is: [#{vmId}]")
+            @logger.info("vApp has been created and ID is: [#{vapp_id}]")
+
+            vm_id = env[:machine].id
+            if vm_id
+              @logger.info("VM has been added to vApp and ID is: [#{vm_id}]")
               env[:result] = true
-           else
-              @logger.warn("VM has not been added to vApp")
+            else
+              @logger.warn('VM has not been added to vApp')
               env[:result] = false
-           end
+            end
 
           end
 
