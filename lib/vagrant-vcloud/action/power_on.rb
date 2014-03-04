@@ -63,7 +63,7 @@ module VagrantPlugins
               cfg.vdc_edge_gateway,
               cfg.vdc_id,
               cfg.vdc_edge_gateway_ip,
-              vAppId
+              vapp_id
             )
 
             # Wait for task to complete.

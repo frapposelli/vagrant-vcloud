@@ -41,30 +41,28 @@ module VagrantPlugins
           myhash = vm[:vms_hash][vm_name.to_sym]
 
           @logger.debug('Getting port forwarding rules...')
-          rules = cnx.get_vapp_port_forwarding_rules(vAppId)
+          rules = cnx.get_vapp_port_forwarding_rules(vapp_id)
 
           # FIXME: not familiar with this syntax (tsugliani)
           new_rule_set = rules.select {
             |h| !myhash[:vapp_scoped_local_id].include? h[:vapp_scoped_local_id]
           }
 
-          @logger.debug("OUR NEW RULE SET, PURGED: #{newRuleSet}")
+          @logger.debug("OUR NEW RULE SET, PURGED: #{new_rule_set}")
 
           remove_ports = cnx.set_vapp_port_forwarding_rules(
             vapp_id,
             'Vagrant-vApp-Net',
-            {
-              :fence_mode       => 'natRouted',
-              :parent_network   => cfg.vdc_network_id,
-              :nat_policy_type  => 'allowTraffic',
-              :nat_rules        => new_rule_set
-            }
+            :fence_mode       => 'natRouted',
+            :parent_network   => cfg.vdc_network_id,
+            :nat_policy_type  => 'allowTraffic',
+            :nat_rules        => new_rule_set
           )
 
           wait = cnx.wait_task_completion(remove_ports)
 
-          if !wait[:errormsg].nil?
-            raise Errors::ComposeVAppError, :message => wait[:errormsg]
+          unless wait[:errormsg].nil?
+            fail Errors::ComposeVAppError, :message => wait[:errormsg]
           end
 
           @app.call(env)

@@ -1,4 +1,4 @@
-require 'securerandom"'
+require 'securerandom'
 require 'etc'
 require 'netaddr'
 
@@ -109,7 +109,7 @@ module VagrantPlugins
               "#{Socket.gethostname.downcase} using vagrant-vcloud on " +
               "#{Time.now.strftime("%B %d, %Y")}",
               {
-                vmName => cfg.catalog_item[:vms_hash][env[:machine].box.name.to_s][:id]
+                vm_name => cfg.catalog_item[:vms_hash][env[:machine].box.name.to_s][:id]
               },
               network_options
             )
@@ -117,8 +117,8 @@ module VagrantPlugins
             # Wait for the task to finish.
             wait = cnx.wait_task_completion(compose[:task_id])
 
-            if !wait[:errormsg].nil?
-              raise Errors::ComposeVAppError, :message => wait[:errormsg]
+            unless wait[:errormsg].nil?
+              fail Errors::ComposeVAppError, :message => wait[:errormsg]
             end
 
             # Fetch thenewly created vApp ID
@@ -147,10 +147,8 @@ module VagrantPlugins
               set_custom = cnx.set_vm_guest_customization(
                 new_vm_properties[:id],
                 vm_name,
-                {
-                  :enabled              => true,
-                  :admin_passwd_enabled => false
-                }
+                :enabled              => true,
+                :admin_passwd_enabled => false
               )
               cnx.wait_task_completion(set_custom)
 
@@ -165,7 +163,7 @@ module VagrantPlugins
             recompose = cnx.recompose_vapp_from_vm(
               env[:machine].get_vapp_id,
               {
-                vmName => cfg.catalog_item[:vms_hash][env[:machine].box.name.to_s][:id]
+                vm_name => cfg.catalog_item[:vms_hash][env[:machine].box.name.to_s][:id]
               },
               network_options
             )
@@ -189,7 +187,7 @@ module VagrantPlugins
 
               set_custom = cnx.set_vm_guest_customization(
                 new_vm_properties[:id],
-                vmName,
+                vm_name,
                 {
                   :enabled              => true,
                   :admin_passwd_enabled => false
@@ -204,7 +202,6 @@ module VagrantPlugins
           end
 
           @app.call env
-
         end
       end
     end

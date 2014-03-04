@@ -20,6 +20,7 @@ module VagrantPlugins
           cfg = env[:machine].provider_config
           cnx = cfg.vcloud_cnx.driver
           vapp_id = env[:machine].get_vapp_id
+          vm_name = env[:machine].name
 
           @logger.debug('Getting vApp information...')
           vm = cnx.get_vapp(vapp_id)
