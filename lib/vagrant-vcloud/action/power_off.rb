@@ -27,8 +27,8 @@ module VagrantPlugins
             vapp_stop_task = cnx.poweroff_vapp(vapp_id)
             vapp_stop_wait = cnx.wait_task_completion(vapp_stop_task)
 
-            if !vAppStopWait[:errormsg].nil?
-              raise Errors::StopVAppError, :message => vapp_stop_wait[:errormsg]
+            unless vapp_stop_wait[:errormsg].nil?
+              fail Errors::StopVAppError, :message => vapp_stop_wait[:errormsg]
             end
 
           else

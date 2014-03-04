@@ -44,7 +44,7 @@ module VagrantPlugins
 
             env[:ui].info('Destroying vApp...')
             vapp_delete_task = cnx.delete_vapp(vapp_id)
-            @logger.debug("vApp Delete task id #{vAppDeleteTask}")
+            @logger.debug("vApp Delete task id #{vapp_delete_task}")
             cnx.wait_task_completion(vapp_delete_task)
 
             env[:machine].id = nil

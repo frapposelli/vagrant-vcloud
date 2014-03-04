@@ -46,7 +46,7 @@ module VagrantPlugins
           vm = cnx.get_vapp(vapp_id)
 
           @logger.debug('Getting port forwarding rules...')
-          rules = cnx.get_vapp_port_forwarding_external_ports(vAppId)
+          rules = cnx.get_vapp_port_forwarding_external_ports(vapp_id)
 
           # Pass two, detect/handle any collisions
           with_forwarded_ports(env) do |options|
