@@ -63,7 +63,7 @@ module VagrantPlugins
           #  "Our variables: IP #{@externalIP} and Port #{@externalPort}"
           # )
 
-          return {
+          {
               # FIXME: these shouldn't be self
               :host => @externalIP,
               :port => @externalPort

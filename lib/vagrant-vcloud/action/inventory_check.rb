@@ -132,7 +132,7 @@ module VagrantPlugins
             #           Organization vDC level (tsugliani)
             cfg.vdc_network_id = cfg.vdc[:networks][cfg.vdc_network_name]
             if !cfg.vdc_network_id
-              raise "vCloud User credentials has insufficient privileges"
+              raise 'vCloud User credentials has insufficient privileges'
             end
           end
 

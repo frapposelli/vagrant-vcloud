@@ -198,7 +198,6 @@ module VagrantPlugins
               cnx.wait_task_completion(set_custom)
 
             else
-
               env[:ui].error("VM #{vm_name} add to #{new_vapp[:name]} failed!")
               raise
             end

@@ -27,8 +27,8 @@ module VagrantPlugins
 
           cfg = @env[:machine].provider_config
           cnx = cfg.vcloud_cnx.driver
-          vm_name = @env[:machine].name
           vapp_id = @env[:machine].get_vapp_id
+          vm_name = @env[:machine].name
 
           # FIXME: why are we overriding this here ?
           #        It's already been taken care during the initial

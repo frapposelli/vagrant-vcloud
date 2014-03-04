@@ -42,15 +42,23 @@ module VagrantPlugins
           ssh_info = env[:machine].ssh_info
 
           unless Vagrant::Util::Which.which('rsync')
-            env[:ui].warn(I18n.t('vagrant_vcloud.sync.rsync_not_found_warning',
-                                 :side => 'host'))
+            env[:ui].warn(
+              I18n.t(
+                'vagrant_vcloud.sync.rsync_not_found_warning',
+                :side => 'host'
+              )
+            )
             return
           end
 
           if env[:machine].communicate.execute('which rsync',
                                                :error_check => false) != 0
-            env[:ui].warn(I18n.t('vagrant_vcloud.sync.rsync_not_found_warning',
-                                 :side => 'guest'))
+            env[:ui].warn(
+              I18n.t(
+                'vagrant_vcloud.sync.rsync_not_found_warning',
+                :side => 'guest'
+              )
+            )
             return
           end
 
@@ -72,9 +80,13 @@ module VagrantPlugins
               hostpath = hostpath.gsub(/^(\w):/) { "/cygdrive/\1" }
             end
 
-            env[:ui].info(I18n.t('vagrant_vcloud.sync.rsync_folder',
-                                 :hostpath => hostpath,
-                                 :guestpath => guestpath))
+            env[:ui].info(
+              I18n.t(
+                'vagrant_vcloud.sync.rsync_folder',
+                :hostpath => hostpath,
+                :guestpath => guestpath
+              )
+            )
 
             # Create the host path if it doesn't exist and option flag is set
             if data[:create]
@@ -90,12 +102,16 @@ module VagrantPlugins
             # Create the guest path
             env[:machine].communicate.sudo("mkdir -p '#{guestpath}'")
             env[:machine].communicate.sudo(
-              "chown -R #{ssh_info[:username]} '#{guestpath}'")
+              "chown -R #{ssh_info[:username]} '#{guestpath}'"
+            )
 
             # collect rsync excludes specified :rsync_excludes=>['path1',...]
             # in synced_folder options
-            excludes = ['.vagrant/', 'Vagrantfile',
-                        *Array(data[:rsync_excludes])].uniq
+            excludes = [
+              '.vagrant/',
+              'Vagrantfile',
+              *Array(data[:rsync_excludes])
+            ].uniq
 
             # Rsync over to the guest path using the SSH info
             command = [
@@ -103,7 +119,8 @@ module VagrantPlugins
               *excludes.map { |e|['--exclude', e] }.flatten,
               '-e', "ssh -p #{ssh_info[:port]} -o StrictHostKeyChecking=no " +
               "#{ssh_key_options(ssh_info)}", hostpath,
-              "#{ssh_info[:username]}@#{ssh_info[:host]}:#{guestpath}"]
+              "#{ssh_info[:username]}@#{ssh_info[:host]}:#{guestpath}"
+            ]
 
             # we need to fix permissions when using rsync.exe on windows, see
             # http://stackoverflow.com/questions/5798807/rsync-permission-
