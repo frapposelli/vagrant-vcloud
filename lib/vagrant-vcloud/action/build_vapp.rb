@@ -147,8 +147,10 @@ module VagrantPlugins
               set_custom = cnx.set_vm_guest_customization(
                 new_vm_properties[:id],
                 vm_name,
-                :enabled              => true,
-                :admin_passwd_enabled => false
+                {
+                  :enabled              => true,
+                  :admin_passwd_enabled => false
+                }
               )
               cnx.wait_task_completion(set_custom)
 

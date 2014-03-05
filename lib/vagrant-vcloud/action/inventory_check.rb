@@ -73,7 +73,6 @@ module VagrantPlugins
           cnx.wait_task_completion(catalog_creation[:task_id])
 
           @logger.debug("Catalog Creation result: #{catalog_creation.inspect}")
-
           env[:ui].info("Catalog [#{cfg.catalog_name}] successfully created.")
 
           cfg.catalog_id = catalog_creation[:catalog_id]

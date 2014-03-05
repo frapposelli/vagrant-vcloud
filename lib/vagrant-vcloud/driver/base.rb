@@ -72,26 +72,26 @@ module VagrantPlugins
         # - catalogs
         # - vdcs
         # - networks
-        def get_organization(orgId)
+        def get_organization(org_id)
         end
 
         ##
         # Fetch details about a given catalog
-        def get_catalog(catalogId)
+        def get_catalog(catalog_id)
         end
 
         ##
         # Friendly helper method to fetch an catalog id by name
         # - organization hash (from get_organization/get_organization_by_name)
         # - catalog name
-        def get_catalog_id_by_name(organization, catalogName)
+        def get_catalog_id_by_name(organization, catalog_name)
         end
 
         ##
         # Friendly helper method to fetch an catalog by name
         # - organization hash (from get_organization/get_organization_by_name)
         # - catalog name
-        def get_catalog_by_name(organization, catalogName)
+        def get_catalog_by_name(organization, catalog_name)
         end
 
         ##
@@ -99,35 +99,35 @@ module VagrantPlugins
         # - description
         # - vapps
         # - networks
-        def get_vdc(vdcId)
+        def get_vdc(vdc_id)
         end
 
         ##
         # Friendly helper method to fetch a Organization VDC Id by name
         # - Organization object
         # - Organization VDC Name
-        def get_vdc_id_by_name(organization, vdcName)
+        def get_vdc_id_by_name(organization, vdc_name)
         end
 
         ##
         # Friendly helper method to fetch a Organization VDC by name
         # - Organization object
         # - Organization VDC Name
-        def get_vdc_by_name(organization, vdcName)
+        def get_vdc_by_name(organization, vdc_name)
         end
 
         ##
         # Fetch details about a given catalog item:
         # - description
         # - vApp templates
-        def get_catalog_item(catalogItemId)
+        def get_catalog_item(catalog_item_id)
         end
 
         ##
         # friendly helper method to fetch an catalogItem  by name
         # - catalogId (use get_catalog_name(org, name))
         # - catalagItemName
-        def get_catalog_item_by_name(catalogId, catalogItemName)
+        def get_catalog_item_by_name(catalog_id, catalog_item_name)
         end
 
         ##
@@ -140,18 +140,18 @@ module VagrantPlugins
         #   -- IP addresses
         #   -- status
         #   -- ID
-        def get_vapp(vAppId)
+        def get_vapp(vapp_id)
         end
 
         ##
         # Delete a given vapp
         # NOTE: It doesn't verify that the vapp is shutdown
-        def delete_vapp(vAppId)
+        def delete_vapp(vapp_id)
         end
 
         ##
         # Suspend a given vapp
-        def suspend_vapp(vAppId)
+        def suspend_vapp(vapp_id)
         end
 
         ##
@@ -159,19 +159,19 @@ module VagrantPlugins
         # This will basically initial a guest OS reboot, and will only work if
         # VMware-tools are installed on the underlying VMs.
         # vShield Edge devices are not affected
-        def reboot_vapp(vAppId)
+        def reboot_vapp(vapp_id)
         end
 
         ##
         # reset a given vapp
         # This will basically reset the VMs within the vApp
         # vShield Edge devices are not affected.
-        def reset_vapp(vAppId)
+        def reset_vapp(vapp_id)
         end
 
         ##
         # Boot a given vapp
-        def poweron_vapp(vAppId)
+        def poweron_vapp(vapp_id)
         end
 
         ##
@@ -193,7 +193,7 @@ module VagrantPlugins
         # - vdc: the associated VDC
         # - vapp_name: name of the target vapp
         # - vapp_description: description of the target vapp
-        # - vm_list: hash with IDs of the VMs to be used in the composing process
+        # - vm_list: hash with IDs of the VMs used in the composing process
         # - network_config: hash of the network configuration for the vapp
         def compose_vapp_from_vm(vdc, vapp_name, vapp_description,
                                  vm_list = {}, network_config = {})
@@ -204,7 +204,7 @@ module VagrantPlugins
         # - description
         # - Children VMs:
         #   -- ID
-        def get_vapp_template(vAppId)
+        def get_vapp_template(vapp_id)
         end
 
         ##
@@ -214,14 +214,14 @@ module VagrantPlugins
         # - network_name: name of the vapp network to be modified
         # - config: hash with network configuration specifications, must contain
         #   an array inside :nat_rules with the nat rules to be applied.
-        def set_vapp_port_forwarding_rules(vappid, network_name, config = {})
+        def set_vapp_port_forwarding_rules(vapp_id, network_name, config = {})
         end
 
         ##
         # Get vApp port forwarding rules
         #
         # - vappid: id of the vApp
-        def get_vapp_port_forwarding_rules(vAppId)
+        def get_vapp_port_forwarding_rules(vapp_id)
         end
 
         ##
@@ -231,7 +231,7 @@ module VagrantPlugins
         # - FenceMode is set to "natRouted"
         # - NatType" is set to "portForwarding
         # This will be required to know how to connect to VMs behind the Edge.
-        def get_vapp_edge_public_ip(vAppId)
+        def get_vapp_edge_public_ip(vapp_id)
         end
 
         ##
@@ -242,38 +242,38 @@ module VagrantPlugins
         # - ovfFile
         # - catalogId
         # - uploadOptions {}
-        def upload_ovf(vdcId, vappName, vappDescription, ovfFile,
-                       catalogId, uploadOptions = {})
+        def upload_ovf(vdc_id, vapp_name, vapp_description, ovf_file,
+                       catalog_id, upload_options = {})
         end
 
         ##
         # Fetch information for a given task
-        def get_task(taskid)
+        def get_task(task_id)
         end
 
         ##
         # Poll a given task until completion
-        def wait_task_completion(taskid)
+        def wait_task_completion(task_id)
         end
 
         ##
         # Set vApp Network Config
-        def set_vapp_network_config(vappid, network_name, config = {})
+        def set_vapp_network_config(vapp_id, network_name, config = {})
         end
 
         ##
         # Set VM Network Config
-        def set_vm_network_config(vmid, network_name, config = {})
+        def set_vm_network_config(vm_id, network_name, config = {})
         end
 
         ##
         # Set VM Guest Customization Config
-        def set_vm_guest_customization(vmid, computer_name, config = {})
+        def set_vm_guest_customization(vm_id, computer_name, config = {})
         end
 
         ##
         # Fetch details about a given VM
-        def get_vm(vmId)
+        def get_vm(vm_Id)
         end
 
         private
@@ -289,10 +289,10 @@ module VagrantPlugins
             clnt.ssl_config.verify_mode = (OpenSSL::SSL::VERIFY_NONE)
 
             # Suppress SSL depth message
-            clnt.ssl_config.verify_callback = proc{ |ok, ctx|; true };
+            clnt.ssl_config.verify_callback = proc { |ok, ctx|; true }
 
             extheader = {}
-            extheader["accept"] = "application/*+xml;version=#{@api_version}"
+            extheader['accept'] = "application/*+xml;version=#{@api_version}"
 
             if !content_type.nil?
               extheader['Content-Type'] = content_type
@@ -390,7 +390,7 @@ module VagrantPlugins
             clnt.ssl_config.verify_mode = (OpenSSL::SSL::VERIFY_NONE)
 
             # Suppress SSL depth message
-            clnt.ssl_config.verify_callback = proc{ |ok, ctx|; true }
+            clnt.ssl_config.verify_callback = proc { |ok, ctx|; true }
 
             # Perform ranged upload until the file reaches its end
             until upload_file_handle.eof?
@@ -405,13 +405,13 @@ module VagrantPlugins
               # If statement to handle last chunk transfer if is > than filesize
               if range_stop.to_i > upload_file_handle.size.to_i
                 content_range = "bytes #{rangeStart.to_s}-" +
-                                "#{uploadFileHandle.size.to_s}/" +
-                                "#{uploadFileHandle.size.to_s}"
+                                "#{upload_file_handle.size.to_s}/" +
+                                "#{upload_file_handle.size.to_s}"
                 range_len = upload_file_handle.size.to_i - range_start.to_i
               else
                 content_range = "bytes #{rangeStart.to_s}-" +
                                 "#{rangeStop.to_s}/" +
-                                "#{uploadFileHandle.size.to_s}"
+                                "#{upload_file_handle.size.to_s}"
                 range_len = range_stop.to_i - range_start.to_i
               end
 
@@ -443,7 +443,9 @@ module VagrantPlugins
                   }
                   response, _headers = send_request(params)
 
-                  response.css("Files File [name='#{file_name}']").each do |file|
+                  response.css(
+                    "Files File [name='#{file_name}']"
+                  ).each do |file|
                     progressbar.progress = file[:bytesTransferred].to_i
                   end
                 end
@@ -453,7 +455,7 @@ module VagrantPlugins
                 # DO SOMETHING WITH THIS, IT'S JUST STUPID AS IT IS NOW!!!
                 retry_time = (config[:retry_time] || 5)
                 puts "Range #{content_range} failed to upload, " +
-                      "retrying the chunk in #{retryTime.to_s} seconds, " +
+                      "retrying the chunk in #{retry_time.to_s} seconds, " +
                       'to stop this task press CTRL+C.'
                 sleep retry_time.to_i
                 retry

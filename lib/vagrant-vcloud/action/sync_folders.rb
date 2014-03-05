@@ -83,8 +83,8 @@ module VagrantPlugins
             env[:ui].info(
               I18n.t(
                 'vagrant_vcloud.sync.rsync_folder',
-                :hostpath => hostpath,
-                :guestpath => guestpath
+                :hostpath   => hostpath,
+                :guestpath  => guestpath
               )
             )
 
@@ -95,7 +95,7 @@ module VagrantPlugins
               rescue => err
                 raise Errors::MkdirError,
                       :hostpath => hostpath,
-                      :err => err
+                      :err      => err
               end
             end
 
@@ -133,8 +133,8 @@ module VagrantPlugins
             if r.exit_code != 0
               fail Errors::RsyncError,
                    :guestpath => guestpath,
-                   :hostpath => hostpath,
-                   :stderr => r.stderr
+                   :hostpath  => hostpath,
+                   :stderr    => r.stderr
             end
           end
         end
