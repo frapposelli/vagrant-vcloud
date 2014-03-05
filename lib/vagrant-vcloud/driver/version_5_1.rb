@@ -341,7 +341,7 @@ module VagrantPlugins
           catalog_elems[:items].each do |catalog_elem|
 
             catalog_item = get_catalog_item(catalog_elem[1])
-            if catalog_item[:items][catalogItemName]
+            if catalog_item[:items][catalog_item_name]
               # This is a vApp Catalog Item
 
               # fetch CatalogItemId
@@ -364,7 +364,7 @@ module VagrantPlugins
                 vms_hash[vm_name] = { :id => vm_id }
               end
               result = {
-                catalogItemName => catalogItemId, :vms_hash => vms_hash
+                catalogItemName => catalog_item_id, :vms_hash => vms_hash
               }
             end
           end
@@ -395,7 +395,7 @@ module VagrantPlugins
             status = convert_vapp_status(vapp_node['status'])
           end
 
-          description = response.css("Description").first
+          description = response.css('Description').first
           description = description.text unless description.nil?
 
           ip = response.css('IpAddress').first
@@ -727,7 +727,7 @@ module VagrantPlugins
         # - vdc: the associated VDC
         # - vapp_name: name of the target vapp
         # - vapp_description: description of the target vapp
-        # - vm_list: hash with IDs of the VMs to be used in the composing process
+        # - vm_list: hash with IDs of the VMs used in the composing process
         # - network_config: hash of the network configuration for the vapp
         def compose_vapp_from_vm(vdc, vapp_name, vapp_description, vm_list = {}, network_config = {})
           builder = Nokogiri::XML::Builder.new do |xml|
@@ -829,15 +829,15 @@ module VagrantPlugins
         # - vm_list: hash with IDs of the VMs to be used in the composing process
         # - network_config: hash of the network configuration for the vapp
 
-        def recompose_vapp_from_vm(vAppId, vm_list = {}, network_config = {})
-          originalVApp = get_vapp(vAppId)
+        def recompose_vapp_from_vm(vapp_id, vm_list = {}, network_config = {})
+          original_vapp = get_vapp(vapp_id)
 
           builder = Nokogiri::XML::Builder.new do |xml|
           xml.RecomposeVAppParams(
             'xmlns' => 'http://www.vmware.com/vcloud/v1.5',
             'xmlns:ovf' => 'http://schemas.dmtf.org/ovf/envelope/1',
-            'name' => originalVApp[:name]) {
-            xml.Description originalVApp[:description]
+            'name' => original_vapp[:name]) {
+            xml.Description original_vapp[:description]
             xml.InstantiationParams {}
             vm_list.each do |vm_name, vm_id|
               xml.SourcedItem {
@@ -865,7 +865,7 @@ module VagrantPlugins
 
           params = {
             'method'  => :post,
-            'command' => "/vApp/vapp-#{vAppId}/action/recomposeVApp"
+            'command' => "/vApp/vapp-#{vapp_id}/action/recomposeVApp"
           }
 
           response, headers = send_request(
@@ -924,7 +924,7 @@ module VagrantPlugins
         ##
         # Set vApp port forwarding rules
         #
-        # - vappid: id of the vapp to be modified
+        # - vapp_id: id of the vapp to be modified
         # - network_name: name of the vapp network to be modified
         # - config: hash with network configuration specifications, must contain an array inside :nat_rules with the nat rules to be applied.
         def set_vapp_port_forwarding_rules(vapp_id, network_name, config = {})
@@ -978,7 +978,7 @@ module VagrantPlugins
         ##
         # Add vApp port forwarding rules
         #
-        # - vappid: id of the vapp to be modified
+        # - vapp_id: id of the vapp to be modified
         # - network_name: name of the vapp network to be modified
         # - config: hash with network configuration specifications,
         #   must contain an array inside :nat_rules with the nat rules to add.
@@ -1005,7 +1005,7 @@ module VagrantPlugins
                       xml.NatType 'portForwarding'
                       xml.Policy(config[:nat_policy_type] || 'allowTraffic')
 
-                      pre_existing = get_vapp_port_forwarding_rules(vappid)
+                      pre_existing = get_vapp_port_forwarding_rules(vapp_id)
 
                       config[:nat_rules].concat(pre_existing)
 
@@ -1044,7 +1044,7 @@ module VagrantPlugins
         ##
         # Get vApp port forwarding rules
         #
-        # - vappid: id of the vApp
+        # - vapp_id: id of the vApp
         def get_vapp_port_forwarding_rules(vapp_id)
           params = {
             'method'  => :get,
@@ -1092,7 +1092,7 @@ module VagrantPlugins
         # Get vApp port forwarding rules external ports used and returns a set
         # instead of an HASH.
         #
-        # - vappid: id of the vApp
+        # - vapp_id: id of the vApp
         def get_vapp_port_forwarding_external_ports(vapp_id)
           params = {
             'method'  => :get,
@@ -1196,10 +1196,10 @@ module VagrantPlugins
             if gw.css('InterfaceType').text == 'uplink'
 
               # Loop on all sub-allocation pools
-              gw.css('SubnetParticipation IpRanges IpRange').each do |curRange|
+              gw.css('SubnetParticipation IpRanges IpRange').each do |cur_range|
 
-                low_ip = curRange.css('StartAddress').first.text
-                high_ip = curRange.css('EndAddress').first.text
+                low_ip = cur_range.css('StartAddress').first.text
+                high_ip = cur_range.css('EndAddress').first.text
 
                 range_ip_low = NetAddr.ip_to_i(low_ip)
                 range_ip_high = NetAddr.ip_to_i(high_ip)
@@ -1217,7 +1217,7 @@ module VagrantPlugins
         ##
         # Set Org Edge port forwarding and firewall rules
         #
-        # - vappid: id of the vapp to be modified
+        # - vapp_id: id of the vapp to be modified
         # - network_name: name of the vapp network to be modified
         # - config: hash with network configuration specifications,
         #           must contain an array inside :nat_rules with the nat rules
@@ -1406,7 +1406,7 @@ module VagrantPlugins
         ##
         # Get Org Edge port forwarding and firewall rules
         #
-        # - vappid: id of the vapp to be modified
+        # - vapp_id: id of the vapp to be modified
         # - network_name: name of the vapp network to be modified
         # - config: hash with network configuration specifications,
         #           must contain an array inside :nat_rules with the nat rules
@@ -1477,7 +1477,7 @@ module VagrantPlugins
         # - edge_gateway_name: Name of the vSE
         # - vdc_id: virtual datacenter id
         # - edge_gateway_ip: public ip associated the vSE
-        # - vAppId: vApp identifier to correlate with the vApp Edge
+        # - vapp_id: vApp identifier to correlate with the vApp Edge
 
         def remove_edge_gateway_rules(edge_gateway_name, vdc_id, edge_gateway_ip, vapp_id)
           edge_vapp_ip = get_vapp_edge_public_ip(vapp_id)
@@ -1580,13 +1580,13 @@ module VagrantPlugins
           if edge_ip == ''
             return nil
           else
-            return edgeIp
+            return edge_ip
           end
         end
 
         ##
         # Upload an OVF package
-        # - vdcId
+        # - vdc_id
         # - vappName
         # - vappDescription
         # - ovfFile
@@ -1641,18 +1641,20 @@ module VagrantPlugins
           @logger.debug('Sending OVF Descriptor...')
           upload_url = "/transfer/#{descriptor_upload}"
           upload_file = "#{ovf_dir}/#{ovf_file_basename}.ovf"
-          upload_file(uploadURL, uploadFile, vAppTemplate, uploadOptions)
+          upload_file(upload_url, upload_file, vapp_template, upload_options)
 
           # Begin the catch for upload interruption
           begin
             params = {
               'method'  => :get,
-              'command' => "/vAppTemplate/vappTemplate-#{vAppTemplate}"
+              'command' => "/vAppTemplate/vappTemplate-#{vapp_template}"
             }
 
             response, _headers = send_request(params)
 
-            task = response.css("VAppTemplate Task[operationName='vdcUploadOvfContents']").first
+            task = response.css(
+              "VAppTemplate Task[operationName='vdcUploadOvfContents']"
+            ).first
             task_id = task['href'].gsub("#{@api_url}/task/", '')
 
             # Loop to wait for the upload links to show up in the vAppTemplate
@@ -1671,20 +1673,25 @@ module VagrantPlugins
             if uploadManifest == 'true'
               upload_url = "/transfer/#{transfer_guid}/descriptor.mf"
               upload_file = "#{ovf_dir}/#{ovf_file_basename}.mf"
-              upload_file(upload_url, upload_file, vapp_template, upload_options)
+              upload_file(
+                upload_url,
+                upload_file,
+                vapp_template,
+                upload_options
+              )
             end
 
             # Start uploading OVF VMDK files
             params = {
               'method'  => :get,
-              'command' => "/vAppTemplate/vappTemplate-#{vAppTemplate}"
+              'command' => "/vAppTemplate/vappTemplate-#{vapp_template}"
             }
             response, _headers = send_request(params)
             response.css(
               "Files File [bytesTransferred='0'] Link [rel='upload:default']"
             ).each do |file|
               file_name = file[:href].gsub(
-                "#{@host_url}/transfer/#{transfer_guid}/",''
+                "#{@host_url}/transfer/#{transfer_guid}/", ''
               )
               upload_file = "#{ovf_dir}/#{file_name}"
               upload_url = "/transfer/#{transfer_guid}/#{file_name}"
@@ -1696,11 +1703,11 @@ module VagrantPlugins
               xml.CatalogItem(
                 'xmlns' => 'http://www.vmware.com/vcloud/v1.5',
                 'type' => 'application/vnd.vmware.vcloud.catalogItem+xml',
-                'name' => vappName) {
+                'name' => vapp_name) {
                 xml.Description vappDescription
                 xml.Entity(
                   'href' => "#{@api_url}/vAppTemplate/" +
-                            "vappTemplate-#{vAppTemplate}"
+                            "vappTemplate-#{vapp_template}"
                   )
               }
             end
@@ -1727,7 +1734,7 @@ module VagrantPlugins
             # Get vAppTemplate Task
             params = {
               'method'  => :get,
-              'command' => "/vAppTemplate/vappTemplate-#{vAppTemplate}"
+              'command' => "/vAppTemplate/vappTemplate-#{vapp_template}"
             }
             response, _headers = send_request(params)
 
@@ -1747,10 +1754,10 @@ module VagrantPlugins
 
         ##
         # Fetch information for a given task
-        def get_task(taskid)
+        def get_task(task_id)
           params = {
             'method'  => :get,
-            'command' => "/task/#{taskid}"
+            'command' => "/task/#{task_id}"
           }
 
           response, _headers = send_request(params)
@@ -1770,10 +1777,10 @@ module VagrantPlugins
 
         ##
         # Poll a given task until completion
-        def wait_task_completion(taskid)
+        def wait_task_completion(task_id)
           task, errormsg = nil
           loop do
-            task = get_task(taskid)
+            task = get_task(task_id)
             @logger.debug(
               "Evaluating taskid: #{taskid}, current status #{task[:status]}"
             )
@@ -1802,14 +1809,14 @@ module VagrantPlugins
 
         ##
         # Set vApp Network Config
-        def set_vapp_network_config(vappid, network_name, config = {})
+        def set_vapp_network_config(vapp_id, network_name, config = {})
           builder = Nokogiri::XML::Builder.new do |xml|
             xml.NetworkConfigSection(
               'xmlns' => 'http://www.vmware.com/vcloud/v1.5',
               'xmlns:ovf' => 'http://schemas.dmtf.org/ovf/envelope/1'
             ) {
               xml['ovf'].Info 'Network configuration'
-              xml.NetworkConfig("networkName" => network_name) {
+              xml.NetworkConfig('networkName' => network_name) {
                 xml.Configuration {
                   xml.FenceMode(config[:fence_mode] || 'isolated')
                   xml.RetainNetInfoAcrossDeployments(config[:retain_net] || false)
@@ -1821,7 +1828,7 @@ module VagrantPlugins
 
           params = {
             'method'  => :put,
-            'command' => "/vApp/vapp-#{vappid}/networkConfigSection"
+            'command' => "/vApp/vapp-#{vapp_id}/networkConfigSection"
           }
 
           _response, headers = send_request(
@@ -1836,7 +1843,7 @@ module VagrantPlugins
 
         ##
         # Set VM Network Config
-        def set_vm_network_config(vmid, network_name, config = {})
+        def set_vm_network_config(vm_id, network_name, config = {})
           builder = Nokogiri::XML::Builder.new do |xml|
             xml.NetworkConnectionSection(
               'xmlns' => 'http://www.vmware.com/vcloud/v1.5',
@@ -1857,7 +1864,7 @@ module VagrantPlugins
 
           params = {
             'method'  => :put,
-            'command' => "/vApp/vm-#{vmid}/networkConnectionSection"
+            'command' => "/vApp/vm-#{vm_id}/networkConnectionSection"
           }
 
           _response, headers = send_request(
@@ -1872,7 +1879,7 @@ module VagrantPlugins
 
         ##
         # Set VM Guest Customization Config
-        def set_vm_guest_customization(vmid, computer_name, config={})
+        def set_vm_guest_customization(vm_id, computer_name, config = {})
           builder = Nokogiri::XML::Builder.new do |xml|
           xml.GuestCustomizationSection(
             'xmlns' => 'http://www.vmware.com/vcloud/v1.5',
@@ -1887,7 +1894,7 @@ module VagrantPlugins
 
           params = {
             'method'  => :put,
-            'command' => "/vApp/vm-#{vmid}/guestCustomizationSection"
+            'command' => "/vApp/vm-#{vm_id}/guestCustomizationSection"
           }
 
           _response, headers = send_request(
