@@ -28,7 +28,6 @@ module VagrantPlugins
           end
 
           if !cfg.ip_subnet.nil?
-
             @logger.debug("Input address: #{cfg.ip_subnet}")
 
             begin

@@ -43,6 +43,7 @@ module VagrantPlugins
 
           @env[:forwarded_ports].each do |fp|
             # FIXME: Useless variable assignement 'message_attributes'
+            # (tsugliani)
             message_attributes = {
               :guest_port   => fp.guest_port,
               :host_port    => fp.host_port

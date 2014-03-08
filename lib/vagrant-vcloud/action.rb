@@ -237,7 +237,7 @@ module VagrantPlugins
       autoload :SyncFolders,
                action_root.join('sync_folders')
       autoload :UnmapPortForwardings,
-               action_root.join('unmap_port_forwardings')      
+               action_root.join('unmap_port_forwardings')
     end
   end
 end

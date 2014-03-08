@@ -11,7 +11,7 @@ Gem::Specification.new do |s|
   s.license = 'MIT'
   s.summary = 'VMware vCloud Director® provider'
   s.description = 'Enables Vagrant to manage machines with VMware vCloud Director®.'
-  
+
   s.add_runtime_dependency 'i18n', '~> 0.6.4'
   s.add_runtime_dependency 'log4r', '~> 1.1.10'
   s.add_runtime_dependency 'nokogiri', '~> 1.5.5'
@@ -22,11 +22,11 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency 'awesome_print', '~> 1.2.0'
   s.add_runtime_dependency 'terminal-table', '~> 1.4.5'
 
-  s.add_development_dependency "rake"
-  s.add_development_dependency "rspec-core", "~> 2.12.2"
-  s.add_development_dependency "rspec-expectations", "~> 2.12.1"
-  s.add_development_dependency "rspec-mocks", "~> 2.12.1"
-  
+  s.add_development_dependency 'rake'
+  s.add_development_dependency 'rspec-core', '~> 2.12.2'
+  s.add_development_dependency 'rspec-expectations', '~> 2.12.1'
+  s.add_development_dependency 'rspec-mocks', '~> 2.12.1'
+
   s.files = `git ls-files`.split($/)
   s.executables = s.files.grep(%r{^bin/}) { |f| File.basename(f) }
   s.test_files = s.files.grep(%r{^(test|spec|features)/})
