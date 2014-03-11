@@ -364,7 +364,7 @@ module VagrantPlugins
                 vms_hash[vm_name] = { :id => vm_id }
               end
               result = {
-                catalogItemName => catalog_item_id, :vms_hash => vms_hash
+                catalog_item_name => catalog_item_id, :vms_hash => vms_hash
               }
             end
           end
@@ -1248,11 +1248,11 @@ module VagrantPlugins
           nat_rule_1 = Nokogiri::XML::Node.new 'NatRule', response
           rule_type = Nokogiri::XML::Node.new 'RuleType', response
           rule_type.content = 'DNAT'
-          natRule1.add_child ruleType
+          nat_rule_1.add_child ruleType
 
           is_enabled = Nokogiri::XML::Node.new 'IsEnabled', response
           is_enabled.content = 'true'
-          natRule1.add_child is_enabled
+          nat_rule_1.add_child is_enabled
 
           gateway_nat_rule = Nokogiri::XML::Node.new 'GatewayNatRule',
                                                      response
@@ -1628,6 +1628,7 @@ module VagrantPlugins
           vapp_template = headers['Location'].gsub(
             "#{@api_url}/vAppTemplate/vappTemplate-", ''
           )
+
           @logger.debug("Getting vAppTemplate ID: #{vapp_template}")
           descriptor_upload = response.css(
             "Files Link [rel='upload:default']"
@@ -1640,8 +1641,13 @@ module VagrantPlugins
           # Send OVF Descriptor
           @logger.debug('Sending OVF Descriptor...')
           upload_url = "/transfer/#{descriptor_upload}"
-          upload_file = "#{ovf_dir}/#{ovf_file_basename}.ovf"
-          upload_file(upload_url, upload_file, vapp_template, upload_options)
+          upload_filename = "#{ovf_dir}/#{ovf_file_basename}.ovf"
+          upload_file(
+            upload_url,
+            upload_filename,
+            vapp_template,
+            upload_options
+          )
 
           # Begin the catch for upload interruption
           begin
@@ -1670,12 +1676,12 @@ module VagrantPlugins
               sleep 1
             end
 
-            if uploadManifest == 'true'
+            if upload_manifest == 'true'
               upload_url = "/transfer/#{transfer_guid}/descriptor.mf"
-              upload_file = "#{ovf_dir}/#{ovf_file_basename}.mf"
+              upload_filename = "#{ovf_dir}/#{ovf_file_basename}.mf"
               upload_file(
                 upload_url,
-                upload_file,
+                upload_filename,
                 vapp_template,
                 upload_options
               )
@@ -1693,18 +1699,23 @@ module VagrantPlugins
               file_name = file[:href].gsub(
                 "#{@host_url}/transfer/#{transfer_guid}/", ''
               )
-              upload_file = "#{ovf_dir}/#{file_name}"
+              upload_filename = "#{ovf_dir}/#{file_name}"
               upload_url = "/transfer/#{transfer_guid}/#{file_name}"
-              upload_file(upload_url, upload_file, vapp_template, upload_options)
+              upload_file(
+                upload_url,
+                upload_filename,
+                vapp_template,
+                upload_options
+              )
             end
 
-            # Add item to the catalog catalogId
+            # Add item to the catalog catalog_id
             builder = Nokogiri::XML::Builder.new do |xml|
               xml.CatalogItem(
                 'xmlns' => 'http://www.vmware.com/vcloud/v1.5',
                 'type' => 'application/vnd.vmware.vcloud.catalogItem+xml',
                 'name' => vapp_name) {
-                xml.Description vappDescription
+                xml.Description vapp_description
                 xml.Entity(
                   'href' => "#{@api_url}/vAppTemplate/" +
                             "vappTemplate-#{vapp_template}"
@@ -1714,7 +1725,7 @@ module VagrantPlugins
 
             params = {
               'method'  => :post,
-              'command' => "/catalog/#{catalogId}/catalogItems"
+              'command' => "/catalog/#{catalog_id}/catalogItems"
             }
             # No debug here (tsugliani)
             _response, _headers = send_request(
@@ -1742,6 +1753,7 @@ module VagrantPlugins
             cancel_hook = response.css(
               "Tasks Task Link [rel='task:cancel']"
             ).first[:href].gsub("#{@api_url}", '')
+
             params = {
               'method'  => :post,
               'command' => cancel_hook
@@ -1782,7 +1794,7 @@ module VagrantPlugins
           loop do
             task = get_task(task_id)
             @logger.debug(
-              "Evaluating taskid: #{taskid}, current status #{task[:status]}"
+              "Evaluating taskid: #{task_id}, current status #{task[:status]}"
             )
             break if task[:status] != 'running'
             sleep 5

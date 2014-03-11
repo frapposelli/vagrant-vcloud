@@ -404,13 +404,13 @@ module VagrantPlugins
 
               # If statement to handle last chunk transfer if is > than filesize
               if range_stop.to_i > upload_file_handle.size.to_i
-                content_range = "bytes #{rangeStart.to_s}-" +
+                content_range = "bytes #{range_start.to_s}-" +
                                 "#{upload_file_handle.size.to_s}/" +
                                 "#{upload_file_handle.size.to_s}"
                 range_len = upload_file_handle.size.to_i - range_start.to_i
               else
-                content_range = "bytes #{rangeStart.to_s}-" +
-                                "#{rangeStop.to_s}/" +
+                content_range = "bytes #{range_start.to_s}-" +
+                                "#{range_stop.to_s}/" +
                                 "#{upload_file_handle.size.to_s}"
                 range_len = range_stop.to_i - range_start.to_i
               end

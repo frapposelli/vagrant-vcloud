@@ -121,6 +121,7 @@ module VagrantPlugins
             cfg.catalog_id,
             env[:machine].box.name.to_s
           )
+
           @logger.debug("Catalog item is now #{cfg.catalog_item}")
 
           # This only works with Org Admin role or higher
