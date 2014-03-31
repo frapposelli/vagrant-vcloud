@@ -176,7 +176,7 @@ module VagrantPlugins
         Vagrant::Action::Builder.new.tap do |b|
           b.use ConfigValidate
           b.use Call, IsCreated do |env, b2|
-            b2.use HandleBoxUrl unless env[:result]
+            b2.use HandleBox unless env[:result]
           end
           b.use ConnectVCloud
           b.use Call, IsCreated do |env, b2|

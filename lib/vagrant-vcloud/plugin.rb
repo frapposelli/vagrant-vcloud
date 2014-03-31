@@ -11,7 +11,7 @@ end
 module VagrantPlugins
   module VCloud
     class Plugin < Vagrant.plugin('2')
-      name 'vCloud'
+      name 'VMware vCloud Director Provider'
       description 'Allows Vagrant to manage machines with VMware vCloud
                     Director(R)'
 
