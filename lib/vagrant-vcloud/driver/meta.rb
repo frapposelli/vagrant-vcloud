@@ -52,7 +52,8 @@ module VagrantPlugins
           @logger.debug("Finding driver for vCloud version: #{@version}")
           driver_map   = {
             "5.1" => Version_5_1,
-            "5.5" => Version_5_1 # Binding vCloud 5.5 API on our current 5.1 implementation
+            "5.5" => Version_5_1, # Binding vCloud 5.5 API on our current 5.1 implementation
+            "5.7" => Version_5_1 # Binding vCHS API on our current 5.1 implementation
           }
 
           if @version.start_with?("0.9") || 
