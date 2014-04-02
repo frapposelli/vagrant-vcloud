@@ -107,7 +107,10 @@ module VagrantPlugins
                  # Loop on every VM in the vApp
                 vapp[:vms_hash].each do |vm|
                   # Only Map valid vAppEdge scope to VM scope
-                  if vm[1][:vapp_scoped_local_id] == vapp_edge_rule[:vapp_scoped_local_id]
+                  vm_scope = vm[1][:vapp_scoped_local_id]
+                  vapp_edge_scope = vapp_edge_rule[:vapp_scoped_local_id]
+
+                  if vm_scope == vapp_edge_scope
 
                     # Generate DNAT Mappings for the valid machines
                     # If rules don't match, you will not see them !

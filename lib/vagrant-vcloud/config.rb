@@ -132,11 +132,22 @@ module VagrantPlugins
         errors << I18n.t('vagrant_vcloud.config.password') if password.nil?
 
         unless ip_dns.nil?
-          errors << I18n.t('vagrant_vcloud.config.ip_dns') unless ip_dns.kind_of?(Array)
+          unless ip_dns.kind_of?(Array)
+            errors << I18n.t('vagrant_vcloud.config.ip_dns')
+          end
         end
-        errors << I18n.t('vagrant_vcloud.config.catalog_name') if catalog_name.nil?
-        errors << I18n.t('vagrant_vcloud.config.vdc_name') if vdc_name.nil?
-        errors << I18n.t('vagrant_vcloud.config.vdc_network_name') if vdc_network_name.nil?
+
+        if catalog_name.nil?
+          errors << I18n.t('vagrant_vcloud.config.catalog_name')
+        end
+
+        if vdc_name.nil?
+          errors << I18n.t('vagrant_vcloud.config.vdc_name')
+        end
+
+        if vdc_network_name.nil?
+          errors << I18n.t('vagrant_vcloud.config.vdc_network_name')
+        end
 
         { 'vCloud Provider' => errors }
       end

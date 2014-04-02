@@ -22,15 +22,13 @@ require 'netaddr'
 module VagrantPlugins
   module VCloud
     module Driver
-
       # Main class to access vCloud rest APIs
       class Version_5_1 < Base
         attr_reader :auth_key, :id
-        
-        ## 
+
+        ##
         # Init the driver with the Vagrantfile information
         def initialize(host, username, password, org_name)
-
           @logger = Log4r::Logger.new('vagrant::provider::vcloud::driver_5_1')
 
           @host = host
@@ -39,7 +37,7 @@ module VagrantPlugins
           @username = username
           @password = password
           @org_name = org_name
-          @api_version = "5.1"
+          @api_version = '5.1'
           @id = nil
         end
 
@@ -51,13 +49,14 @@ module VagrantPlugins
             'command' => '/sessions'
           }
 
-          response, headers = send_request(params)
+          _response, headers = send_request(params)
 
-          if !headers.has_key?("x-vcloud-authorization")
-            raise "Unable to authenticate: missing x_vcloud_authorization header"
+          if !headers.key?('x-vcloud-authorization')
+            raise 'Failed to authenticate: ' \
+                  'missing x-vcloud-authorization header'
           end
 
-          @auth_key = headers["x-vcloud-authorization"]
+          @auth_key = headers['x-vcloud-authorization']
         end
 
         ##
@@ -68,7 +67,7 @@ module VagrantPlugins
             'command' => '/session'
           }
 
-          response, _headers = send_request(params)
+          _response, _headers = send_request(params)
           # reset auth key to nil
           @auth_key = nil
         end
@@ -130,52 +129,77 @@ module VagrantPlugins
         # - catalogs
         # - vdcs
         # - networks
-        def get_organization(orgId)
+        def get_organization(org_id)
           params = {
             'method'  => :get,
-            'command' => "/org/#{orgId}"
+            'command' => "/org/#{org_id}"
           }
 
-          response, headers = send_request(params)
+          response, _headers = send_request(params)
 
           catalogs = {}
-          response.css("Link[type='application/vnd.vmware.vcloud.catalog+xml']").each do |item|
-            catalogs[item['name']] = item['href'].gsub("#{@api_url}/catalog/", "")
+          response.css(
+            "Link[type='application/vnd.vmware.vcloud.catalog+xml']"
+          ).each do |item|
+            catalogs[item['name']] = item['href'].gsub(
+              "#{@api_url}/catalog/", ''
+            )
           end
 
           vdcs = {}
-          response.css("Link[type='application/vnd.vmware.vcloud.vdc+xml']").each do |item|
-            vdcs[item['name']] = item['href'].gsub("#{@api_url}/vdc/", "")
+          response.css(
+            "Link[type='application/vnd.vmware.vcloud.vdc+xml']"
+          ).each do |item|
+            vdcs[item['name']] = item['href'].gsub(
+              "#{@api_url}/vdc/", ''
+            )
           end
 
           networks = {}
-          response.css("Link[type='application/vnd.vmware.vcloud.orgNetwork+xml']").each do |item|
-            networks[item['name']] = item['href'].gsub("#{@api_url}/network/", "")
+          response.css(
+            "Link[type='application/vnd.vmware.vcloud.orgNetwork+xml']"
+          ).each do |item|
+            networks[item['name']] = item['href'].gsub(
+              "#{@api_url}/network/", ''
+            )
           end
 
           tasklists = {}
-          response.css("Link[type='application/vnd.vmware.vcloud.tasksList+xml']").each do |item|
-            tasklists[item['name']] = item['href'].gsub("#{@api_url}/tasksList/", "")
+          response.css(
+            "Link[type='application/vnd.vmware.vcloud.tasksList+xml']"
+          ).each do |item|
+            tasklists[item['name']] = item['href'].gsub(
+              "#{@api_url}/tasksList/", ''
+            )
           end
 
-          { :catalogs => catalogs, :vdcs => vdcs, :networks => networks, :tasklists => tasklists }
+          {
+            :catalogs   => catalogs,
+            :vdcs       => vdcs,
+            :networks   => networks,
+            :tasklists  => tasklists
+          }
         end
 
         ##
         # Fetch details about a given catalog
-        def get_catalog(catalogId)
+        def get_catalog(catalog_id)
           params = {
             'method'  => :get,
-            'command' => "/catalog/#{catalogId}"
+            'command' => "/catalog/#{catalog_id}"
           }
 
-          response, headers = send_request(params)
-          description = response.css("Description").first
+          response, _headers = send_request(params)
+          description = response.css('Description').first
           description = description.text unless description.nil?
 
           items = {}
-          response.css("CatalogItem[type='application/vnd.vmware.vcloud.catalogItem+xml']").each do |item|
-            items[item['name']] = item['href'].gsub("#{@api_url}/catalogItem/", "")
+          response.css(
+            "CatalogItem[type='application/vnd.vmware.vcloud.catalogItem+xml']"
+          ).each do |item|
+            items[item['name']] = item['href'].gsub(
+              "#{@api_url}/catalogItem/", ''
+            )
           end
           { :description => description, :items => items }
         end
@@ -184,11 +208,11 @@ module VagrantPlugins
         # Friendly helper method to fetch an catalog id by name
         # - organization hash (from get_organization/get_organization_by_name)
         # - catalog name
-        def get_catalog_id_by_name(organization, catalogName)
+        def get_catalog_id_by_name(organization, catalog_name)
           result = nil
 
           organization[:catalogs].each do |catalog|
-            if catalog[0].downcase == catalogName.downcase
+            if catalog[0].downcase == catalog_name.downcase
               result = catalog[1]
             end
           end
@@ -200,11 +224,11 @@ module VagrantPlugins
         # Friendly helper method to fetch an catalog by name
         # - organization hash (from get_organization/get_organization_by_name)
         # - catalog name
-        def get_catalog_by_name(organization, catalogName)
+        def get_catalog_by_name(organization, catalog_name)
           result = nil
 
           organization[:catalogs].each do |catalog|
-            if catalog[0].downcase == catalogName.downcase
+            if catalog[0].downcase == catalog_name.downcase
               result = get_catalog(catalog[1])
             end
           end
@@ -217,37 +241,47 @@ module VagrantPlugins
         # - description
         # - vapps
         # - networks
-        def get_vdc(vdcId)
+        def get_vdc(vdc_id)
           params = {
             'method'  => :get,
-            'command' => "/vdc/#{vdcId}"
+            'command' => "/vdc/#{vdc_id}"
           }
 
-          response, headers = send_request(params)
-          description = response.css("Description").first
+          response, _headers = send_request(params)
+          description = response.css('Description').first
           description = description.text unless description.nil?
 
           vapps = {}
-          response.css("ResourceEntity[type='application/vnd.vmware.vcloud.vApp+xml']").each do |item|
-            vapps[item['name']] = item['href'].gsub("#{@api_url}/vApp/vapp-", "")
+          response.css(
+            "ResourceEntity[type='application/vnd.vmware.vcloud.vApp+xml']"
+          ).each do |item|
+            vapps[item['name']] = item['href'].gsub(
+              "#{@api_url}/vApp/vapp-", ''
+            )
           end
 
           networks = {}
-          response.css("Network[type='application/vnd.vmware.vcloud.network+xml']").each do |item|
-            networks[item['name']] = item['href'].gsub("#{@api_url}/network/", "")
+          response.css(
+            "Network[type='application/vnd.vmware.vcloud.network+xml']"
+          ).each do |item|
+            networks[item['name']] = item['href'].gsub(
+              "#{@api_url}/network/", ''
+            )
           end
-          { :description => description, :vapps => vapps, :networks => networks }
+          {
+            :description => description, :vapps => vapps, :networks => networks
+          }
         end
 
         ##
         # Friendly helper method to fetch a Organization VDC Id by name
         # - Organization object
         # - Organization VDC Name
-        def get_vdc_id_by_name(organization, vdcName)
+        def get_vdc_id_by_name(organization, vdc_name)
           result = nil
 
           organization[:vdcs].each do |vdc|
-            if vdc[0].downcase == vdcName.downcase
+            if vdc[0].downcase == vdc_name.downcase
               result = vdc[1]
             end
           end
@@ -259,11 +293,11 @@ module VagrantPlugins
         # Friendly helper method to fetch a Organization VDC by name
         # - Organization object
         # - Organization VDC Name
-        def get_vdc_by_name(organization, vdcName)
+        def get_vdc_by_name(organization, vdc_name)
           result = nil
 
           organization[:vdcs].each do |vdc|
-            if vdc[0].downcase == vdcName.downcase
+            if vdc[0].downcase == vdc_name.downcase
               result = get_vdc(vdc[1])
             end
           end
@@ -275,19 +309,23 @@ module VagrantPlugins
         # Fetch details about a given catalog item:
         # - description
         # - vApp templates
-        def get_catalog_item(catalogItemId)
+        def get_catalog_item(catalog_item_id)
           params = {
             'method'  => :get,
-            'command' => "/catalogItem/#{catalogItemId}"
+            'command' => "/catalogItem/#{catalog_item_id}"
           }
 
-          response, headers = send_request(params)
-          description = response.css("Description").first
+          response, _headers = send_request(params)
+          description = response.css('Description').first
           description = description.text unless description.nil?
 
           items = {}
-          response.css("Entity[type='application/vnd.vmware.vcloud.vAppTemplate+xml']").each do |item|
-            items[item['name']] = item['href'].gsub("#{@api_url}/vAppTemplate/vappTemplate-", "")
+          response.css(
+            "Entity[type='application/vnd.vmware.vcloud.vAppTemplate+xml']"
+          ).each do |item|
+            items[item['name']] = item['href'].gsub(
+              "#{@api_url}/vAppTemplate/vappTemplate-", ''
+            )
           end
           { :description => description, :items => items }
         end
@@ -295,41 +333,43 @@ module VagrantPlugins
         ##
         # friendly helper method to fetch an catalogItem  by name
         # - catalogId (use get_catalog_name(org, name))
-        # - catalagItemName 
-        def get_catalog_item_by_name(catalogId, catalogItemName)
+        # - catalagItemName
+        def get_catalog_item_by_name(catalog_id, catalog_item_name)
           result = nil
-          catalogElems = get_catalog(catalogId)
-          
-          catalogElems[:items].each do |catalogElem|
-            
-            catalogItem = get_catalog_item(catalogElem[1])
-            if catalogItem[:items][catalogItemName]
+          catalog_elems = get_catalog(catalog_id)
+
+          catalog_elems[:items].each do |catalog_elem|
+
+            catalog_item = get_catalog_item(catalog_elem[1])
+            if catalog_item[:items][catalog_item_name]
               # This is a vApp Catalog Item
 
               # fetch CatalogItemId
-              catalogItemId = catalogItem[:items][catalogItemName]
+              catalog_item_id = catalog_item[:items][catalog_item_name]
 
               # Fetch the catalogItemId information
               params = {
                 'method'  => :get,
-                'command' => "/vAppTemplate/vappTemplate-#{catalogItemId}"
+                'command' => "/vAppTemplate/vappTemplate-#{catalog_item_id}"
               }
-              response, headers = send_request(params)
+              response, _headers = send_request(params)
 
-              # VMs Hash for all the vApp VM entities        
+              # VMs Hash for all the vApp VM entities
               vms_hash = {}
-              response.css("/VAppTemplate/Children/Vm").each do |vmElem|
-                vmName = vmElem["name"]
-                vmId = vmElem["href"].gsub("#{@api_url}/vAppTemplate/vm-", "")
-            
+              response.css('/VAppTemplate/Children/Vm').each do |vm_elem|
+                vm_name = vm_elem['name']
+                vm_id = vm_elem['href'].gsub("#{@api_url}/vAppTemplate/vm-", '')
+
                 # Add the VM name/id to the VMs Hash
-                vms_hash[vmName] = { :id => vmId }
+                vms_hash[vm_name] = { :id => vm_id }
               end
-            result = { catalogItemName => catalogItemId, :vms_hash => vms_hash }
+              result = {
+                catalog_item_name => catalog_item_id, :vms_hash => vms_hash
+              }
             end
           end
-          result 
-        end  
+          result
+        end
 
         ##
         # Fetch details about a given vapp:
@@ -341,13 +381,13 @@ module VagrantPlugins
         #   -- IP addresses
         #   -- status
         #   -- ID
-        def get_vapp(vAppId)
+        def get_vapp(vapp_id)
           params = {
             'method'  => :get,
-            'command' => "/vApp/vapp-#{vAppId}"
+            'command' => "/vApp/vapp-#{vapp_id}"
           }
 
-          response, headers = send_request(params)
+          response, _headers = send_request(params)
 
           vapp_node = response.css('VApp').first
           if vapp_node
@@ -355,7 +395,7 @@ module VagrantPlugins
             status = convert_vapp_status(vapp_node['status'])
           end
 
-          description = response.css("Description").first
+          description = response.css('Description').first
           description = description.text unless description.nil?
 
           ip = response.css('IpAddress').first
@@ -364,10 +404,13 @@ module VagrantPlugins
           vms = response.css('Children Vm')
           vms_hash = {}
 
-          # ipAddress could be namespaced or not: see https://github.com/astratto/vcloud-rest/issues/3
+          # ipAddress could be namespaced or not:
+          # see https://github.com/astratto/vcloud-rest/issues/3
           vms.each do |vm|
             vapp_local_id = vm.css('VAppScopedLocalId')
-            addresses = vm.css('rasd|Connection').collect{|n| n['vcloud:ipAddress'] || n['ipAddress'] }
+            addresses = vm.css('rasd|Connection').collect {
+              |n| n['vcloud:ipAddress'] || n['ipAddress']
+            }
             vms_hash[vm['name'].to_sym] = {
               :addresses            => addresses,
               :status               => convert_vapp_status(vm['status']),
@@ -377,57 +420,62 @@ module VagrantPlugins
           end
 
           # TODO: EXPAND INFO FROM RESPONSE
-          { :name => name, :description => description, :status => status, :ip => ip, :vms_hash => vms_hash }
+          {
+            :name         => name,
+            :description  => description,
+            :status       => status,
+            :ip           => ip,
+            :vms_hash     => vms_hash
+          }
         end
 
         ##
         # Delete a given vapp
         # NOTE: It doesn't verify that the vapp is shutdown
-        def delete_vapp(vAppId)
+        def delete_vapp(vapp_id)
           params = {
             'method'  => :delete,
-            'command' => "/vApp/vapp-#{vAppId}"
+            'command' => "/vApp/vapp-#{vapp_id}"
           }
 
-          response, headers = send_request(params)
-          task_id = headers["Location"].gsub("#{@api_url}/task/", "")
+          _response, headers = send_request(params)
+          task_id = headers['Location'].gsub("#{@api_url}/task/", '')
           task_id
         end
 
         ##
         # Shutdown a given vapp
-        def poweroff_vapp(vAppId)
+        def poweroff_vapp(vapp_id)
           builder = Nokogiri::XML::Builder.new do |xml|
-          xml.UndeployVAppParams(
-            "xmlns" => "http://www.vmware.com/vcloud/v1.5") {
-            xml.UndeployPowerAction 'powerOff'
-          }
+            xml.UndeployVAppParams(
+              'xmlns' => 'http://www.vmware.com/vcloud/v1.5'
+            ) { xml.UndeployPowerAction 'powerOff' }
           end
 
           params = {
             'method'  => :post,
-            'command' => "/vApp/vapp-#{vAppId}/action/undeploy"
+            'command' => "/vApp/vapp-#{vapp_id}/action/undeploy"
           }
 
-          response, headers = send_request(
-            params, 
+          _response, headers = send_request(
+            params,
             builder.to_xml,
-            "application/vnd.vmware.vcloud.undeployVAppParams+xml"
+            'application/vnd.vmware.vcloud.undeployVAppParams+xml'
           )
-          task_id = headers["Location"].gsub("#{@api_url}/task/", "")
+          task_id = headers['Location'].gsub("#{@api_url}/task/", '')
           task_id
         end
 
         ##
         # Suspend a given vapp
-        def suspend_vapp(vAppId)
+        def suspend_vapp(vapp_id)
           params = {
             'method'  => :post,
-            'command' => "/vApp/vapp-#{vAppId}/power/action/suspend"
+            'command' => "/vApp/vapp-#{vapp_id}/power/action/suspend"
           }
 
-          response, headers = send_request(params)
-          task_id = headers["Location"].gsub("#{@api_url}/task/", "")
+          _response, headers = send_request(params)
+          task_id = headers['Location'].gsub("#{@api_url}/task/", '')
           task_id
         end
 
@@ -436,14 +484,14 @@ module VagrantPlugins
         # This will basically initial a guest OS reboot, and will only work if
         # VMware-tools are installed on the underlying VMs.
         # vShield Edge devices are not affected
-        def reboot_vapp(vAppId)
+        def reboot_vapp(vapp_id)
           params = {
             'method'  => :post,
-            'command' => "/vApp/vapp-#{vAppId}/power/action/reboot"
+            'command' => "/vApp/vapp-#{vapp_id}/power/action/reboot"
           }
 
-          response, headers = send_request(params)
-          task_id = headers["Location"].gsub("#{@api_url}/task/", "")
+          _response, headers = send_request(params)
+          task_id = headers['Location'].gsub("#{@api_url}/task/", '')
           task_id
         end
 
@@ -451,27 +499,27 @@ module VagrantPlugins
         # reset a given vapp
         # This will basically reset the VMs within the vApp
         # vShield Edge devices are not affected.
-        def reset_vapp(vAppId)
+        def reset_vapp(vapp_id)
           params = {
             'method'  => :post,
-            'command' => "/vApp/vapp-#{vAppId}/power/action/reset"
+            'command' => "/vApp/vapp-#{vapp_id}/power/action/reset"
           }
 
-          response, headers = send_request(params)
-          task_id = headers["Location"].gsub("#{@api_url}/task/", "")
+          _response, headers = send_request(params)
+          task_id = headers['Location'].gsub("#{@api_url}/task/", '')
           task_id
         end
 
         ##
         # Boot a given vapp
-        def poweron_vapp(vAppId)
+        def poweron_vapp(vapp_id)
           params = {
             'method'  => :post,
-            'command' => "/vApp/vapp-#{vAppId}/power/action/powerOn"
+            'command' => "/vApp/vapp-#{vapp_id}/power/action/powerOn"
           }
 
-          response, headers = send_request(params)
-          task_id = headers["Location"].gsub("#{@api_url}/task/", "")
+          _response, headers = send_request(params)
+          task_id = headers['Location'].gsub("#{@api_url}/task/", '')
           task_id
         end
 
@@ -479,64 +527,62 @@ module VagrantPlugins
         ##
         # Delete a given vm
         # NOTE: It doesn't verify that the vm is shutdown
-        def delete_vm(vmId)
+        def delete_vm(vm_id)
           params = {
             'method'  => :delete,
-            'command' => "/vApp/vm-#{vmId}"
+            'command' => "/vApp/vm-#{vm_id}"
           }
 
-          response, headers = send_request(params)
-          task_id = headers["Location"].gsub("#{@api_url}/task/", "")
+          _response, headers = send_request(params)
+          task_id = headers['Location'].gsub("#{@api_url}/task/", '')
           task_id
         end
 
         ##
         # Shutdown a given VM
-        # Using undeploy as a REAL powerOff 
+        # Using undeploy as a REAL powerOff
         # Only poweroff will put the VM into a partially powered off state.
-        def poweroff_vm(vmId)
+        def poweroff_vm(vm_id)
           builder = Nokogiri::XML::Builder.new do |xml|
-          xml.UndeployVAppParams(
-            "xmlns" => "http://www.vmware.com/vcloud/v1.5") {
-            xml.UndeployPowerAction 'powerOff'
-          }
+            xml.UndeployVAppParams(
+            'xmlns' => 'http://www.vmware.com/vcloud/v1.5'
+          ) { xml.UndeployPowerAction 'powerOff' }
           end
 
           params = {
             'method'  => :post,
-            'command' => "/vApp/vm-#{vmId}/action/undeploy"
+            'command' => "/vApp/vm-#{vm_id}/action/undeploy"
           }
 
-          response, headers = send_request(
-            params, 
+          _response, headers = send_request(
+            params,
             builder.to_xml,
-            "application/vnd.vmware.vcloud.undeployVAppParams+xml"
+            'application/vnd.vmware.vcloud.undeployVAppParams+xml'
           )
-          task_id = headers["Location"].gsub("#{@api_url}/task/", "")
+          task_id = headers['Location'].gsub("#{@api_url}/task/", '')
           task_id
         end
 
         ##
         # Suspend a given VM
-        def suspend_vm(vmId)
+        def suspend_vm(vm_id)
           builder = Nokogiri::XML::Builder.new do |xml|
-          xml.UndeployVAppParams(
-            "xmlns" => "http://www.vmware.com/vcloud/v1.5") {
-            xml.UndeployPowerAction 'suspend'
-          }
+            xml.UndeployVAppParams(
+              'xmlns' => 'http://www.vmware.com/vcloud/v1.5'
+            ) { xml.UndeployPowerAction 'suspend' }
           end
 
           params = {
             'method'  => :post,
-            'command' => "/vApp/vm-#{vmId}/action/undeploy"
+            'command' => "/vApp/vm-#{vm_id}/action/undeploy"
           }
 
-          response, headers = send_request(
-            params, 
+          _response, headers = send_request(
+            params,
             builder.to_xml,
-            "application/vnd.vmware.vcloud.undeployVAppParams+xml"
+            'application/vnd.vmware.vcloud.undeployVAppParams+xml'
           )
-          task_id = headers["Location"].gsub("#{@api_url}/task/", "")
+          task_id = headers['Location'].gsub("#{@api_url}/task/", '')
           task_id
         end
 
@@ -545,14 +591,14 @@ module VagrantPlugins
         # This will basically initial a guest OS reboot, and will only work if
         # VMware-tools are installed on the underlying VMs.
         # vShield Edge devices are not affected
-        def reboot_vm(vmId)
+        def reboot_vm(vm_id)
           params = {
             'method'  => :post,
-            'command' => "/vApp/vm-#{vmId}/power/action/reboot"
+            'command' => "/vApp/vm-#{vm_id}/power/action/reboot"
           }
 
-          response, headers = send_request(params)
-          task_id = headers["Location"].gsub("#{@api_url}/task/", "")
+          _response, headers = send_request(params)
+          task_id = headers['Location'].gsub("#{@api_url}/task/", '')
           task_id
         end
 
@@ -560,75 +606,72 @@ module VagrantPlugins
         # reset a given VM
         # This will basically reset the VMs within the vApp
         # vShield Edge devices are not affected.
-        def reset_vm(vmId)
+        def reset_vm(vm_id)
           params = {
             'method'  => :post,
-            'command' => "/vApp/vm-#{vmId}/power/action/reset"
+            'command' => "/vApp/vm-#{vm_id}/power/action/reset"
           }
 
-          response, headers = send_request(params)
-          task_id = headers["Location"].gsub("#{@api_url}/task/", "")
+          _response, headers = send_request(params)
+          task_id = headers['Location'].gsub("#{@api_url}/task/", '')
           task_id
         end
 
         ##
         # Boot a given VM
-        def poweron_vm(vmId)
+        def poweron_vm(vm_id)
           params = {
             'method'  => :post,
-            'command' => "/vApp/vm-#{vmId}/power/action/powerOn"
+            'command' => "/vApp/vm-#{vm_id}/power/action/powerOn"
           }
 
-          response, headers = send_request(params)
-          task_id = headers["Location"].gsub("#{@api_url}/task/", "")
+          _response, headers = send_request(params)
+          task_id = headers['Location'].gsub("#{@api_url}/task/", '')
           task_id
         end
-
-        ### End Of VM operations ###
-
-
 
         ##
         # Boot a given vm
-        def poweron_vm(vmId)
+        def poweron_vm(vm_id)
           params = {
             'method'  => :post,
-            'command' => "/vApp/vm-#{vmId}/power/action/powerOn"
+            'command' => "/vApp/vm-#{vm_id}/power/action/powerOn"
           }
 
-          response, headers = send_request(params)
-          task_id = headers["Location"].gsub("#{@api_url}/task/", "")
+          _response, headers = send_request(params)
+          task_id = headers['Location'].gsub("#{@api_url}/task/", '')
           task_id
         end
 
-
         ##
         # Create a catalog in an organization
-        def create_catalog(orgId, catalogName, catalogDescription)
+        def create_catalog(org_id, catalog_name, catalog_description)
           builder = Nokogiri::XML::Builder.new do |xml|
+            xml.AdminCatalog(
+              'xmlns' => 'http://www.vmware.com/vcloud/v1.5',
+              'name' => catalog_name
+            ) { xml.Description catalog_description }
 
-          xml.AdminCatalog(
-            "xmlns" => "http://www.vmware.com/vcloud/v1.5",
-            "name" => catalogName
-          ) {
-            xml.Description catalogDescription
-          }
-          
           end
 
           params = {
             'method'  => :post,
-            'command' => "/admin/org/#{orgId}/catalogs"
-
+            'command' => "/admin/org/#{org_id}/catalogs"
           }
 
-          response, headers = send_request(
-            params, 
+          response, _headers = send_request(
+            params,
             builder.to_xml,
-            "application/vnd.vmware.admin.catalog+xml"
+            'application/vnd.vmware.admin.catalog+xml'
           )
-          task_id = response.css("AdminCatalog Tasks Task[operationName='catalogCreateCatalog']").first[:href].gsub("#{@api_url}/task/","")
-          catalog_id = response.css("AdminCatalog Link [type='application/vnd.vmware.vcloud.catalog+xml']").first[:href].gsub("#{@api_url}/catalog/","")
+          task_id = response.css(
+            "AdminCatalog Tasks Task[operationName='catalogCreateCatalog']"
+          ).first[:href].gsub("#{@api_url}/task/", '')
+
+          catalog_id = response.css(
+            "AdminCatalog Link [type='application/vnd.vmware.vcloud.catalog+xml']"
+            ).first[:href].gsub("#{@api_url}/catalog/", '')
+
           { :task_id => task_id, :catalog_id => catalog_id }
         end
 
@@ -640,35 +683,39 @@ module VagrantPlugins
         # - vapp_name: name of the target vapp
         # - vapp_description: description of the target vapp
         # - vapp_templateid: ID of the vapp template
-        def create_vapp_from_template(vdc, vapp_name, vapp_description, vapp_templateid, poweron=false)
+        def create_vapp_from_template(vdc, vapp_name, vapp_description, vapp_template_id, poweron = false)
           builder = Nokogiri::XML::Builder.new do |xml|
-          xml.InstantiateVAppTemplateParams(
-            "xmlns" => "http://www.vmware.com/vcloud/v1.5",
-            "xmlns:xsi" => "http://www.w3.org/2001/XMLSchema-instance",
-            "xmlns:ovf" => "http://schemas.dmtf.org/ovf/envelope/1",
-            "name" => vapp_name,
-            "deploy" => "true",
-            "powerOn" => poweron) {
-            xml.Description vapp_description
-            xml.Source("href" => "#{@api_url}/vAppTemplate/#{vapp_templateid}")
-          }
+            xml.InstantiateVAppTemplateParams(
+              'xmlns'     => 'http://www.vmware.com/vcloud/v1.5',
+              'xmlns:xsi' => 'http://www.w3.org/2001/XMLSchema-instance',
+              'xmlns:ovf' => 'http://schemas.dmtf.org/ovf/envelope/1',
+              'name'      => vapp_name,
+              'deploy'    => 'true',
+              'powerOn'   => poweron
+            ) { xml.Description vapp_description xml.Source(
+                'href' => "#{@api_url}/vAppTemplate/#{vapp_template_id}"
+              )
+            }
           end
 
           params = {
-            "method"  => :post,
-            "command" => "/vdc/#{vdc}/action/instantiateVAppTemplate"
+            'method'  => :post,
+            'command' => "/vdc/#{vdc}/action/instantiateVAppTemplate"
           }
 
           response, headers = send_request(
-            params, 
-            builder.to_xml, 
-            "application/vnd.vmware.vcloud.instantiateVAppTemplateParams+xml"
+            params,
+            builder.to_xml,
+            'application/vnd.vmware.vcloud.instantiateVAppTemplateParams+xml'
           )
 
-          vapp_id = headers["Location"].gsub("#{@api_url}/vApp/vapp-", "")
+          vapp_id = headers['Location'].gsub("#{@api_url}/vApp/vapp-", '')
 
-          task = response.css("VApp Task[operationName='vdcInstantiateVapp']").first
-          task_id = task["href"].gsub("#{@api_url}/task/", "")
+          task = response.css(
+            "VApp Task[operationName='vdcInstantiateVapp']"
+          ).first
+
+          task_id = task['href'].gsub("#{@api_url}/task/", '')
 
           { :vapp_id => vapp_id, :task_id => task_id }
         end
@@ -680,35 +727,35 @@ module VagrantPlugins
         # - vdc: the associated VDC
         # - vapp_name: name of the target vapp
         # - vapp_description: description of the target vapp
-        # - vm_list: hash with IDs of the VMs to be used in the composing process
+        # - vm_list: hash with IDs of the VMs used in the composing process
         # - network_config: hash of the network configuration for the vapp
-        def compose_vapp_from_vm(vdc, vapp_name, vapp_description, vm_list={}, network_config={})
+        def compose_vapp_from_vm(vdc, vapp_name, vapp_description, vm_list = {}, network_config = {})
           builder = Nokogiri::XML::Builder.new do |xml|
           xml.ComposeVAppParams(
-            "xmlns" => "http://www.vmware.com/vcloud/v1.5",
-            "xmlns:ovf" => "http://schemas.dmtf.org/ovf/envelope/1",
-            "name" => vapp_name,
-            "deploy" => "false",
-            "powerOn" => "false") {
+            'xmlns' => 'http://www.vmware.com/vcloud/v1.5',
+            'xmlns:ovf' => 'http://schemas.dmtf.org/ovf/envelope/1',
+            'name' => vapp_name,
+            'deploy' => 'false',
+            'powerOn' => 'false') {
             xml.Description vapp_description
             xml.InstantiationParams {
               xml.NetworkConfigSection {
-                xml['ovf'].Info "Configuration parameters for logical networks"
-                xml.NetworkConfig("networkName" => network_config[:name]) {
+                xml['ovf'].Info 'Configuration parameters for logical networks'
+                xml.NetworkConfig('networkName' => network_config[:name]) {
                   xml.Configuration {
                     if network_config[:fence_mode] != 'bridged'
                       xml.IpScopes {
-                        xml.IpScope {
-                          xml.IsInherited(network_config[:is_inherited] || "false")
-                          xml.Gateway network_config[:gateway]
-                          xml.Netmask network_config[:netmask]
-                          xml.Dns1 network_config[:dns1] if network_config[:dns1]
-                          xml.Dns2 network_config[:dns2] if network_config[:dns2]
-                          xml.DnsSuffix network_config[:dns_suffix] if network_config[:dns_suffix]
-                          xml.IpRanges {
-                            xml.IpRange {
-                              xml.StartAddress network_config[:start_address]
-                              xml.EndAddress network_config[:end_address]
+                      xml.IpScope {
+                        xml.IsInherited(network_config[:is_inherited] || 'false')
+                        xml.Gateway network_config[:gateway]
+                        xml.Netmask network_config[:netmask]
+                        xml.Dns1 network_config[:dns1] if network_config[:dns1]
+                        xml.Dns2 network_config[:dns2] if network_config[:dns2]
+                        xml.DnsSuffix network_config[:dns_suffix] if network_config[:dns_suffix]
+                        xml.IpRanges {
+                          xml.IpRange {
+                            xml.StartAddress network_config[:start_address]
+                            xml.EndAddress network_config[:end_address]
                             }
                           }
                         }
@@ -734,47 +781,46 @@ module VagrantPlugins
             }
             vm_list.each do |vm_name, vm_id|
               xml.SourcedItem {
-                xml.Source("href" => "#{@api_url}/vAppTemplate/vm-#{vm_id}", "name" => vm_name)
+                xml.Source('href' => "#{@api_url}/vAppTemplate/vm-#{vm_id}", 'name' => vm_name)
                 xml.InstantiationParams {
                   xml.NetworkConnectionSection(
-                    "xmlns:ovf" => "http://schemas.dmtf.org/ovf/envelope/1",
-                    "type" => "application/vnd.vmware.vcloud.networkConnectionSection+xml",
-                    "href" => "#{@api_url}/vAppTemplate/vm-#{vm_id}/networkConnectionSection/") {
-                      xml['ovf'].Info "Network config for sourced item"
-                      xml.PrimaryNetworkConnectionIndex "0"
-                      xml.NetworkConnection("network" => network_config[:name]) {
-                        xml.NetworkConnectionIndex "0"
-                        xml.IsConnected "true"
-                        xml.IpAddressAllocationMode(network_config[:ip_allocation_mode] || "POOL")
+                    'xmlns:ovf' => 'http://schemas.dmtf.org/ovf/envelope/1',
+                    'type' => 'application/vnd.vmware.vcloud.networkConnectionSection+xml',
+                    'href' => "#{@api_url}/vAppTemplate/vm-#{vm_id}/networkConnectionSection/") {
+                      xml['ovf'].Info 'Network config for sourced item'
+                      xml.PrimaryNetworkConnectionIndex '0'
+                      xml.NetworkConnection('network' => network_config[:name]) {
+                        xml.NetworkConnectionIndex '0'
+                        xml.IsConnected 'true'
+                        xml.IpAddressAllocationMode(network_config[:ip_allocation_mode] || 'POOL')
                     }
                   }
                 }
-                xml.NetworkAssignment("containerNetwork" => network_config[:name], "innerNetwork" => network_config[:name])
+                xml.NetworkAssignment('containerNetwork' => network_config[:name], 'innerNetwork' => network_config[:name])
               }
             end
-            xml.AllEULAsAccepted "true"
+            xml.AllEULAsAccepted 'true'
           }
           end
 
           params = {
-            "method"  => :post,
-            "command" => "/vdc/#{vdc}/action/composeVApp"
+            'method'  => :post,
+            'command' => "/vdc/#{vdc}/action/composeVApp"
           }
 
           response, headers = send_request(
-            params, 
-            builder.to_xml, 
-            "application/vnd.vmware.vcloud.composeVAppParams+xml"
+            params,
+            builder.to_xml,
+            'application/vnd.vmware.vcloud.composeVAppParams+xml'
           )
 
-          vapp_id = headers["Location"].gsub("#{@api_url}/vApp/vapp-", "")
+          vapp_id = headers['Location'].gsub("#{@api_url}/vApp/vapp-", '')
 
           task = response.css("VApp Task[operationName='vdcComposeVapp']").first
-          task_id = task["href"].gsub("#{@api_url}/task/", "")
+          task_id = task['href'].gsub("#{@api_url}/task/", '')
 
           { :vapp_id => vapp_id, :task_id => task_id }
         end
-
 
         ##
         # Recompose an existing vapp using existing virtual machines
@@ -786,86 +832,84 @@ module VagrantPlugins
         # - vm_list: hash with IDs of the VMs to be used in the composing process
         # - network_config: hash of the network configuration for the vapp
 
-        def recompose_vapp_from_vm(vAppId, vm_list={}, network_config={})
-          originalVApp = get_vapp(vAppId)
+        def recompose_vapp_from_vm(vapp_id, vm_list = {}, network_config = {})
+          original_vapp = get_vapp(vapp_id)
 
           builder = Nokogiri::XML::Builder.new do |xml|
           xml.RecomposeVAppParams(
-            "xmlns" => "http://www.vmware.com/vcloud/v1.5",
-            "xmlns:ovf" => "http://schemas.dmtf.org/ovf/envelope/1",
-            "name" => originalVApp[:name]) {
-            xml.Description originalVApp[:description]
+            'xmlns' => 'http://www.vmware.com/vcloud/v1.5',
+            'xmlns:ovf' => 'http://schemas.dmtf.org/ovf/envelope/1',
+            'name' => original_vapp[:name]) {
+            xml.Description original_vapp[:description]
             xml.InstantiationParams {}
             vm_list.each do |vm_name, vm_id|
               xml.SourcedItem {
-                xml.Source("href" => "#{@api_url}/vAppTemplate/vm-#{vm_id}", "name" => vm_name)
+                xml.Source('href' => "#{@api_url}/vAppTemplate/vm-#{vm_id}", 'name' => vm_name)
                 xml.InstantiationParams {
                   xml.NetworkConnectionSection(
-                    "xmlns:ovf" => "http://schemas.dmtf.org/ovf/envelope/1",
-                    "type" => "application/vnd.vmware.vcloud.networkConnectionSection+xml",
-                    "href" => "#{@api_url}/vAppTemplate/vm-#{vm_id}/networkConnectionSection/") {
-                      xml['ovf'].Info "Network config for sourced item"
-                      xml.PrimaryNetworkConnectionIndex "0"
-                      xml.NetworkConnection("network" => network_config[:name]) {
-                        xml.NetworkConnectionIndex "0"
-                        xml.IsConnected "true"
-                        xml.IpAddressAllocationMode(network_config[:ip_allocation_mode] || "POOL")
+                    'xmlns:ovf' => 'http://schemas.dmtf.org/ovf/envelope/1',
+                    'type' => 'application/vnd.vmware.vcloud.networkConnectionSection+xml',
+                    'href' => "#{@api_url}/vAppTemplate/vm-#{vm_id}/networkConnectionSection/") {
+                      xml['ovf'].Info 'Network config for sourced item'
+                      xml.PrimaryNetworkConnectionIndex '0'
+                      xml.NetworkConnection('network' => network_config[:name]) {
+                        xml.NetworkConnectionIndex '0'
+                        xml.IsConnected 'true'
+                        xml.IpAddressAllocationMode(network_config[:ip_allocation_mode] || 'POOL')
                     }
                   }
                 }
-                xml.NetworkAssignment("containerNetwork" => network_config[:name], "innerNetwork" => network_config[:name])
+                xml.NetworkAssignment('containerNetwork' => network_config[:name], 'innerNetwork' => network_config[:name])
               }
             end
-            xml.AllEULAsAccepted "true"
+            xml.AllEULAsAccepted 'true'
           }
           end
 
           params = {
-            "method"  => :post,
-            "command" => "/vApp/vapp-#{vAppId}/action/recomposeVApp"
+            'method'  => :post,
+            'command' => "/vApp/vapp-#{vapp_id}/action/recomposeVApp"
           }
 
           response, headers = send_request(
-            params, 
-            builder.to_xml, 
-            "application/vnd.vmware.vcloud.recomposeVAppParams+xml"
+            params,
+            builder.to_xml,
+            'application/vnd.vmware.vcloud.recomposeVAppParams+xml'
           )
 
-          vapp_id = headers["Location"].gsub("#{@api_url}/vApp/vapp-", "")
+          vapp_id = headers['Location'].gsub("#{@api_url}/vApp/vapp-", '')
 
           task = response.css("Task [operationName='vdcRecomposeVapp']").first
-          task_id = task["href"].gsub("#{@api_url}/task/", "")
+          task_id = task['href'].gsub("#{@api_url}/task/", '')
 
           { :vapp_id => vapp_id, :task_id => task_id }
         end
-
-
-
 
         # Fetch details about a given vapp template:
         # - name
         # - description
         # - Children VMs:
         #   -- ID
-        def get_vapp_template(vAppId)
+        def get_vapp_template(vapp_id)
           params = {
             'method'  => :get,
-            'command' => "/vAppTemplate/vappTemplate-#{vAppId}"
+            'command' => "/vAppTemplate/vappTemplate-#{vapp_id}"
           }
 
-          response, headers = send_request(params)
+          response, _headers = send_request(params)
 
           vapp_node = response.css('VAppTemplate').first
           if vapp_node
             name = vapp_node['name']
-            status = convert_vapp_status(vapp_node['status'])
+            convert_vapp_status(vapp_node['status'])
           end
 
-          description = response.css("Description").first
+          description = response.css('Description').first
           description = description.text unless description.nil?
 
-          ip = response.css('IpAddress').first
-          ip = ip.text unless ip.nil?
+          # FIXME: What are those 2 lines for ? disabling for now (tsugliani)
+          # ip = response.css('IpAddress').first
+          # ip = ip.text unless ip.nil?
 
           vms = response.css('Children Vm')
           vms_hash = {}
@@ -883,32 +927,32 @@ module VagrantPlugins
         ##
         # Set vApp port forwarding rules
         #
-        # - vappid: id of the vapp to be modified
+        # - vapp_id: id of the vapp to be modified
         # - network_name: name of the vapp network to be modified
         # - config: hash with network configuration specifications, must contain an array inside :nat_rules with the nat rules to be applied.
-        def set_vapp_port_forwarding_rules(vappid, network_name, config={})
+        def set_vapp_port_forwarding_rules(vapp_id, network_name, config = {})
           builder = Nokogiri::XML::Builder.new do |xml|
           xml.NetworkConfigSection(
-            "xmlns" => "http://www.vmware.com/vcloud/v1.5",
-            "xmlns:ovf" => "http://schemas.dmtf.org/ovf/envelope/1") {
-            xml['ovf'].Info "Network configuration"
-            xml.NetworkConfig("networkName" => network_name) {
+            'xmlns' => 'http://www.vmware.com/vcloud/v1.5',
+            'xmlns:ovf' => 'http://schemas.dmtf.org/ovf/envelope/1') {
+            xml['ovf'].Info 'Network configuration'
+            xml.NetworkConfig('networkName' => network_name) {
               xml.Configuration {
-                xml.ParentNetwork("href" => "#{@api_url}/network/#{config[:parent_network]}")
+                xml.ParentNetwork('href' => "#{@api_url}/network/#{config[:parent_network]}")
                 xml.FenceMode(config[:fence_mode] || 'isolated')
                 xml.Features {
                   xml.NatService {
-                    xml.IsEnabled "true"
-                    xml.NatType "portForwarding"
-                    xml.Policy(config[:nat_policy_type] || "allowTraffic")
+                    xml.IsEnabled 'true'
+                    xml.NatType 'portForwarding'
+                    xml.Policy(config[:nat_policy_type] || 'allowTraffic')
                     config[:nat_rules].each do |nat_rule|
                       xml.NatRule {
                         xml.VmRule {
                           xml.ExternalPort nat_rule[:nat_external_port]
                           xml.VAppScopedVmId nat_rule[:vapp_scoped_local_id]
-                          xml.VmNicId(nat_rule[:nat_vmnic_id] || "0")
+                          xml.VmNicId(nat_rule[:nat_vmnic_id] || '0')
                           xml.InternalPort nat_rule[:nat_internal_port]
-                          xml.Protocol(nat_rule[:nat_protocol] || "TCP")
+                          xml.Protocol(nat_rule[:nat_protocol] || 'TCP')
                         }
                       }
                     end
@@ -921,179 +965,195 @@ module VagrantPlugins
 
           params = {
             'method'  => :put,
-            'command' => "/vApp/vapp-#{vappid}/networkConfigSection"
+            'command' => "/vApp/vapp-#{vapp_id}/networkConfigSection"
           }
 
-          response, headers = send_request(
-            params, 
-            builder.to_xml, 
-            "application/vnd.vmware.vcloud.networkConfigSection+xml"
+          _response, headers = send_request(
+            params,
+            builder.to_xml,
+            'application/vnd.vmware.vcloud.networkConfigSection+xml'
           )
 
-          task_id = headers["Location"].gsub("#{@api_url}/task/", "")
+          task_id = headers['Location'].gsub("#{@api_url}/task/", '')
           task_id
         end
 
         ##
         # Add vApp port forwarding rules
         #
-        # - vappid: id of the vapp to be modified
+        # - vapp_id: id of the vapp to be modified
         # - network_name: name of the vapp network to be modified
-        # - config: hash with network configuration specifications, must contain an array inside :nat_rules with the nat rules to be added.
+        # - config: hash with network configuration specifications,
+        #   must contain an array inside :nat_rules with the nat rules to add.
+        #   nat_rules << {
+        #     :nat_external_port    => j.to_s,
+        #     :nat_internal_port    => "22",
+        #     :nat_protocol         => "TCP",
+        #     :vm_scoped_local_id   => value[:vapp_scoped_local_id]
+        #   }
 
-        # nat_rules << { :nat_external_port => j.to_s, :nat_internal_port => "22", :nat_protocol => "TCP", :vm_scoped_local_id => value[:vapp_scoped_local_id]}
-
-        def add_vapp_port_forwarding_rules(vappid, network_name, config={})
+        def add_vapp_port_forwarding_rules(vapp_id, network_name, config = {})
           builder = Nokogiri::XML::Builder.new do |xml|
-          xml.NetworkConfigSection(
-            "xmlns" => "http://www.vmware.com/vcloud/v1.5",
-            "xmlns:ovf" => "http://schemas.dmtf.org/ovf/envelope/1") {
-            xml['ovf'].Info "Network configuration"
-            xml.NetworkConfig("networkName" => network_name) {
-              xml.Configuration {
-                xml.ParentNetwork("href" => "#{@api_url}/network/#{config[:parent_network]}")
-                xml.FenceMode(config[:fence_mode] || 'isolated')
-                xml.Features {
-                  xml.NatService {
-                    xml.IsEnabled "true"
-                    xml.NatType "portForwarding"
-                    xml.Policy(config[:nat_policy_type] || "allowTraffic")
+            xml.NetworkConfigSection(
+              'xmlns' => 'http://www.vmware.com/vcloud/v1.5',
+              'xmlns:ovf' => 'http://schemas.dmtf.org/ovf/envelope/1') {
+              xml['ovf'].Info 'Network configuration'
+              xml.NetworkConfig('networkName' => network_name) {
+                xml.Configuration {
+                  xml.ParentNetwork('href' => "#{@api_url}/network/#{config[:parent_network]}")
+                  xml.FenceMode(config[:fence_mode] || 'isolated')
+                  xml.Features {
+                    xml.NatService {
+                      xml.IsEnabled 'true'
+                      xml.NatType 'portForwarding'
+                      xml.Policy(config[:nat_policy_type] || 'allowTraffic')
 
-                    preExisting = get_vapp_port_forwarding_rules(vappid)
-                    
-                    config[:nat_rules].concat(preExisting)
+                      pre_existing = get_vapp_port_forwarding_rules(vapp_id)
 
-                    config[:nat_rules].each do |nat_rule|
-                      xml.NatRule {
-                        xml.VmRule {
-                          xml.ExternalPort nat_rule[:nat_external_port]
-                          xml.VAppScopedVmId nat_rule[:vapp_scoped_local_id]
-                          xml.VmNicId(nat_rule[:nat_vmnic_id] || "0")
-                          xml.InternalPort nat_rule[:nat_internal_port]
-                          xml.Protocol(nat_rule[:nat_protocol] || "TCP")
+                      config[:nat_rules].concat(pre_existing)
+
+                      config[:nat_rules].each do |nat_rule|
+                        xml.NatRule {
+                          xml.VmRule {
+                            xml.ExternalPort nat_rule[:nat_external_port]
+                            xml.VAppScopedVmId nat_rule[:vapp_scoped_local_id]
+                            xml.VmNicId(nat_rule[:nat_vmnic_id] || '0')
+                            xml.InternalPort nat_rule[:nat_internal_port]
+                            xml.Protocol(nat_rule[:nat_protocol] || 'TCP')
+                          }
                         }
-                      }
-                    end
+                      end
+                    }
                   }
                 }
               }
             }
-          }
           end
 
           params = {
             'method'  => :put,
-            'command' => "/vApp/vapp-#{vappid}/networkConfigSection"
+            'command' => "/vApp/vapp-#{vapp_id}/networkConfigSection"
           }
 
-          response, headers = send_request(
-            params, 
-            builder.to_xml, 
-            "application/vnd.vmware.vcloud.networkConfigSection+xml"
+          _response, headers = send_request(
+            params,
+            builder.to_xml,
+            'application/vnd.vmware.vcloud.networkConfigSection+xml'
           )
 
-          task_id = headers["Location"].gsub("#{@api_url}/task/", "")
+          task_id = headers['Location'].gsub("#{@api_url}/task/", '')
           task_id
         end
-
-
-
         ##
         # Get vApp port forwarding rules
         #
-        # - vappid: id of the vApp
-
-        # nat_rules << { :nat_external_port => j.to_s, :nat_internal_port => "22", :nat_protocol => "TCP", :vm_scoped_local_id => value[:vapp_scoped_local_id]}
-        
-        def get_vapp_port_forwarding_rules(vAppId)
+        # - vapp_id: id of the vApp
+        def get_vapp_port_forwarding_rules(vapp_id)
           params = {
             'method'  => :get,
-            'command' => "/vApp/vapp-#{vAppId}/networkConfigSection"
+            'command' => "/vApp/vapp-#{vapp_id}/networkConfigSection"
           }
 
-          response, headers = send_request(params)
+          response, _headers = send_request(params)
 
           # FIXME: this will return nil if the vApp uses multiple vApp Networks
           # with Edge devices in natRouted/portForwarding mode.
-          config = response.css('NetworkConfigSection/NetworkConfig/Configuration')
-          fenceMode = config.css('/FenceMode').text
-          natType = config.css('/Features/NatService/NatType').text
+          config = response.css(
+            'NetworkConfigSection/NetworkConfig/Configuration'
+          )
+          fence_mode = config.css('/FenceMode').text
+          nat_type = config.css('/Features/NatService/NatType').text
 
-          raise InvalidStateError, "Invalid request because FenceMode must be set to natRouted." unless fenceMode == "natRouted"
-          raise InvalidStateError, "Invalid request because NatType must be set to portForwarding." unless natType == "portForwarding"
+          unless fence_mode == 'natRouted'
+            raise InvalidStateError,
+                  'Invalid request because FenceMode must be natRouted.'
+          end
+
+          unless nat_type == 'portForwarding'
+            raise InvalidStateError,
+                  'Invalid request because NatType must be portForwarding.'
+          end
 
           nat_rules = []
           config.css('/Features/NatService/NatRule').each do |rule|
             # portforwarding rules information
-            ruleId = rule.css('Id').text
-            vmRule = rule.css('VmRule')
+            vm_rule = rule.css('VmRule')
 
             nat_rules << {
-              :nat_external_ip      => vmRule.css('ExternalIpAddress').text,
-              :nat_external_port    => vmRule.css('ExternalPort').text,
-              :vapp_scoped_local_id => vmRule.css('VAppScopedVmId').text,
-              :vm_nic_id            => vmRule.css('VmNicId').text,
-              :nat_internal_port    => vmRule.css('InternalPort').text,
-              :nat_protocol         => vmRule.css('Protocol').text
+              :nat_external_ip      => vm_rule.css('ExternalIpAddress').text,
+              :nat_external_port    => vm_rule.css('ExternalPort').text,
+              :vapp_scoped_local_id => vm_rule.css('VAppScopedVmId').text,
+              :vm_nic_id            => vm_rule.css('VmNicId').text,
+              :nat_internal_port    => vm_rule.css('InternalPort').text,
+              :nat_protocol         => vm_rule.css('Protocol').text
             }
           end
           nat_rules
         end
 
         ##
-        # Get vApp port forwarding rules external ports used and returns a set instead
-        # of an HASH.
+        # Get vApp port forwarding rules external ports used and returns a set
+        # instead of an HASH.
         #
-        # - vappid: id of the vApp
-        def get_vapp_port_forwarding_external_ports(vAppId)
+        # - vapp_id: id of the vApp
+        def get_vapp_port_forwarding_external_ports(vapp_id)
           params = {
             'method'  => :get,
-            'command' => "/vApp/vapp-#{vAppId}/networkConfigSection"
+            'command' => "/vApp/vapp-#{vapp_id}/networkConfigSection"
           }
 
-          @logger.debug("these are the params: #{params.inspect}")
-
-          response, headers = send_request(params)
+          response, _headers = send_request(params)
 
           # FIXME: this will return nil if the vApp uses multiple vApp Networks
           # with Edge devices in natRouted/portForwarding mode.
-          config = response.css('NetworkConfigSection/NetworkConfig/Configuration')
-          fenceMode = config.css('/FenceMode').text
-          natType = config.css('/Features/NatService/NatType').text
+          config = response.css(
+            'NetworkConfigSection/NetworkConfig/Configuration'
+          )
+          fence_mode = config.css('/FenceMode').text
+          nat_type = config.css('/Features/NatService/NatType').text
 
-          raise InvalidStateError, "Invalid request because FenceMode must be set to natRouted." unless fenceMode == "natRouted"
-          raise InvalidStateError, "Invalid request because NatType must be set to portForwarding." unless natType == "portForwarding"
+          unless fence_mode == 'natRouted'
+            raise InvalidStateError,
+                  'Invalid request because FenceMode must be natRouted.'
+          end
+
+          unless nat_type == 'portForwarding'
+            raise InvalidStateError,
+                  'Invalid request because NatType must be portForwarding.'
+          end
 
           nat_rules = Set.new
           config.css('/Features/NatService/NatRule').each do |rule|
             # portforwarding rules information
-            vmRule = rule.css('VmRule')
-            nat_rules.add(vmRule.css('ExternalPort').text.to_i)
+            vm_rule = rule.css('VmRule')
+            nat_rules.add(vm_rule.css('ExternalPort').text.to_i)
           end
           nat_rules
         end
 
         ##
         # Find an edge gateway id from the edge name and vdc_id
-        # 
+        #
         # - edge_gateway_name: Name of the vSE
         # - vdc_id: virtual datacenter id
-        # 
+        #
         def find_edge_gateway_id(edge_gateway_name, vdc_id)
           params = {
             'method'  => :get,
-            'command' => "/query?type=edgeGateway&" +
-                         "format=records&" +
+            'command' => '/query?type=edgeGateway&' \
+                         'format=records&' \
                          "filter=vdc==#{@api_url}/vdc/#{vdc_id}&" +
                          "filter=name==#{edge_gateway_name}"
           }
 
-          response, headers = send_request(params)
+          response, _headers = send_request(params)
 
-          edgeGateway = response.css('EdgeGatewayRecord').first
+          edge_gateway = response.css('EdgeGatewayRecord').first
 
-          if edgeGateway
-            return edgeGateway['href'].gsub("#{@api_url}/admin/edgeGateway/", "")
+          if edge_gateway
+            return edge_gateway['href'].gsub(
+              "#{@api_url}/admin/edgeGateway/", ''
+            )
           else
             return nil
           end
@@ -1101,207 +1161,217 @@ module VagrantPlugins
 
         ##
         # Find an edge gateway network from the edge name and vdc_id, and ip
-        # 
+        #
         # - edge_gateway_name: Name of the vSE
         # - vdc_id: virtual datacenter id
         # - edge_gateway_ip: public ip associated to that vSE
-        # 
+        #
 
         def find_edge_gateway_network(edge_gateway_name, vdc_id, edge_gateway_ip)
-
           params = {
             'method'  => :get,
-            'command' => "/query?type=edgeGateway&" + 
-                         "format=records&" + 
-                         "filter=vdc==#{@api_url}/vdc/#{vdc_id}&" + 
+            'command' => '/query?type=edgeGateway&' \
+                         'format=records&' \
+                         "filter=vdc==#{@api_url}/vdc/#{vdc_id}&" +
                          "filter=name==#{edge_gateway_name}"
           }
 
-          response, headers = send_request(params)
+          response, _headers = send_request(params)
 
-          edgeGateway = response.css('EdgeGatewayRecord').first
+          edge_gateway = response.css('EdgeGatewayRecord').first
 
-          if edgeGateway
-            edgeGatewayId = edgeGateway['href'].gsub("#{@api_url}/admin/edgeGateway/", "")
+          if edge_gateway
+            edge_gateway_id = edge_gateway['href'].gsub(
+              "#{@api_url}/admin/edgeGateway/", ''
+            )
           end
 
           params = {
             'method'  => :get,
-            'command' => "/admin/edgeGateway/#{edgeGatewayId}"
+            'command' => "/admin/edgeGateway/#{edge_gateway_id}"
           }
 
-          response, headers = send_request(params)
-          response.css("EdgeGateway Configuration GatewayInterfaces GatewayInterface").each do |gw|
- 
-            # Only check uplinks, avoid another check           
-            if gw.css("InterfaceType").text == "uplink"
-              
+          response, _headers = send_request(params)
+          response.css(
+            'EdgeGateway Configuration GatewayInterfaces GatewayInterface'
+          ).each do |gw|
+            # Only check uplinks, avoid another check
+            if gw.css('InterfaceType').text == 'uplink'
+
               # Loop on all sub-allocation pools
-              gw.css("SubnetParticipation IpRanges IpRange").each do |currentRange|
+              gw.css('SubnetParticipation IpRanges IpRange').each do |cur_range|
 
-                lowip = currentRange.css("StartAddress").first.text
-                highip = currentRange.css("EndAddress").first.text
+                low_ip = cur_range.css('StartAddress').first.text
+                high_ip = cur_range.css('EndAddress').first.text
 
-                rangeIpLow = NetAddr.ip_to_i(lowip)
-                rangeIpHigh = NetAddr.ip_to_i(highip)
-                testIp = NetAddr.ip_to_i(edge_gateway_ip)
+                range_ip_low = NetAddr.ip_to_i(low_ip)
+                range_ip_high = NetAddr.ip_to_i(high_ip)
+                test_ip = NetAddr.ip_to_i(edge_gateway_ip)
 
-                if (rangeIpLow..rangeIpHigh) === testIp
-                  return gw.css("Network").first[:href]
+                # FIXME: replace "===" (tsugliani)
+                if (range_ip_low..range_ip_high) === test_ip
+                  return gw.css('Network').first[:href]
                 end
               end
             end
-
           end
-
         end
-
 
         ##
         # Set Org Edge port forwarding and firewall rules
         #
-        # - vappid: id of the vapp to be modified
+        # - vapp_id: id of the vapp to be modified
         # - network_name: name of the vapp network to be modified
-        # - config: hash with network configuration specifications, must contain an array inside :nat_rules with the nat rules to be applied.
-        def set_edge_gateway_rules(edge_gateway_name, vdc_id, edge_gateway_ip, vAppId)
-
-          edge_vapp_ip = get_vapp_edge_public_ip(vAppId)
-          edge_network_id = find_edge_gateway_network(edge_gateway_name, vdc_id, edge_gateway_ip)
+        # - config: hash with network configuration specifications,
+        #           must contain an array inside :nat_rules with the nat rules
+        #           to be applied.
+        def set_edge_gateway_rules(edge_gateway_name, vdc_id, edge_gateway_ip, vapp_id)
+          edge_vapp_ip = get_vapp_edge_public_ip(vapp_id)
+          edge_network_id = find_edge_gateway_network(
+            edge_gateway_name,
+            vdc_id,
+            edge_gateway_ip
+          )
           edge_gateway_id = find_edge_gateway_id(edge_gateway_name, vdc_id)
 
           ### FIXME: tsugliani
           # We need to check the previous variables, especially (edge_*)
           # which can fail in some *weird* situations.
-
           params = {
              'method'   => :get,
              'command'  => "/admin/edgeGateway/#{edge_gateway_id}"
            }
 
-          response, headers = send_request(params)
+          response, _headers = send_request(params)
 
           interesting = response.css(
-            "EdgeGateway Configuration EdgeGatewayServiceConfiguration"
+            'EdgeGateway Configuration EdgeGatewayServiceConfiguration'
           )
 
-          natRule1 = Nokogiri::XML::Node.new 'NatRule', response
-            ruleType = Nokogiri::XML::Node.new 'RuleType', response
-            ruleType.content = "DNAT"
-            natRule1.add_child ruleType
+          nat_rule_1 = Nokogiri::XML::Node.new 'NatRule', response
+          rule_type = Nokogiri::XML::Node.new 'RuleType', response
+          rule_type.content = 'DNAT'
+          nat_rule_1.add_child ruleType
 
-            isEnabled = Nokogiri::XML::Node.new 'IsEnabled', response
-            isEnabled.content = "true"
-            natRule1.add_child isEnabled
+          is_enabled = Nokogiri::XML::Node.new 'IsEnabled', response
+          is_enabled.content = 'true'
+          nat_rule_1.add_child is_enabled
 
-            gatewayNatRule = Nokogiri::XML::Node.new 'GatewayNatRule', response
-            natRule1.add_child gatewayNatRule
+          gateway_nat_rule = Nokogiri::XML::Node.new 'GatewayNatRule',
+                                                     response
+          nat_rule_1.add_child gateway_nat_rule
 
-              interface = Nokogiri::XML::Node.new 'Interface', response
-              interface["href"] = edge_network_id
+          interface = Nokogiri::XML::Node.new 'Interface', response
+          interface['href'] = edge_network_id
 
-              gatewayNatRule.add_child interface
+          gateway_nat_rule.add_child interface
 
-              originalIp = Nokogiri::XML::Node.new 'OriginalIp', response
-              originalIp.content = edge_gateway_ip
-              gatewayNatRule.add_child originalIp
+          original_ip = Nokogiri::XML::Node.new 'OriginalIp', response
+          original_ip.content = edge_gateway_ip
+          gatewayNatRule.add_child original_ip
 
-              originalPort = Nokogiri::XML::Node.new 'OriginalPort', response
-              originalPort.content = "any"
-              gatewayNatRule.add_child originalPort
+          original_port = Nokogiri::XML::Node.new 'OriginalPort', response
+          original_port.content = 'any'
+          gateway_nat_rule.add_child original_port
 
-              translatedIp = Nokogiri::XML::Node.new 'TranslatedIp', response
-              translatedIp.content = edge_vapp_ip
-              gatewayNatRule.add_child translatedIp
+          translated_ip = Nokogiri::XML::Node.new 'TranslatedIp', response
+          translated_ip.content = edge_vapp_ip
+          gateway_nat_rule.add_child translated_ip
 
-              translatedPort = Nokogiri::XML::Node.new 'TranslatedPort', response
-              translatedPort.content = "any"
-              gatewayNatRule.add_child translatedPort
+          translated_port = Nokogiri::XML::Node.new 'TranslatedPort',
+                                                    response
+          translated_port.content = 'any'
+          gateway_nat_rule.add_child translated_port
 
-              protocol = Nokogiri::XML::Node.new 'Protocol', response
-              protocol.content = "any"
-              gatewayNatRule.add_child protocol
+          protocol = Nokogiri::XML::Node.new 'Protocol', response
+          protocol.content = 'any'
+          gateway_nat_rule.add_child protocol
 
-              # FIXME: frapposelli/tsugliani we should be able to remove this
-              # FIXME: test this against a vCloud Director 5.1.x installation
-              #icmpSubType = Nokogiri::XML::Node.new 'IcmpSubType', response
-              #icmpSubType.content = "any"
-              #gatewayNatRule.add_child icmpSubType
+          # FIXME: frapposelli/tsugliani we should be able to remove this
+          # FIXME: test this against a vCloud Director 5.1.x installation
+          # icmpSubType = Nokogiri::XML::Node.new 'IcmpSubType', response
+          # icmpSubType.content = "any"
+          # gatewayNatRule.add_child icmpSubType
 
+          nat_rule_2 = Nokogiri::XML::Node.new 'NatRule', response
 
-          natRule2 = Nokogiri::XML::Node.new 'NatRule', response
+          rule_type = Nokogiri::XML::Node.new 'RuleType', response
+          rule_type.content = 'SNAT'
+          nat_rule_2.add_child rule_type
 
-            ruleType = Nokogiri::XML::Node.new 'RuleType', response
-            ruleType.content = "SNAT"
-            natRule2.add_child ruleType
+          is_enabled = Nokogiri::XML::Node.new 'IsEnabled', response
+          is_enabled.content = 'true'
+          nat_rule_2.add_child isEnabled
 
-            isEnabled = Nokogiri::XML::Node.new 'IsEnabled', response
-            isEnabled.content = "true"
-            natRule2.add_child isEnabled
+          gateway_nat_rule = Nokogiri::XML::Node.new 'GatewayNatRule',
+                                                     response
+          nat_rule_2.add_child gatewayNatRule
 
-            gatewayNatRule = Nokogiri::XML::Node.new 'GatewayNatRule', response
-            natRule2.add_child gatewayNatRule
+          interface = Nokogiri::XML::Node.new 'Interface', response
+          interface['href'] = edge_network_id
 
-              interface = Nokogiri::XML::Node.new 'Interface', response
-              interface["href"] = edge_network_id
- 
-              gatewayNatRule.add_child interface
+          gateway_nat_rule.add_child interface
 
-              originalIp = Nokogiri::XML::Node.new 'OriginalIp', response
-              originalIp.content = edge_vapp_ip
-              gatewayNatRule.add_child originalIp
+          original_ip = Nokogiri::XML::Node.new 'OriginalIp', response
+          original_ip.content = edge_vapp_ip
+          gatewayNatRule.add_child original_ip
 
-              translatedIp = Nokogiri::XML::Node.new 'TranslatedIp', response
-              translatedIp.content = edge_gateway_ip
-              gatewayNatRule.add_child translatedIp
+          translated_ip = Nokogiri::XML::Node.new 'TranslatedIp', response
+          translated_ip.content = edge_gateway_ip
+          gateway_nat_rule.add_child translated_ip
 
-              protocol = Nokogiri::XML::Node.new 'Protocol', response
-              protocol.content = "any"
-              gatewayNatRule.add_child protocol
+          protocol = Nokogiri::XML::Node.new 'Protocol', response
+          protocol.content = 'any'
+          gateway_nat_rule.add_child protocol
 
+          firewall_rule_1 = Nokogiri::XML::Node.new 'FirewallRule', response
 
-          firewallRule1 = Nokogiri::XML::Node.new 'FirewallRule', response
+          is_enabled = Nokogiri::XML::Node.new 'IsEnabled', response
+          is_enabled.content = 'true'
+          firewall_rule_1.add_child is_enabled
 
-            isEnabled = Nokogiri::XML::Node.new 'IsEnabled', response
-            isEnabled.content = "true"
-            firewallRule1.add_child isEnabled
+          description = Nokogiri::XML::Node.new 'Description', response
+          description.content = 'Allow Vagrant Communications'
+          firewall_rule_1.add_child description
 
-            description = Nokogiri::XML::Node.new 'Description', response
-            description.content = "Allow Vagrant Comms"
-            firewallRule1.add_child description
+          policy = Nokogiri::XML::Node.new 'Policy', response
+          policy.content = 'allow'
+          firewall_rule_1.add_child policy
 
-            policy = Nokogiri::XML::Node.new 'Policy', response
-            policy.content = "allow"
-            firewallRule1.add_child policy
+          protocols = Nokogiri::XML::Node.new 'Protocols', response
+          firewall_rule_1.add_child protocols
 
-            protocols = Nokogiri::XML::Node.new 'Protocols', response
-            firewallRule1.add_child protocols
+          any = Nokogiri::XML::Node.new 'Any', response
+          any.content = 'true'
+          protocols.add_child any
 
-              any = Nokogiri::XML::Node.new 'Any', response
-              any.content = "true"
-              protocols.add_child any
+          destination_port_range =
+          Nokogiri::XML::Node.new 'DestinationPortRange', response
+          destination_port_range.content = 'Any'
+          firewall_rule_1.add_child destination_port_range
 
-            destinationPortRange = Nokogiri::XML::Node.new 'DestinationPortRange', response
-            destinationPortRange.content = "Any"
-            firewallRule1.add_child destinationPortRange
+          destination_ip = Nokogiri::XML::Node.new 'DestinationIp', response
+          destination_ip.content = edge_gateway_ip
+          firewall_rule_1.add_child destination_ip
+          source_port_range = Nokogiri::XML::Node.new 'SourcePortRange',
 
-            destinationIp = Nokogiri::XML::Node.new 'DestinationIp', response
-            destinationIp.content = edge_gateway_ip
-            firewallRule1.add_child destinationIp
+                                                      response
+          source_port_range.content = 'Any'
+          firewall_rule_1.add_child source_port_range
 
-            sourcePortRange = Nokogiri::XML::Node.new 'SourcePortRange', response
-            sourcePortRange.content = "Any"
-            firewallRule1.add_child sourcePortRange
+          source_ip = Nokogiri::XML::Node.new 'SourceIp', response
+          source_ip.content = 'Any'
+          firewall_rule_1.add_child source_ip
 
-            sourceIp = Nokogiri::XML::Node.new 'SourceIp', response
-            sourceIp.content = "Any"
-            firewallRule1.add_child sourceIp
+          enable_logging = Nokogiri::XML::Node.new 'EnableLogging', response
+          enable_logging.content = 'false'
+          firewall_rule_1.add_child enable_logging
 
-            enableLogging = Nokogiri::XML::Node.new 'EnableLogging', response
-            enableLogging.content = "false"
-            firewallRule1.add_child enableLogging
-
-          # FIXME: Think about adding an outgoing rule (which could not be available)
+          # FIXME: Think about adding an outgoing rule
+          #        (which could not be available)
           #        by default in all cases vapp_edge_ip -> any
+          #        Especially for provisionners using apt-get, internet, etc...
+          #        (tsugliani)
 
           builder = Nokogiri::XML::Builder.new
           builder << interesting
@@ -1310,92 +1380,95 @@ module VagrantPlugins
             config.default_xml.noblanks
           end
 
-          nat_rules = set_edge_rules.at_css("NatService")
-          nat_rules << natRule1
-          nat_rules << natRule2
+          nat_rules = set_edge_rules.at_css('NatService')
+          nat_rules << nat_rule_1
+          nat_rules << nat_rule_2
 
-          fw_rules = set_edge_rules.at_css("FirewallService")
-          fw_rules << firewallRule1
+          fw_rules = set_edge_rules.at_css('FirewallService')
+          fw_rules << firewall_rule_1
 
-          xml1 = set_edge_rules.at_css "EdgeGatewayServiceConfiguration"
-          xml1["xmlns"] = "http://www.vmware.com/vcloud/v1.5"
- 
-        params = {
-          'method'  => :post,
-          'command' => "/admin/edgeGateway/#{edge_gateway_id}/action/configureServices"
-        }
+          xml = set_edge_rules.at_css 'EdgeGatewayServiceConfiguration'
+          xml['xmlns'] = 'http://www.vmware.com/vcloud/v1.5'
 
-        response, headers = send_request(
-          params, 
-          set_edge_rules.to_xml, 
-          "application/vnd.vmware.admin.edgeGatewayServiceConfiguration+xml"
-        )
+          params = {
+            'method'  => :post,
+            'command' => "/admin/edgeGateway/#{edge_gateway_id}/action/" +
+                         'configureServices'
+          }
 
-        task_id = headers["Location"].gsub("#{@api_url}/task/", "")
-        task_id
+          _response, headers = send_request(
+            params,
+            set_edge_rules.to_xml,
+            'application/vnd.vmware.admin.edgeGatewayServiceConfiguration+xml'
+          )
 
-      end
-
+          task_id = headers['Location'].gsub("#{@api_url}/task/", '')
+          task_id
+        end
 
         ##
         # Get Org Edge port forwarding and firewall rules
         #
-        # - vappid: id of the vapp to be modified
+        # - vapp_id: id of the vapp to be modified
         # - network_name: name of the vapp network to be modified
-        # - config: hash with network configuration specifications, must contain an array inside :nat_rules with the nat rules to be applied.
+        # - config: hash with network configuration specifications,
+        #           must contain an array inside :nat_rules with the nat rules
+        #           to be applied.
         def get_edge_gateway_rules(edge_gateway_name, vdc_id)
-          
           edge_gateway_id = find_edge_gateway_id(edge_gateway_name, vdc_id)
 
-           params = {
-             'method'  => :get,
-             'command' => "/admin/edgeGateway/#{edge_gateway_id}"
-           }
+          params = {
+            'method'  => :get,
+            'command' => "/admin/edgeGateway/#{edge_gateway_id}"
+          }
 
-          response, headers = send_request(params)
+          response, _headers = send_request(params)
 
           nat_fw_rules = []
 
-          interesting = response.css("EdgeGateway Configuration EdgeGatewayServiceConfiguration")
-          interesting.css("NatService NatRule").each do |node|
-            if node.css("RuleType").text == "DNAT"
+          interesting = response.css(
+            'EdgeGateway Configuration EdgeGatewayServiceConfiguration'
+          )
+          interesting.css('NatService NatRule').each do |node|
+            if node.css('RuleType').text == 'DNAT'
+              gw_node = node.css('GatewayNatRule')
               nat_fw_rules << {
-                :rule_type        => "DNAT",
-                :original_ip      => node.css("GatewayNatRule/OriginalIp").text,
-                :original_port    => node.css("GatewayNatRule/OriginalPort").text,
-                :translated_ip    => node.css("GatewayNatRule/TranslatedIp").text,
-                :translated_port  => node.css("GatewayNatRule/TranslatedPort").text,
-                :protocol         => node.css("GatewayNatRule/Protocol").text,
-                :is_enabled       => node.css("IsEnabled").text,
+                :rule_type        => 'DNAT',
+                :original_ip      => gw_node.css('OriginalIp').text,
+                :original_port    => gw_node.css('OriginalPort').text,
+                :translated_ip    => gw_node.css('TranslatedIp').text,
+                :translated_port  => gw_node.css('TranslatedPort').text,
+                :protocol         => gw_node.css('Protocol').text,
+                :is_enabled       => node.css('IsEnabled').text
               }
 
-            end 
-            if node.css("RuleType").text == "SNAT"
+            end
+            if node.css('RuleType').text == 'SNAT'
+              gw_node = node.css('gatewayNatRule')
               nat_fw_rules << {
-                :rule_type      => "SNAT",
-                :interface_name => node.css("GatewayNatRule/Interface").first["name"],
-                :original_ip    => node.css("GatewayNatRule/OriginalIp").text,
-                :translated_ip  => node.css("GatewayNatRule/TranslatedIp").text,
-                :is_enabled     => node.css("IsEnabled").text,
+                :rule_type      => 'SNAT',
+                :interface_name => gw_node.css('Interface').first['name'],
+                :original_ip    => gw_node.css('OriginalIp').text,
+                :translated_ip  => gw_node.css('TranslatedIp').text,
+                :is_enabled     => node.css('IsEnabled').text
               }
-
-            end 
+            end
           end
 
-          interesting.css("FirewallService FirewallRule").each do |node|
-            if node.css("Port").text == "-1"
+          interesting.css('FirewallService FirewallRule').each do |node|
+            if node.css('Port').text == '-1'
               nat_fw_rules << {
-                :rule_type             => "Firewall",
-                :id                    => node.css("Id").text,
-                :policy                => node.css("Policy").text,
-                :description           => node.css("Description").text,
-                :destination_ip        => node.css("DestinationIp").text,
-                :destination_portrange => node.css("DestinationPortRange").text,
-                :source_ip             => node.css("SourceIp").text,
-                :source_portrange      => node.css("SourcePortRange").text,
-                :is_enabled            => node.css("IsEnabled").text,
+                :rule_type             => 'Firewall',
+                :id                    => node.css('Id').text,
+                :policy                => node.css('Policy').text,
+                :description           => node.css('Description').text,
+                :destination_ip        => node.css('DestinationIp').text,
+                :destination_portrange => node.css('DestinationPortRange').text,
+                :source_ip             => node.css('SourceIp').text,
+                :source_portrange      => node.css('SourcePortRange').text,
+                :is_enabled            => node.css('IsEnabled').text
               }
-            end 
+            end
           end
 
           nat_fw_rules
@@ -1407,40 +1480,41 @@ module VagrantPlugins
         # - edge_gateway_name: Name of the vSE
         # - vdc_id: virtual datacenter id
         # - edge_gateway_ip: public ip associated the vSE
-        # - vAppId: vApp identifier to correlate with the vApp Edge
+        # - vapp_id: vApp identifier to correlate with the vApp Edge
 
-        def remove_edge_gateway_rules(edge_gateway_name, vdc_id, edge_gateway_ip, vAppId)
-
-          edge_vapp_ip = get_vapp_edge_public_ip(vAppId)
+        def remove_edge_gateway_rules(edge_gateway_name, vdc_id, edge_gateway_ip, vapp_id)
+          edge_vapp_ip = get_vapp_edge_public_ip(vapp_id)
           edge_gateway_id = find_edge_gateway_id(edge_gateway_name, vdc_id)
 
-           params = {
-             'method'  => :get,
-             'command' => "/admin/edgeGateway/#{edge_gateway_id}"
-           }
+          params = {
+           'method'  => :get,
+           'command' => "/admin/edgeGateway/#{edge_gateway_id}"
+          }
 
-          response, headers = send_request(params)
-          
-          interesting = response.css("EdgeGateway Configuration EdgeGatewayServiceConfiguration")
-          interesting.css("NatService NatRule").each do |node|
-            if node.css("RuleType").text == "DNAT" && 
-               node.css("GatewayNatRule/OriginalIp").text == edge_gateway_ip && 
-               node.css("GatewayNatRule/TranslatedIp").text == edge_vapp_ip
+          response, _headers = send_request(params)
+
+          interesting = response.css(
+            'EdgeGateway Configuration EdgeGatewayServiceConfiguration'
+          )
+          interesting.css('NatService NatRule').each do |node|
+            if node.css('RuleType').text == 'DNAT' &&
+               node.css('GatewayNatRule/OriginalIp').text == edge_gateway_ip &&
+               node.css('GatewayNatRule/TranslatedIp').text == edge_vapp_ip
               node.remove
-            end 
-            if node.css("RuleType").text == "SNAT" && 
-               node.css("GatewayNatRule/OriginalIp").text == edge_vapp_ip && 
-               node.css("GatewayNatRule/TranslatedIp").text == edge_gateway_ip
+            end
+            if node.css('RuleType').text == 'SNAT' &&
+               node.css('GatewayNatRule/OriginalIp').text == edge_vapp_ip &&
+               node.css('GatewayNatRule/TranslatedIp').text == edge_gateway_ip
               node.remove
-            end 
+            end
           end
 
-          interesting.css("FirewallService FirewallRule").each do |node|
-            if node.css("Port").text == "-1" && 
-               node.css("DestinationIp").text == edge_gateway_ip && 
-               node.css("DestinationPortRange").text == "Any"
+          interesting.css('FirewallService FirewallRule').each do |node|
+            if node.css('Port').text == '-1' &&
+               node.css('DestinationIp').text == edge_gateway_ip &&
+               node.css('DestinationPortRange').text == 'Any'
               node.remove
-            end 
+            end
           end
 
           builder = Nokogiri::XML::Builder.new
@@ -1448,21 +1522,22 @@ module VagrantPlugins
 
           remove_edge_rules = Nokogiri::XML(builder.to_xml)
 
-          xml1 = remove_edge_rules.at_css "EdgeGatewayServiceConfiguration"
-          xml1["xmlns"] = "http://www.vmware.com/vcloud/v1.5"
-  
+          xml = remove_edge_rules.at_css 'EdgeGatewayServiceConfiguration'
+          xml['xmlns'] = 'http://www.vmware.com/vcloud/v1.5'
+
           params = {
             'method'  => :post,
-            'command' => "/admin/edgeGateway/#{edge_gateway_id}/action/configureServices"
+            'command' => "/admin/edgeGateway/#{edge_gateway_id}/action/" +
+                         'configureServices'
           }
 
-          response, headers = send_request(
-            params, 
-            remove_edge_rules.to_xml, 
-            "application/vnd.vmware.admin.edgeGatewayServiceConfiguration+xml"
+          _response, headers = send_request(
+            params,
+            remove_edge_rules.to_xml,
+            'application/vnd.vmware.admin.edgeGatewayServiceConfiguration+xml'
           )
 
-          task_id = headers["Location"].gsub("#{@api_url}/task/", "")
+          task_id = headers['Location'].gsub("#{@api_url}/task/", '')
           task_id
         end
 
@@ -1472,151 +1547,194 @@ module VagrantPlugins
         # - vApp needs to be poweredOn
         # - FenceMode is set to "natRouted"
         # - NatType" is set to "portForwarding
-        # This will be required to know how to connect to VMs behind the Edge device.
-        def get_vapp_edge_public_ip(vAppId)
+        # This will be required to know how to connect to VMs behind the Edge
+        # device.
+        def get_vapp_edge_public_ip(vapp_id)
           # Check the network configuration section
           params = {
             'method' => :get,
-            'command' => "/vApp/vapp-#{vAppId}/networkConfigSection"
+            'command' => "/vApp/vapp-#{vapp_id}/networkConfigSection"
           }
 
-          response, headers = send_request(params)
+          response, _headers = send_request(params)
 
           # FIXME: this will return nil if the vApp uses multiple vApp Networks
           # with Edge devices in natRouted/portForwarding mode.
-          config = response.css('NetworkConfigSection/NetworkConfig/Configuration')
+          config = response.css(
+            'NetworkConfigSection/NetworkConfig/Configuration'
+          )
 
-          fenceMode = config.css('/FenceMode').text
-          natType = config.css('/Features/NatService/NatType').text
+          fence_mode = config.css('/FenceMode').text
+          nat_type = config.css('/Features/NatService/NatType').text
 
-          raise InvalidStateError, "Invalid request because FenceMode must be set to natRouted." unless fenceMode == "natRouted"
-          raise InvalidStateError, "Invalid request because NatType must be set to portForwarding." unless natType == "portForwarding"
+          unless fence_mode == 'natRouted'
+            raise InvalidStateError,
+                  'Invalid request because FenceMode must be natRouted.'
+          end
 
-          # Check the routerInfo configuration where the global external IP is defined
-          edgeIp = config.css('/RouterInfo/ExternalIp').text
-          if edgeIp == ""
+          unless nat_type == 'portForwarding'
+            raise InvalidStateError,
+                  'Invalid request because NatType must be portForwarding.'
+          end
+
+          # Check the routerInfo configuration where the global external IP
+          # is defined
+          edge_ip = config.css('/RouterInfo/ExternalIp').text
+          if edge_ip == ''
             return nil
           else
-            return edgeIp
+            return edge_ip
           end
         end
 
         ##
         # Upload an OVF package
-        # - vdcId
+        # - vdc_id
         # - vappName
         # - vappDescription
         # - ovfFile
         # - catalogId
         # - uploadOptions {}
-        def upload_ovf(vdcId, vappName, vappDescription, ovfFile, catalogId, uploadOptions={})
-
+        def upload_ovf(vdc_id, vapp_name, vapp_description, ovf_file, catalog_id, upload_options = {})
           # if send_manifest is not set, setting it true
-          if uploadOptions[:send_manifest].nil? || uploadOptions[:send_manifest]
-            uploadManifest = "true"
+          if upload_options[:send_manifest].nil? ||
+             upload_options[:send_manifest]
+            upload_manifest = 'true'
           else
-            uploadManifest = "false"
+            upload_manifest = 'false'
           end
 
           builder = Nokogiri::XML::Builder.new do |xml|
             xml.UploadVAppTemplateParams(
-              "xmlns" => "http://www.vmware.com/vcloud/v1.5",
-              "xmlns:ovf" => "http://schemas.dmtf.org/ovf/envelope/1",
-              "manifestRequired" => uploadManifest,
-              "name" => vappName) {
-              xml.Description vappDescription
+              'xmlns' => 'http://www.vmware.com/vcloud/v1.5',
+              'xmlns:ovf' => 'http://schemas.dmtf.org/ovf/envelope/1',
+              'manifestRequired' => upload_manifest,
+              'name' => vapp_name) {
+              xml.Description vapp_description
             }
           end
 
           params = {
             'method'  => :post,
-            'command' => "/vdc/#{vdcId}/action/uploadVAppTemplate"
+            'command' => "/vdc/#{vdc_id}/action/uploadVAppTemplate"
           }
 
-          @logger.debug("Sending uploadVAppTemplate request...")
+          @logger.debug('Sending uploadVAppTemplate request...')
 
           response, headers = send_request(
-            params, 
+            params,
             builder.to_xml,
-            "application/vnd.vmware.vcloud.uploadVAppTemplateParams+xml"
+            'application/vnd.vmware.vcloud.uploadVAppTemplateParams+xml'
           )
 
-          # Get vAppTemplate Link from location        
-          vAppTemplate = headers["Location"].gsub("#{@api_url}/vAppTemplate/vappTemplate-", "")
-          @logger.debug("Getting vAppTemplate ID: #{vAppTemplate}")
-          descriptorUpload = response.css("Files Link [rel='upload:default']").first[:href].gsub("#{@host_url}/transfer/", "")
-          transferGUID = descriptorUpload.gsub("/descriptor.ovf", "")
+          # Get vAppTemplate Link from location
+          vapp_template = headers['Location'].gsub(
+            "#{@api_url}/vAppTemplate/vappTemplate-", ''
+          )
 
-          ovfFileBasename = File.basename(ovfFile, ".ovf")
-          ovfDir = File.dirname(ovfFile)
+          @logger.debug("Getting vAppTemplate ID: #{vapp_template}")
+          descriptor_upload = response.css(
+            "Files Link [rel='upload:default']"
+          ).first[:href].gsub("#{@host_url}/transfer/", '')
+          transfer_guid = descriptor_upload.gsub('/descriptor.ovf', '')
+
+          ovf_file_basename = File.basename(ovf_file, '.ovf')
+          ovf_dir = File.dirname(ovf_file)
 
           # Send OVF Descriptor
-          @logger.debug("Sending OVF Descriptor...")
-          uploadURL = "/transfer/#{descriptorUpload}"
-          uploadFile = "#{ovfDir}/#{ovfFileBasename}.ovf"
-          upload_file(uploadURL, uploadFile, vAppTemplate, uploadOptions)
+          @logger.debug('Sending OVF Descriptor...')
+          upload_url = "/transfer/#{descriptor_upload}"
+          upload_filename = "#{ovf_dir}/#{ovf_file_basename}.ovf"
+          upload_file(
+            upload_url,
+            upload_filename,
+            vapp_template,
+            upload_options
+          )
 
           # Begin the catch for upload interruption
           begin
             params = {
               'method'  => :get,
-              'command' => "/vAppTemplate/vappTemplate-#{vAppTemplate}"
+              'command' => "/vAppTemplate/vappTemplate-#{vapp_template}"
             }
 
-            response, headers = send_request(params)
+            response, _headers = send_request(params)
 
-            task = response.css("VAppTemplate Task[operationName='vdcUploadOvfContents']").first
-            task_id = task["href"].gsub("#{@api_url}/task/", "")
+            task = response.css(
+              "VAppTemplate Task[operationName='vdcUploadOvfContents']"
+            ).first
+            task_id = task['href'].gsub("#{@api_url}/task/", '')
 
-            # Loop to wait for the upload links to show up in the vAppTemplate we just created
-            @logger.debug("Waiting for the upload links to show up in the vAppTemplate we just created.")
+            # Loop to wait for the upload links to show up in the vAppTemplate
+            # we just created
+            @logger.debug(
+              'Waiting for the upload links to show up in the vAppTemplate ' \
+              'we just created.'
+            )
             while true
-              response, headers = send_request(params)
-              @logger.debug("Request...")
+              response, _headers = send_request(params)
+              @logger.debug('Request...')
               break unless response.css("Files Link [rel='upload:default']").count == 1
               sleep 1
             end
 
-            if uploadManifest == "true"
-              uploadURL = "/transfer/#{transferGUID}/descriptor.mf"
-              uploadFile = "#{ovfDir}/#{ovfFileBasename}.mf"
-              upload_file(uploadURL, uploadFile, vAppTemplate, uploadOptions)
+            if upload_manifest == 'true'
+              upload_url = "/transfer/#{transfer_guid}/descriptor.mf"
+              upload_filename = "#{ovf_dir}/#{ovf_file_basename}.mf"
+              upload_file(
+                upload_url,
+                upload_filename,
+                vapp_template,
+                upload_options
+              )
             end
 
             # Start uploading OVF VMDK files
             params = {
               'method'  => :get,
-              'command' => "/vAppTemplate/vappTemplate-#{vAppTemplate}"
+              'command' => "/vAppTemplate/vappTemplate-#{vapp_template}"
             }
-            response, headers = send_request(params)
-            response.css("Files File [bytesTransferred='0'] Link [rel='upload:default']").each do |file|
-              fileName = file[:href].gsub("#{@host_url}/transfer/#{transferGUID}/","")
-              uploadFile = "#{ovfDir}/#{fileName}"
-              uploadURL = "/transfer/#{transferGUID}/#{fileName}"
-              upload_file(uploadURL, uploadFile, vAppTemplate, uploadOptions)
+            response, _headers = send_request(params)
+            response.css(
+              "Files File [bytesTransferred='0'] Link [rel='upload:default']"
+            ).each do |file|
+              file_name = file[:href].gsub(
+                "#{@host_url}/transfer/#{transfer_guid}/", ''
+              )
+              upload_filename = "#{ovf_dir}/#{file_name}"
+              upload_url = "/transfer/#{transfer_guid}/#{file_name}"
+              upload_file(
+                upload_url,
+                upload_filename,
+                vapp_template,
+                upload_options
+              )
             end
 
-            # Add item to the catalog catalogId
+            # Add item to the catalog catalog_id
             builder = Nokogiri::XML::Builder.new do |xml|
               xml.CatalogItem(
-                "xmlns" => "http://www.vmware.com/vcloud/v1.5",
-                "type" => "application/vnd.vmware.vcloud.catalogItem+xml",
-                "name" => vappName) {
-                xml.Description vappDescription
+                'xmlns' => 'http://www.vmware.com/vcloud/v1.5',
+                'type' => 'application/vnd.vmware.vcloud.catalogItem+xml',
+                'name' => vapp_name) {
+                xml.Description vapp_description
                 xml.Entity(
-                  "href" => "#{@api_url}/vAppTemplate/vappTemplate-#{vAppTemplate}"
+                  'href' => "#{@api_url}/vAppTemplate/" +
+                            "vappTemplate-#{vapp_template}"
                   )
               }
             end
 
             params = {
               'method'  => :post,
-              'command' => "/catalog/#{catalogId}/catalogItems"
+              'command' => "/catalog/#{catalog_id}/catalogItems"
             }
-            response, headers = send_request(
-              params, 
+            # No debug here (tsugliani)
+            _response, _headers = send_request(
+              params,
               builder.to_xml,
-              "application/vnd.vmware.vcloud.catalogItem+xml"
+              'application/vnd.vmware.vcloud.catalogItem+xml'
             )
 
             task_id
@@ -1625,150 +1743,163 @@ module VagrantPlugins
 
           rescue Exception => e
             puts "Exception detected: #{e.message}."
-            puts "Aborting task..."
+            puts 'Aborting task...'
 
             # Get vAppTemplate Task
             params = {
               'method'  => :get,
-              'command' => "/vAppTemplate/vappTemplate-#{vAppTemplate}"
+              'command' => "/vAppTemplate/vappTemplate-#{vapp_template}"
             }
-            response, headers = send_request(params)
+            response, _headers = send_request(params)
 
             # Cancel Task
-            cancelHook = response.css("Tasks Task Link [rel='task:cancel']").first[:href].gsub("#{@api_url}","")
+            cancel_hook = response.css(
+              "Tasks Task Link [rel='task:cancel']"
+            ).first[:href].gsub("#{@api_url}", '')
+
             params = {
               'method'  => :post,
-              'command' => cancelHook
+              'command' => cancel_hook
             }
-            response, headers = send_request(params)
+            # No debug here (tsugliani)
+            _response, _headers = send_request(params)
             raise
           end
         end
 
         ##
         # Fetch information for a given task
-        def get_task(taskid)
+        def get_task(task_id)
           params = {
             'method'  => :get,
-            'command' => "/task/#{taskid}"
+            'command' => "/task/#{task_id}"
           }
 
-          response, headers = send_request(params)
+          response, _headers = send_request(params)
 
           task = response.css('Task').first
           status = task['status']
           start_time = task['startTime']
           end_time = task['endTime']
 
-          { 
-            :status     => status, 
-            :start_time => start_time, 
-            :end_time   => end_time, 
-            :response   => response 
+          {
+            :status     => status,
+            :start_time => start_time,
+            :end_time   => end_time,
+            :response   => response
           }
         end
 
         ##
         # Poll a given task until completion
-        def wait_task_completion(taskid)
-          task, status, errormsg, start_time, end_time, response = nil
+        def wait_task_completion(task_id)
+          task, errormsg = nil
           loop do
-            task = get_task(taskid)
-            @logger.debug("Evaluating taskid: #{taskid}, current status #{task[:status]}")
+            task = get_task(task_id)
+            @logger.debug(
+              "Evaluating taskid: #{task_id}, current status #{task[:status]}"
+            )
             break if task[:status] != 'running'
             sleep 5
           end
 
           if task[:status] == 'error'
-            @logger.debug("Task Errored out")
-            errormsg = task[:response].css("Error").first
-            @logger.debug("Task Error Message #{errormsg['majorErrorCode']} - #{errormsg['message']}")
-            errormsg = "Error code #{errormsg['majorErrorCode']} - #{errormsg['message']}"
+            @logger.debug('Task Error')
+            errormsg = task[:response].css('Error').first
+            @logger.debug(
+              "Task Error Message #{errormsg['majorErrorCode']} - " +
+              "#{errormsg['message']}"
+            )
+            errormsg =
+            "Error code #{errormsg['majorErrorCode']} - #{errormsg['message']}"
           end
 
-          { 
-            :status     => task[:status], 
-            :errormsg   => errormsg, 
-            :start_time => task[:start_time], 
-            :end_time   => task[:end_time] 
+          {
+            :status     => task[:status],
+            :errormsg   => errormsg,
+            :start_time => task[:start_time],
+            :end_time   => task[:end_time]
           }
         end
 
         ##
         # Set vApp Network Config
-        def set_vapp_network_config(vappid, network_name, config={})
+        def set_vapp_network_config(vapp_id, network_name, config = {})
           builder = Nokogiri::XML::Builder.new do |xml|
-          xml.NetworkConfigSection(
-            "xmlns" => "http://www.vmware.com/vcloud/v1.5",
-            "xmlns:ovf" => "http://schemas.dmtf.org/ovf/envelope/1") {
-            xml['ovf'].Info "Network configuration"
-            xml.NetworkConfig("networkName" => network_name) {
-              xml.Configuration {
-                xml.FenceMode(config[:fence_mode] || 'isolated')
-                xml.RetainNetInfoAcrossDeployments(config[:retain_net] || false)
-                xml.ParentNetwork("href" => config[:parent_network])
+            xml.NetworkConfigSection(
+              'xmlns' => 'http://www.vmware.com/vcloud/v1.5',
+              'xmlns:ovf' => 'http://schemas.dmtf.org/ovf/envelope/1'
+            ) {
+              xml['ovf'].Info 'Network configuration'
+              xml.NetworkConfig('networkName' => network_name) {
+                xml.Configuration {
+                  xml.FenceMode(config[:fence_mode] || 'isolated')
+                  xml.RetainNetInfoAcrossDeployments(config[:retain_net] || false)
+                  xml.ParentNetwork('href' => config[:parent_network])
+                }
               }
             }
-          }
           end
 
           params = {
             'method'  => :put,
-            'command' => "/vApp/vapp-#{vappid}/networkConfigSection"
+            'command' => "/vApp/vapp-#{vapp_id}/networkConfigSection"
           }
 
-          response, headers = send_request(
-            params, 
-            builder.to_xml, 
-            "application/vnd.vmware.vcloud.networkConfigSection+xml"
+          _response, headers = send_request(
+            params,
+            builder.to_xml,
+            'application/vnd.vmware.vcloud.networkConfigSection+xml'
           )
 
-          task_id = headers["Location"].gsub("#{@api_url}/task/", "")
+          task_id = headers['Location'].gsub("#{@api_url}/task/", '')
           task_id
         end
 
         ##
         # Set VM Network Config
-        def set_vm_network_config(vmid, network_name, config={})
+        def set_vm_network_config(vm_id, network_name, config = {})
           builder = Nokogiri::XML::Builder.new do |xml|
-          xml.NetworkConnectionSection(
-            "xmlns" => "http://www.vmware.com/vcloud/v1.5",
-            "xmlns:ovf" => "http://schemas.dmtf.org/ovf/envelope/1") {
-            xml['ovf'].Info "VM Network configuration"
-            xml.PrimaryNetworkConnectionIndex(config[:primary_index] || 0)
-            xml.NetworkConnection("network" => network_name, "needsCustomization" => true) {
-              xml.NetworkConnectionIndex(config[:network_index] || 0)
-              xml.IpAddress config[:ip] if config[:ip]
-              xml.IsConnected(config[:is_connected] || true)
-              xml.IpAddressAllocationMode config[:ip_allocation_mode] if config[:ip_allocation_mode]
+            xml.NetworkConnectionSection(
+              'xmlns' => 'http://www.vmware.com/vcloud/v1.5',
+              'xmlns:ovf' => 'http://schemas.dmtf.org/ovf/envelope/1') {
+              xml['ovf'].Info 'VM Network configuration'
+              xml.PrimaryNetworkConnectionIndex(config[:primary_index] || 0)
+              xml.NetworkConnection(
+                'network' => network_name,
+                'needsCustomization' => true
+              ) {
+                xml.NetworkConnectionIndex(config[:network_index] || 0)
+                xml.IpAddress config[:ip] if config[:ip]
+                xml.IsConnected(config[:is_connected] || true)
+                xml.IpAddressAllocationMode config[:ip_allocation_mode] if config[:ip_allocation_mode]
+              }
             }
-          }
           end
 
           params = {
             'method'  => :put,
-            'command' => "/vApp/vm-#{vmid}/networkConnectionSection"
+            'command' => "/vApp/vm-#{vm_id}/networkConnectionSection"
           }
 
-          response, headers = send_request(
-            params, 
-            builder.to_xml, 
-            "application/vnd.vmware.vcloud.networkConnectionSection+xml"
+          _response, headers = send_request(
+            params,
+            builder.to_xml,
+            'application/vnd.vmware.vcloud.networkConnectionSection+xml'
           )
 
-          task_id = headers["Location"].gsub("#{@api_url}/task/", "")
+          task_id = headers['Location'].gsub("#{@api_url}/task/", '')
           task_id
         end
 
-
         ##
         # Set VM Guest Customization Config
-        def set_vm_guest_customization(vmid, computer_name, config={})
+        def set_vm_guest_customization(vm_id, computer_name, config = {})
           builder = Nokogiri::XML::Builder.new do |xml|
           xml.GuestCustomizationSection(
-            "xmlns" => "http://www.vmware.com/vcloud/v1.5",
-            "xmlns:ovf" => "http://schemas.dmtf.org/ovf/envelope/1") {
-              xml['ovf'].Info "VM Guest Customization configuration"
+            'xmlns' => 'http://www.vmware.com/vcloud/v1.5',
+            'xmlns:ovf' => 'http://schemas.dmtf.org/ovf/envelope/1') {
+              xml['ovf'].Info 'VM Guest Customization configuration'
               xml.Enabled config[:enabled] if config[:enabled]
               xml.AdminPasswordEnabled config[:admin_passwd_enabled] if config[:admin_passwd_enabled]
               xml.AdminPassword config[:admin_passwd] if config[:admin_passwd]
@@ -1778,29 +1909,31 @@ module VagrantPlugins
 
           params = {
             'method'  => :put,
-            'command' => "/vApp/vm-#{vmid}/guestCustomizationSection"
+            'command' => "/vApp/vm-#{vm_id}/guestCustomizationSection"
           }
 
-          response, headers = send_request(
-            params, 
-            builder.to_xml, 
-            "application/vnd.vmware.vcloud.guestCustomizationSection+xml"
+          _response, headers = send_request(
+            params,
+            builder.to_xml,
+            'application/vnd.vmware.vcloud.guestCustomizationSection+xml'
           )
-          task_id = headers["Location"].gsub("#{@api_url}/task/", "")
+          task_id = headers['Location'].gsub("#{@api_url}/task/", '')
           task_id
         end
 
         ##
         # Fetch details about a given VM
-        def get_vm(vmId)
+        def get_vm(vm_id)
           params = {
             'method'  => :get,
-            'command' => "/vApp/vm-#{vmId}"
+            'command' => "/vApp/vm-#{vm_id}"
           }
 
-          response, headers = send_request(params)
+          response, _headers = send_request(params)
 
-          os_desc = response.css('ovf|OperatingSystemSection ovf|Description').first.text
+          os_desc = response.css(
+            'ovf|OperatingSystemSection ovf|Description'
+          ).first.text
 
           networks = {}
           response.css('NetworkConnection').each do |network|
@@ -1808,31 +1941,51 @@ module VagrantPlugins
             ip = ip.text if ip
 
             networks[network['network']] = {
-              :index => network.css('NetworkConnectionIndex').first.text,
-              :ip => ip,
-              :is_connected => network.css('IsConnected').first.text,
-              :mac_address => network.css('MACAddress').first.text,
-              :ip_allocation_mode => network.css('IpAddressAllocationMode').first.text
+              :index              => network.css(
+                                     'NetworkConnectionIndex'
+                                     ).first.text,
+              :ip                 => ip,
+              :is_connected       => network.css(
+                                     'IsConnected'
+                                     ).first.text,
+              :mac_address        => network.css(
+                                     'MACAddress'
+                                     ).first.text,
+              :ip_allocation_mode => network.css(
+                                     'IpAddressAllocationMode'
+                                     ).first.text
             }
           end
 
-          admin_password = response.css('GuestCustomizationSection AdminPassword').first
+          admin_password = response.css(
+            'GuestCustomizationSection AdminPassword'
+          ).first
           admin_password = admin_password.text if admin_password
 
+          # make the lines shorter by adjusting the nokogiri css namespace
+          guest_css = response.css('GuestCustomizationSection')
           guest_customizations = {
-            :enabled => response.css('GuestCustomizationSection Enabled').first.text,
-            :admin_passwd_enabled => response.css('GuestCustomizationSection AdminPasswordEnabled').first.text,
-            :admin_passwd_auto => response.css('GuestCustomizationSection AdminPasswordAuto').first.text,
-            :admin_passwd => admin_password,
-            :reset_passwd_required => response.css('GuestCustomizationSection ResetPasswordRequired').first.text,
-            :computer_name => response.css('GuestCustomizationSection ComputerName').first.text
+            :enabled                => guest_css.css('Enabled').first.text,
+            :admin_passwd_enabled   => guest_css.css(
+                                       'AdminPasswordEnabled'
+                                       ).first.text,
+            :admin_passwd_auto      => guest_css.css(
+                                       'AdminPasswordAuto'
+                                       ).first.text,
+            :admin_passwd           => admin_password,
+            :reset_passwd_required  => guest_css.css(
+                                       'ResetPasswordRequired'
+                                       ).first.text,
+            :computer_name          => guest_css.css('ComputerName').first.text
           }
 
-          { :os_desc => os_desc, :networks => networks, :guest_customizations => guest_customizations }
+          {
+            :os_desc              => os_desc,
+            :networks             => networks,
+            :guest_customizations => guest_customizations
+          }
         end
-
-
-      end # class
-    end
-  end
-end
+      end # Class Version 5.1
+    end # Module Driver
+  end # Module VCloud
+end # Module VagrantPlugins
