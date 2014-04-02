@@ -34,10 +34,8 @@ module VagrantPlugins
             box_ovf,
             cfg.catalog_id,
             {
-              :progressbar_enable => true
-              # FIXME: export chunksize as a parameter and lower the default
-              # to 1M.
-              #:chunksize => 262144
+              :progressbar_enable => true,
+              :chunksize => (cfg.upload_chunksize || 1_048_576)
             }
           )
 
@@ -47,9 +45,9 @@ module VagrantPlugins
           )
           add_ovf_to_catalog = cnx.wait_task_completion(upload_ovf)
 
-          if !add_ovf_to_catalog[:errormsg].nil?
-            raise Errors::CatalogAddError,
-                  :message => add_ovf_to_catalog[:errormsg]
+          unless add_ovf_to_catalog[:errormsg].nil?
+            fail Errors::CatalogAddError,
+                 :message => add_ovf_to_catalog[:errormsg]
           end
 
           # Retrieve catalog_item ID

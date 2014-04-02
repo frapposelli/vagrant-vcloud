@@ -354,8 +354,9 @@ module VagrantPlugins
           # Upload a large file in configurable chunks, output an optional
           # progressbar
           def upload_file(upload_url, upload_file, vapp_template, config = {})
-            # Set chunksize to 10M if not specified otherwise
-            chunk_size = (config[:chunksize] || 10485760)
+            # Set chunksize to 1M if not specified otherwise
+            chunk_size = (config[:chunksize] || 1_048_576)
+            @logger.debug("Set chunksize to #{chunk_size} bytes")
 
             # Set progressbar to default format if not specified otherwise
             progressbar_format = (

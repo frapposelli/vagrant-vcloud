@@ -37,6 +37,11 @@ module VagrantPlugins
       # @return [String]
       attr_accessor :catalog_item_name
 
+      # Chunksize for upload in bytes (default 1048576 == 1M)
+      #
+      # @return [Integer]
+      attr_accessor :upload_chunksize
+
       # Virtual Data Center to be used
       #
       # @return [String]
