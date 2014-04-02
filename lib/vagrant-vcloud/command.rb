@@ -5,8 +5,7 @@ module VagrantPlugins
   module VCloud
     class Command < Vagrant.plugin('2', :command)
       def self.synopsis
-        'outputs status of the vCloud Director setup [vcloud provider only]
-         *experimental*'
+        'outputs status of the vCloud Director setup [vcloud provider only]'
       end
 
       def execute
@@ -65,8 +64,10 @@ module VagrantPlugins
         table << ['Organization vDC Name', cfg.vdc_name]
         table << ['Organization vDC ID', cfg.vdc_id]
         table << ['Organization vDC Network Name', cfg.vdc_network_name]
-        table << ['Organization vDC Edge Gateway Name', cfg.vdc_edge_gateway]
-        table << ['Organization vDC Edge IP', cfg.vdc_edge_gateway_ip]
+        table << ['Organization vDC Edge Gateway Name',
+                  cfg.vdc_edge_gateway] unless cfg.vdc_edge_gateway.nil?
+        table << ['Organization vDC Edge IP',
+                  cfg.vdc_edge_gateway_ip] unless cfg.vdc_edge_gateway_ip.nil?
         table << :separator
         table << ['vApp Name', vapp[:name]]
         table << ['vAppID', vapp_id]
@@ -82,6 +83,9 @@ module VagrantPlugins
 
         # Display Network information only if --all is passed to the cmd
         if options[:all] == true
+
+          # FIXME: this needs to be fixed to accomodate the bridged scenario
+          # potentially showing only the assigned IPs in the VMs
 
           vapp_edge_ip = cnx.get_vapp_edge_public_ip(vapp_id)
           vapp_edge_rules = cnx.get_vapp_port_forwarding_rules(vapp_id)

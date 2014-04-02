@@ -17,13 +17,17 @@ module VagrantPlugins
           env[:ui].info('Booting VM...')
 
           if cfg.network_bridge.nil?
-          test_ip = cnx.get_vapp_edge_public_ip(vapp_id)
+            test_ip = cnx.get_vapp_edge_public_ip(vapp_id)
           end
 
           poweron_vm = cnx.poweron_vm(env[:machine].id)
           cnx.wait_task_completion(poweron_vm)
 
-          if testIp.nil? && cfg.vdc_edge_gateway_ip && cfg.vdc_edge_gateway && cfg.network_bridge.nil?
+          if test_ip.nil? && \
+             cfg.vdc_edge_gateway_ip && \
+             cfg.vdc_edge_gateway && \
+             cfg.network_bridge.nil?
+
             @logger.debug(
               'This is our first boot, we should map ports on the ' \
               'Organization vDC vShield Edge Gateway!'
