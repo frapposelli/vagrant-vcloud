@@ -18,12 +18,14 @@ module VagrantPlugins
 
   	      env[:ui].info("Booting VM...")
 
-          testIp = cnx.get_vapp_edge_public_ip(vAppId)
+          if cfg.network_bridge.nil?
+            testIp = cnx.get_vapp_edge_public_ip(vAppId)
+          end
 
           poweronVM = cnx.poweron_vm(env[:machine].id)
           cnx.wait_task_completion(poweronVM)
 
-          if testIp.nil? && cfg.vdc_edge_gateway_ip && cfg.vdc_edge_gateway
+          if testIp.nil? && cfg.vdc_edge_gateway_ip && cfg.vdc_edge_gateway && cfg.network_bridge.nil?
             @logger.debug(
               "This is our first boot, we should map ports on org edge!"
             )

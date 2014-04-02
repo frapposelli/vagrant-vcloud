@@ -36,21 +36,31 @@ module VagrantPlugins
             return nil
           end
 
-          @logger.debug("Getting port forwarding rules...")
-          rules = cnx.get_vapp_port_forwarding_rules(vAppId)
-          
-          rules.each do |rule|
-            if rule[:vapp_scoped_local_id] == myhash[:vapp_scoped_local_id] && 
-               rule[:nat_internal_port] == "22"              
-              @externalIP = rule[:nat_external_ip]
-              @externalPort = rule[:nat_external_port]
-              break
-            end
-          end
+          if !cfg.network_bridge.nil?
+            @logger.debug("We're running in bridged mode, fetching the IP directly from the VM")
+            vm_info = cnx.get_vm(env[:machine].id)
+            @logger.debug("IP address for #{vmName}: #{vm_info[:networks]['Vagrant-vApp-Net'][:ip]}")
+            @externalIP = vm_info[:networks]['Vagrant-vApp-Net'][:ip]
+            @externalPort = "22"
+          else
 
-          if cfg.vdc_edge_gateway_ip && cfg.vdc_edge_gateway
-            @logger.debug("We're running vagrant behind an Organization vDC edge")
-            @externalIP = cfg.vdc_edge_gateway_ip
+            @logger.debug("Getting port forwarding rules...")
+            rules = cnx.get_vapp_port_forwarding_rules(vAppId)
+            
+            rules.each do |rule|
+              if rule[:vapp_scoped_local_id] == myhash[:vapp_scoped_local_id] && 
+                 rule[:nat_internal_port] == "22"              
+                @externalIP = rule[:nat_external_ip]
+                @externalPort = rule[:nat_external_port]
+                break
+              end
+            end
+
+            if cfg.vdc_edge_gateway_ip && cfg.vdc_edge_gateway
+              @logger.debug("We're running vagrant behind an Organization vDC edge")
+              @externalIP = cfg.vdc_edge_gateway_ip
+            end
+
           end
 
           # FIXME: fix the selfs and create a meaningful info message

@@ -72,6 +72,17 @@ module VagrantPlugins
               :dns2               => dnsAddress2
             }
 
+          elsif !cfg.network_bridge.nil?
+            # Bridged mode, avoid deploying a vShield Edge altogether.
+            network_options = {
+              :name               => 'Vagrant-vApp-Net',
+              :fence_mode         => 'bridged',
+              :ip_allocation_mode => 'POOL',
+              :parent_network     => cfg.vdc_network_id
+            }
+
+            env[:bridged_network] = true
+
           else
 
             @logger.debug("DNS1: #{dnsAddress1} DNS2: #{dnsAddress2}")

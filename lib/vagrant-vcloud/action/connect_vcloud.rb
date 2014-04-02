@@ -19,7 +19,7 @@ module VagrantPlugins
 
               @logger.debug("config.hostname    : #{config.hostname}")
               @logger.debug("config.username    : #{config.username}")
-              @logger.debug("config.password    : #{config.password}")
+              @logger.debug("config.password    : <hidden>")
               @logger.debug("config.org_name    : #{config.org_name}")
 
               # Create the vcloud-rest connection object with the configuration 

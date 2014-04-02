@@ -696,35 +696,38 @@ module VagrantPlugins
                 xml['ovf'].Info "Configuration parameters for logical networks"
                 xml.NetworkConfig("networkName" => network_config[:name]) {
                   xml.Configuration {
-                    xml.IpScopes {
-                      xml.IpScope {
-                        xml.IsInherited(network_config[:is_inherited] || "false")
-                        xml.Gateway network_config[:gateway]
-                        xml.Netmask network_config[:netmask]
-                        xml.Dns1 network_config[:dns1] if network_config[:dns1]
-                        xml.Dns2 network_config[:dns2] if network_config[:dns2]
-                        xml.DnsSuffix network_config[:dns_suffix] if network_config[:dns_suffix]
-                        xml.IpRanges {
-                          xml.IpRange {
-                            xml.StartAddress network_config[:start_address]
-                            xml.EndAddress network_config[:end_address]
+                    if network_config[:fence_mode] != 'bridged'
+                      xml.IpScopes {
+                        xml.IpScope {
+                          xml.IsInherited(network_config[:is_inherited] || "false")
+                          xml.Gateway network_config[:gateway]
+                          xml.Netmask network_config[:netmask]
+                          xml.Dns1 network_config[:dns1] if network_config[:dns1]
+                          xml.Dns2 network_config[:dns2] if network_config[:dns2]
+                          xml.DnsSuffix network_config[:dns_suffix] if network_config[:dns_suffix]
+                          xml.IpRanges {
+                            xml.IpRange {
+                              xml.StartAddress network_config[:start_address]
+                              xml.EndAddress network_config[:end_address]
+                            }
                           }
                         }
                       }
-                    }
+                    end
                     xml.ParentNetwork("href" => "#{@api_url}/network/#{network_config[:parent_network]}")
                     xml.FenceMode network_config[:fence_mode]
-
-                    xml.Features {
-                      xml.FirewallService {
-                        xml.IsEnabled(network_config[:enable_firewall] || "false")
+                    if network_config[:fence_mode] != 'bridged'
+                      xml.Features {
+                        xml.FirewallService {
+                          xml.IsEnabled(network_config[:enable_firewall] || "false")
+                        }
+                        xml.NatService {
+                          xml.IsEnabled "true"
+                          xml.NatType "portForwarding"
+                          xml.Policy(network_config[:nat_policy_type] || "allowTraffic")
+                        }
                       }
-                      xml.NatService {
-                        xml.IsEnabled "true"
-                        xml.NatType "portForwarding"
-                        xml.Policy(network_config[:nat_policy_type] || "allowTraffic")
-                      }
-                    }
+                    end
                   }
                 }
               }
