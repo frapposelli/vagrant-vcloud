@@ -67,6 +67,11 @@ module VagrantPlugins
       # @return [Array]
       attr_accessor :ip_dns
 
+      # Bridge Mode
+      #
+      # @return [Bool]
+      attr_accessor :network_bridge
+
       # Port forwarding rules
       #
       # @return [Hash]

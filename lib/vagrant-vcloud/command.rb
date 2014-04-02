@@ -5,7 +5,8 @@ module VagrantPlugins
   module VCloud
     class Command < Vagrant.plugin('2', :command)
       def self.synopsis
-        'outputs status of the vCloud Director setup [vcloud provider only]'
+        'outputs status of the vCloud Director setup [vcloud provider only]
+         *experimental*'
       end
 
       def execute

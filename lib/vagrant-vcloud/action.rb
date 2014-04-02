@@ -11,9 +11,14 @@ module VagrantPlugins
       # a bootup (i.e. not saved).
       def self.action_boot
         Vagrant::Action::Builder.new.tap do |b|
+          b.use ConfigValidate
           b.use PowerOn
-          b.use HandleNATPortCollisions
-          b.use ForwardPorts
+          b.use Call, IsCreated do |env, b2|
+            unless env[:bridged_network]
+              b2.use HandleNATPortCollisions
+              b2.use ForwardPorts
+            end
+          end
           b.use Provision
           b.use SyncFolders
         end
@@ -59,12 +64,15 @@ module VagrantPlugins
 
       def self.action_halt
         Vagrant::Action::Builder.new.tap do |b|
+          b.use ConfigValidate
           b.use ConnectVCloud
           b.use Call, IsPaused do |env, b2|
             b2.use Resume if env[:result]
-            b2.use UnmapPortForwardings
-            b2.use PowerOff
           end
+          b.use Call, IsBridged do |env, b2|
+            b2.use UnmapPortForwardings unless env[:bridged_network]
+          end
+          b.use PowerOff
         end
       end
 
@@ -210,6 +218,8 @@ module VagrantPlugins
                action_root.join('inventory_check')
       autoload :IsCreated,
                action_root.join('is_created')
+      autoload :IsBridged,
+               action_root.join('is_bridged')
       autoload :IsPaused,
                action_root.join('is_paused')
       autoload :IsRunning,
