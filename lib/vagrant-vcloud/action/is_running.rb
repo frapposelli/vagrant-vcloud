@@ -1,5 +1,3 @@
-require "i18n"
-
 module VagrantPlugins
   module VCloud
     module Action

@@ -1,188 +1,121 @@
-# vagrant-vcloud
+[Vagrant](http://www.vagrantup.com) provider for VMware vCloud Director®
+=============
 
-Vagrant provider for VMware vCloud Director®
+[Version 0.2.0](https://github.com/frapposelli/vagrant-vcloud/releases/tag/v0.2.0) has been released!
+-------------
 
-Please note that this is NOT WORKING yet.
+Please note that this software is still Alpha/Beta quality and is not recommended for production usage.
 
-## TODO ##
+Right now a [Precise32](http://vagrant.tsugliani.fr/precise32.box) is available for use, or you can roll your own as you please, make sure to install VMware tools in it.
 
-Using this page as a reminder todo list to what needs to be done to integrate
-vCloud Director with vagrant, at a high level.
+Features of Version 0.2.0 are:
 
-### Overall things to consider/fix ###
+- It's now possible to connect to an existing VDC network without creating a vShield Edge [ISSUE #23].
+- Added a ```upload_chunksize``` parameter to specify the chunk dimension during box uploads [ISSUE #21].
+- Added support for [vCloud® Hybrid Service™](http://www.vmware.com/products/vcloud-hybrid-service) API version 5.7.
+- Added a new command to vagrant called ```vcloud-status``` that shows the current status of the vCloud instance relative to the Vagrant deployment. *experimental*
+- General code cleanup, code should be more readable and there's a rubocop file for our code conventions.
+- Passwords are now hidden when running in DEBUG mode.
+- Initial support for Vagrant 1.5 (currently not supporting the new "share" features).
+- Lowered Nokogiri requirement to 1.5.5 (you may need to remove a later version if installed).
+- Fixed the Edge Gateway NAT rules creation / deletion.
+- Added debug capabilities down to XML traffic exchanged during the REST calls.
 
-*   Handle vCloud Director blocking tasks
+Features of Version 0.1.2 are:
 
-    This might surface at some point depending if this plugin is used in private 
-    cloud environment with an approval process. (sigh)
+- Fix ssh_key array for the sync_folder [ISSUE #30 thanks @JMG-OICR]
 
-*   Try multiple Catalog Items upload at the same time
+Features of Version 0.1.1 are:
 
-    This might surface when working in the same organization as another developer
-    and check if our error handling is working fine.
+  - bugfix multiple sub allocation pools ranges [ISSUE #24]
+  - Putting back Google DNS as default if not specified
+  - binding vCloud 5.5 API on 5.1 driver
+  - Debug cut and general cosmetic cleanup
+  - added DNS choice using the "ip_dns" Array config property.
+  - Updated sync_folders.rb with code from vagrant-aws, Will focus on a better sync engine later in the future.
+  - Removed dependency on rest-client gem, moved everything to httpclient.
+  - Fixed destroy vApp bug.
 
-*   Check vCloud Username credentials (permissions for catalog for example)
+Features of Version 0.1.0 are:
+
+- Basic Create/Provision/Destroy lifecycle.
+- Rsync-based provisioning (working on alternatives for that).
+- Use a single vApp as a container for Multi-VM Vagrantfiles.
+- Use a vApp vShield Edge to perform DNAT/SNAT on a single IP for Multi-VM Vagrantfiles.
+- Automatically create NAT rules on a fronting Organization Edge.
+- Automatic upload of the Vagrant box to the specified catalog.
+- Works on [vCloud® Hybrid Service™](http://www.vmware.com/products/vcloud-hybrid-service)!
+
+What is still missing:
+
+- TEST SUITES! (working on that).
+- Speed, the code is definitely not optimized.
+- Permission checks, make sure you have at least Catalog Admin privileges if you want to upload boxes to vCloud.
+- Thorough testing.
+- Error checking is absymal.
+- Some spaghetti code here and there.
+- Bugs, bugs and BUGS!.
+
+If you're a developer and want to lend us a hand, head over to our ```develop``` branch and get busy!
+
+Install
+-------------
+
+Version 0.1.0 can be easily installed by running:
+
+```vagrant plugin install vagrant-vcloud```
+
+Vagrant will download all the required gems during the installation process.
+
+After the install has completed a ```vagrant up --provider=vcloud``` will trigger the newly installed provider.
+
+Here's a sample Multi-VM Vagrantfile, please note that ```vcloud.vdc_edge_gateway``` and ```vcloud.vdc_edge_gateway_ip``` are required only when you cannot access ```vcloud.vdc_network_name``` directly and there's an Organization Edge between your workstation and the vCloud Network.
+
+```ruby
+precise32_vm_box_url = "http://vagrant.tsugliani.fr/precise32.box"
+
+nodes = [
+  { :hostname => "web-vm",  :box => "precise32", :box_url => precise32_vm_box_url },
+  { :hostname => "ssh-vm",  :box => "precise32", :box_url => precise32_vm_box_url },
+  { :hostname => "sql-vm",  :box => "precise32", :box_url => precise32_vm_box_url },
+  { :hostname => "lb-vm",   :box => "precise64", :box_url => precise32_vm_box_url },
+  { :hostname => "app-vm",  :box => "precise32", :box_url => precise32_vm_box_url },
+]
+
+Vagrant.configure("2") do |config|
+
+  # vCloud Director provider settings
+  config.vm.provider :vcloud do |vcloud|
+    vcloud.hostname = "https://my.cloudprovider.com"
+    vcloud.username = "MyUserName"
+    vcloud.password = "MySup3rS3cr3tPassw0rd!"
+ 
+    vcloud.org_name = "OrganizationName"
+    vcloud.vdc_name = "vDC_Name"
+
+    vcloud.catalog_name = "Vagrant"
+    vcloud.ip_subnet = "172.16.32.125/255.255.255.240"
     
-    If trying to use a public Catalog from another Organization that process
-    *will* fail.
+    vcloud.vdc_network_name = "MyNetwork"
 
-    [x] This should be fixed.  
+    vcloud.vdc_edge_gateway = "MyOrgEdgeGateway"
+    vcloud.vdc_edge_gateway_ip = "10.10.10.10"
+  end
 
-*   Wait for catalog item to be ready before processing to next step.
+  nodes.each do |node|
+    config.vm.define node[:hostname] do |node_config|
+      node_config.vm.box = node[:box]
+      node_config.vm.hostname = node[:hostname]
+      node_config.vm.box_url = node[:box_url]
+      node_config.vm.network :forwarded_port, guest: 80, host: 8080, auto_correct: true
+      # node_config.vm.provision :puppet do |puppet|
+      #   puppet.manifests_path = 'puppet/manifests'
+      #   puppet.manifest_file = 'site.pp'
+      #   puppet.module_path = 'puppet/modules'
+      # end
+    end
+  end
+end
+```
 
-    If you do a catalog upload, and deploy right after, the catalog item is
-    going through a ovf import process through vSphere which takes some time.
-
-    [x] This should be fixed.  
-
-*   Set the VM guest customization default password to 'vagrant'
-
-    The vApp will actually not power on successfully with guest customization
-    enabled, and a blank password.
-
-    [x] This should be fixed.  
-
-*   Avoid serializing vApp/Virtual Machine build when multi Virtual Machines
-
-    Find a way to avoid doing the following steps:  
-    - Create vApp  
-    - Create VM1  
-    - Boot & Guest Customize VM1  
-    - Applying network port forwarding rules  
-    - Create VM2  
-    - Boot & Guest Customize VM2  
-    - Applying network port forwarding rules  
-    - repeat for every VM...  
-
-    This would avoid spending a lot of time for each VM on the boot/reboot process
-    for the guest customization process.
-
-    [x] This should be fixed.
-
-*   Inconsistency to fix on the following variable through the whole code/lib
-    
-    This should never happen ! (vm/vApp is confusing !)  
-    :vm_scoped_local_id => rule[:VAppScopedVmId]
-
-    We might need to clean some data structures between the driver/api  
-
-### Vagrant Actions ###
-
-*   Box
-
-    We should provide a vCloud Director-ready OVF inside the box file, 
-    and give the ability to upload the box to a Catalog 
-    (if the user has catalog author permission) or leverage a pre-existing box 
-    already in a catalog.
-
-    [x] Create a new precise32 box for vCloud Director   
-    [x] Ability to use a vCloud Director Catalog Template/Catalog item  
-    [x] Ability to upload a local box into a vCloud Catalog Template/Catalog item  
-
-    Url to fetch the current box:  
-    [Precise32 box for vagrant-vcloud] (http://vagrant.tsugliani.fr/precise32.box)
-
-*   Destroy
-    
-    This is a pretty simple action to implement in vCloud Director, as the vApp 
-    is the top level object that contains the whole configuration of the setup.
-
-    Deleting the vApp will clean all the objects contained within that vApp
-    such as:
-    *   vApp Metadata
-    *   vApp Networks (including the NAT & Portforarding rules)
-    *   All the VMs and their configuration
-
-    [x] Destroying Virtual Machines is now possible using their predefined name  
-    [x] When the last Virtual Machine is destroyed, vApp will be deleted  
-    [x] Cleaning network NAT rules (portforwarding etc...)  
-
-*   Halt
-
-    This is a pretty simple action to implement in vCloud Director, as the vApp
-    is the top layer object that contains the whole configuration of the setup.
-
-    [x] Halting Virtual Machines is now possible using their predefined name  
-
-*   Init
-    
-    TBD
-
-*   Package
-
-    Nothing to do here at the moment:
-
-    [This command cannot be used with any other provider] (http://docs.vagrantup.com/v2/cli/package.html)
-
-*   Provision
-
-    TBD
-
-*   Reload
-
-    TBD
-
-*   Resume
-
-    This is a pretty simple action to implement in vCloud Director, as the vApp
-    is the top layer object that contains the whole configuration of the setup.
-
-    [x] Resuming/Starting Virtual Machines is now possible using their predefined name   
-
-*   Ssh
-
-    As the vApp is using a vShield Edge device to NAT using portforwarding mode,
-    we will need to fetch the portforwarding rules used for SSH, and then map 
-    them correctly to the configuration.
-
-    Those two methods could be called to check for information and map the 
-    information accordingly:
-
-    [ ] Using unison to handle this part  
-
-    ```ruby
-    cnx = cfg.vcloud_cnx.driver  
-    cnx.get_vapp_edge_public_ip(vAppId)  
-    cnx.get_vapp_port_forwarding_rules(vAppId)
-    ```  
-
-*   Ssh-Config
-
-    This will likely need the information used on the previous section "Ssh"
-
-*   Status
-
-    This will display the state of the vApp and it's overall configuration.
-    vApp status, VM status, and Network NAT rules for example would be nice.
-
-    [x] Checking the Virtual Machines status is now possible  
-
-    ```Shell
-    Current machine states:
-
-    web-vm                   running (vcloud)
-    ssh-vm                   suspended (vcloud)
-    sql-vm                   stopped (vcloud)
-
-    This environment represents multiple VMs. The VMs are all listed
-    above with their current state. For more information about a specific
-    VM, run `vagrant status NAME`.
-    ```
-
-*   Suspend
-
-    This is a pretty simple action to implement in vCloud Director, as the vApp
-    is the top layer object that contains the whole configuration of the setup.
-
-    [x] Suspending the Virtual Machines status is now possible
-
-*   Up
-
-    This is probably the most important action.
-    It will basically compose the vApp from all the properties in the Vagrant 
-    file, deploy that vApp, and power it on.
-
-    [x] Creating vApp   
-    [x] Adding Virtual Machines to the vApp from configuration  
-    [x] Post configuration of the Virtual Machine (Guest Customization)  
-    [x] Configuration of the Network Port forwarding rules  
+[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/frapposelli/vagrant-vcloud/trend.png)](https://bitdeli.com/free "Bitdeli Badge")

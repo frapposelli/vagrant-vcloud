@@ -38,7 +38,7 @@ module VagrantPlugins
       end
 
       def self.setup_i18n
-        I18n.load_path << File.expand_path('locales/en.yml',VCloud.source_root)
+        I18n.load_path << File.expand_path('locales/en.yml', VCloud.source_root)
         I18n.reload!
       end
 
@@ -76,11 +76,13 @@ module VagrantPlugins
       autoload :Version_5_1, File.expand_path('../driver/version_5_1', __FILE__)
     end
     module Model
-      autoload :ForwardedPort, File.expand_path('../model/forwarded_port', __FILE__)
+      autoload :ForwardedPort,
+               File.expand_path('../model/forwarded_port', __FILE__)
     end
 
     module Util
-      autoload :CompileForwardedPorts, File.expand_path('../util/compile_forwarded_ports', __FILE__)
+      autoload :CompileForwardedPorts,
+               File.expand_path('../util/compile_forwarded_ports', __FILE__)
     end
   end
 end
