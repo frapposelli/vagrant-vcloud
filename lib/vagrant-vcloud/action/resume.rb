@@ -1,29 +1,21 @@
-require "i18n"
-
 module VagrantPlugins
   module VCloud
     module Action
       class Resume
-
         def initialize(app, env)
           @app = app
-          @logger = Log4r::Logger.new("vagrant_vcloud::action::resume")
+          @logger = Log4r::Logger.new('vagrant_vcloud::action::resume')
         end
 
         def call(env)
-
           cfg = env[:machine].provider_config
           cnx = cfg.vcloud_cnx.driver
 
-          vAppId = env[:machine].get_vapp_id
-          vmId = env[:machine].id
-          vmName = env[:machine].name
+          vm_id = env[:machine].id
 
-          env[:ui].info("Powering on VM...")
-          task_id = cnx.poweron_vm(vmId)
-          wait = cnx.wait_task_completion(task_id)
-
-          true
+          env[:ui].info('Powering on VM...')
+          task_id = cnx.poweron_vm(vm_id)
+          cnx.wait_task_completion(task_id)
 
           @app.call env
         end

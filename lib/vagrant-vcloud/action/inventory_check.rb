@@ -1,73 +1,79 @@
-require "etc"
-require "log4r"
+require 'etc'
 
 module VagrantPlugins
   module VCloud
     module Action
       class InventoryCheck
-
         def initialize(app, env)
           @app = app
-          @logger = Log4r::Logger.new("vagrant_vcloud::action::inventory_check")
+          @logger = Log4r::Logger.new('vagrant_vcloud::action::inventory_check')
         end
 
         def call(env)
           vcloud_check_inventory(env)
-            
+
           @app.call env
         end
 
         def vcloud_upload_box(env)
-
           cfg = env[:machine].provider_config
           cnx = cfg.vcloud_cnx.driver
 
-          boxDir = env[:machine].box.directory.to_s
-          boxFile = env[:machine].box.name.to_s
+          box_dir = env[:machine].box.directory.to_s
+          box_file = env[:machine].box.name.to_s
 
-          boxOVF = "#{boxDir}/#{boxFile}.ovf"
+          box_ovf = "#{box_dir}/#{box_file}.ovf"
 
-          # Still relying on ruby-progressbar because report_progress basically sucks.
-
-          @logger.debug("OVF File: #{boxOVF}")
-          uploadOVF = cnx.upload_ovf(
+          # Still relying on ruby-progressbar because report_progress
+          # basically sucks.
+          @logger.debug("OVF File: #{box_ovf}")
+          upload_ovf = cnx.upload_ovf(
             cfg.vdc_id,
             env[:machine].box.name.to_s,
-            "Vagrant Box",
-            boxOVF,
+            'Vagrant Box',
+            box_ovf,
             cfg.catalog_id,
             {
-              :progressbar_enable => true
-              # FIXME: export chunksize as a parameter and lower the default to 1M.
-              #:chunksize => 262144
+              :progressbar_enable => true,
+              :chunksize => (cfg.upload_chunksize || 1_048_576)
             }
           )
 
-          env[:ui].info("Adding [#{env[:machine].box.name.to_s}] to Catalog [#{cfg.catalog_name}]")
-          addOVFtoCatalog = cnx.wait_task_completion(uploadOVF)
+          env[:ui].info(
+            "Adding [#{env[:machine].box.name.to_s}] to " +
+            "Catalog [#{cfg.catalog_name}]"
+          )
+          add_ovf_to_catalog = cnx.wait_task_completion(upload_ovf)
 
-          if !addOVFtoCatalog[:errormsg].nil?
-            raise Errors::CatalogAddError, :message => addOVFtoCatalog[:errormsg]
+          unless add_ovf_to_catalog[:errormsg].nil?
+            fail Errors::CatalogAddError,
+                 :message => add_ovf_to_catalog[:errormsg]
           end
 
           # Retrieve catalog_item ID
-          cfg.catalog_item = cnx.get_catalog_item_by_name(cfg.catalog_id, env[:machine].box.name.to_s)
-
+          cfg.catalog_item = cnx.get_catalog_item_by_name(
+            cfg.catalog_id,
+            env[:machine].box.name.to_s
+          )
         end
 
         def vcloud_create_catalog(env)
           cfg = env[:machine].provider_config
           cnx = cfg.vcloud_cnx.driver
 
-          catalogCreation = cnx.create_catalog(cfg.org_id, cfg.catalog_name, "Created by #{Etc.getlogin} running on #{Socket.gethostname.downcase} using vagrant-vcloud on #{Time.now.strftime("%B %d, %Y")}")
-          cnx.wait_task_completion(catalogCreation[:task_id])
+          catalog_creation = cnx.create_catalog(
+            cfg.org_id,
+            cfg.catalog_name,
+            "Created by #{Etc.getlogin} " +
+            "running on #{Socket.gethostname.downcase} " +
+            "using vagrant-vcloud on #{Time.now.strftime("%B %d, %Y")}"
+          )
+          cnx.wait_task_completion(catalog_creation[:task_id])
 
-          @logger.debug("Catalog Creation result: #{catalogCreation.inspect}")
-
+          @logger.debug("Catalog Creation result: #{catalog_creation.inspect}")
           env[:ui].info("Catalog [#{cfg.catalog_name}] successfully created.")
 
-          cfg.catalog_id = catalogCreation[:catalog_id]
-
+          cfg.catalog_id = catalog_creation[:catalog_id]
         end
 
         def vcloud_check_inventory(env)
@@ -83,72 +89,93 @@ module VagrantPlugins
           cfg.vdc_id = cnx.get_vdc_id_by_name(cfg.org, cfg.vdc_name)
 
           cfg.catalog = cnx.get_catalog_by_name(cfg.org, cfg.catalog_name)
-          
           cfg.catalog_id = cnx.get_catalog_id_by_name(cfg.org, cfg.catalog_name)
 
           if cfg.catalog_id.nil?
             env[:ui].warn("Catalog [#{cfg.catalog_name}] does not exist!")
 
             user_input = env[:ui].ask(
-              "Would you like to create the [#{cfg.catalog_name}] catalog?\nChoice (yes/no): "
+              "Would you like to create the [#{cfg.catalog_name}] catalog?\n" +
+              'Choice (yes/no): '
             )
 
-            if user_input.downcase == "yes" || user_input.downcase == "y" 
+            if user_input.downcase == 'yes' || user_input.downcase == 'y'
               vcloud_create_catalog(env)
             else
-              env[:ui].error("Catalog not created, exiting...")
+              env[:ui].error('Catalog not created, exiting...')
 
               # FIXME: wrong error message
-              raise VagrantPlugins::VCloud::Errors::VCloudError, 
-                    :message => "Catalog not available, exiting..."
+              raise VagrantPlugins::VCloud::Errors::VCloudError,
+                    :message => 'Catalog not available, exiting...'
 
             end
           end
 
-          
-          @logger.debug("Getting catalog item with cfg.catalog_id: [#{cfg.catalog_id}] and machine name [#{env[:machine].box.name.to_s}]")
-          cfg.catalog_item = cnx.get_catalog_item_by_name(cfg.catalog_id, env[:machine].box.name.to_s)
-          @logger.debug("Catalog item is now #{cfg.catalog_item}")
-          cfg.vdc_network_id = cfg.org[:networks][cfg.vdc_network_name]
+          @logger.debug(
+            "Getting catalog item with cfg.catalog_id: [#{cfg.catalog_id}] " +
+            "and machine name [#{env[:machine].box.name.to_s}]"
+          )
+          cfg.catalog_item = cnx.get_catalog_item_by_name(
+            cfg.catalog_id,
+            env[:machine].box.name.to_s
+          )
 
+          @logger.debug("Catalog item is now #{cfg.catalog_item}")
+
+          # This only works with Org Admin role or higher
+          cfg.vdc_network_id = cfg.org[:networks][cfg.vdc_network_name]
+          if !cfg.vdc_network_id
+            # TEMP FIX: permissions issues at the Org Level for vApp authors
+            #           to "view" Org vDC Networks but they can see them at the
+            #           Organization vDC level (tsugliani)
+            cfg.vdc_network_id = cfg.vdc[:networks][cfg.vdc_network_name]
+            if !cfg.vdc_network_id
+              raise 'vCloud User credentials has insufficient privileges'
+            end
+          end
 
           # Checking Catalog mandatory requirements
           if !cfg.catalog_id
             @logger.info("Catalog [#{cfg.catalog_name}] STILL does not exist!")
 
               # FIXME: wrong error message
-              raise VagrantPlugins::VCloud::Errors::VCloudError, 
-                    :message => "Catalog not available, exiting..."
+              raise VagrantPlugins::VCloud::Errors::VCloudError,
+                    :message => 'Catalog not available, exiting...'
 
           else
             @logger.info("Catalog [#{cfg.catalog_name}] exists")
           end
 
           if !cfg.catalog_item
-            env[:ui].warn("Catalog item [#{env[:machine].box.name.to_s}] in Catalog [#{cfg.catalog_name}] does not exist!")
-
-            user_input = env[:ui].ask(
-              "Would you like to upload the [#{env[:machine].box.name.to_s}] box to "\
-              "[#{cfg.catalog_name}] Catalog?\nChoice (yes/no): "
+            env[:ui].warn(
+              "Catalog item [#{env[:machine].box.name.to_s}] " +
+              "in Catalog [#{cfg.catalog_name}] does not exist!"
             )
 
-            if user_input.downcase == "yes" || user_input.downcase == "y" 
+            user_input = env[:ui].ask(
+              "Would you like to upload the [#{env[:machine].box.name.to_s}] " +
+              "box to [#{cfg.catalog_name}] Catalog?\n" +
+              'Choice (yes/no): '
+            )
+
+            if user_input.downcase == 'yes' || user_input.downcase == 'y'
               env[:ui].info("Uploading [#{env[:machine].box.name.to_s}]...")
               vcloud_upload_box(env)
             else
-              env[:ui].error("Catalog item not available, exiting...")
+              env[:ui].error('Catalog item not available, exiting...')
 
               # FIXME: wrong error message
-              raise VagrantPlugins::VCloud::Errors::VCloudError, 
-                    :message => "Catalog item not available, exiting..."
-
+              raise VagrantPlugins::VCloud::Errors::VCloudError,
+                    :message => 'Catalog item not available, exiting...'
             end
 
           else
-            @logger.info("Using catalog item [#{env[:machine].box.name.to_s}] in Catalog [#{cfg.catalog_name}]...")
+            @logger.info(
+              "Using catalog item [#{env[:machine].box.name.to_s}] " +
+              "in Catalog [#{cfg.catalog_name}]..."
+            )
           end
         end
-
       end
     end
   end

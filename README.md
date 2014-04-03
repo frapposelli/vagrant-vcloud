@@ -1,12 +1,25 @@
 [Vagrant](http://www.vagrantup.com) provider for VMware vCloud Director®
 =============
 
-[Version 0.1.2](https://github.com/frapposelli/vagrant-vcloud/releases/tag/v0.1.2) has been released!
+[Version 0.2.0](https://github.com/frapposelli/vagrant-vcloud/releases/tag/v0.2.0) has been released!
 -------------
 
 Please note that this software is still Alpha/Beta quality and is not recommended for production usage.
 
 Right now a [Precise32](http://vagrant.tsugliani.fr/precise32.box) is available for use, or you can roll your own as you please, make sure to install VMware tools in it.
+
+Features of Version 0.2.0 are:
+
+- It's now possible to connect to an existing VDC network without creating a vShield Edge [ISSUE #23].
+- Added a ```upload_chunksize``` parameter to specify the chunk dimension during box uploads [ISSUE #21].
+- Added support for [vCloud® Hybrid Service™](http://www.vmware.com/products/vcloud-hybrid-service) API version 5.7.
+- Added a new command to vagrant called ```vcloud-status``` that shows the current status of the vCloud instance relative to the Vagrant deployment. *experimental*
+- General code cleanup, code should be more readable and there's a rubocop file for our code conventions.
+- Passwords are now hidden when running in DEBUG mode.
+- Initial support for Vagrant 1.5 (currently not supporting the new "share" features).
+- Lowered Nokogiri requirement to 1.5.5 (you may need to remove a later version if installed).
+- Fixed the Edge Gateway NAT rules creation / deletion.
+- Added debug capabilities down to XML traffic exchanged during the REST calls.
 
 Features of Version 0.1.2 are:
 

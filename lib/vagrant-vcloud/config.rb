@@ -1,9 +1,8 @@
-require "vagrant"
+require 'vagrant'
 
 module VagrantPlugins
   module VCloud
     class Config < Vagrant.plugin('2', :config)
-
       # login attributes
 
       # The vCloud Director hostname
@@ -38,6 +37,11 @@ module VagrantPlugins
       # @return [String]
       attr_accessor :catalog_item_name
 
+      # Chunksize for upload in bytes (default 1048576 == 1M)
+      #
+      # @return [Integer]
+      attr_accessor :upload_chunksize
+
       # Virtual Data Center to be used
       #
       # @return [String]
@@ -68,6 +72,11 @@ module VagrantPlugins
       # @return [Array]
       attr_accessor :ip_dns
 
+      # Bridge Mode
+      #
+      # @return [Bool]
+      attr_accessor :network_bridge
+
       # Port forwarding rules
       #
       # @return [Hash]
@@ -78,21 +87,22 @@ module VagrantPlugins
       # @return [String]
       attr_accessor :vdc_edge_gateway
 
-      # Public IP of the edge gateway [optional, required if :vdc_edge_gateway is specified]
+      # Public IP of the edge gateway [optional, required if :vdc_edge_gateway
+      # is specified]
       #
       # @return [String]
       attr_accessor :vdc_edge_gateway_ip
-     
+
       ##
       ## vCloud Director config runtime values
-      ## 
+      ##
 
       # connection handle
       attr_accessor :vcloud_cnx
-      
+
       # org object (Hash)
       attr_accessor :org
-      
+
       # org id (String)
       attr_accessor :org_id
 
@@ -106,10 +116,10 @@ module VagrantPlugins
       attr_accessor :catalog
 
       # catalog id (String)
-      attr_accessor :catalog_id 
+      attr_accessor :catalog_id
 
       # catalog item object (Hash)
-      attr_accessor :catalog_item 
+      attr_accessor :catalog_item
 
       # vApp Name (String)
       attr_accessor :vAppName
@@ -121,19 +131,30 @@ module VagrantPlugins
         errors = _detected_errors
 
         # TODO: add blank?
-        errors << I18n.t("vagrant_vcloud.config.hostname") if hostname.nil?
-        errors << I18n.t("vagrant_vcloud.config.org_name") if org_name.nil?
-        errors << I18n.t("vagrant_vcloud.config.username") if username.nil?
-        errors << I18n.t("vagrant_vcloud.config.password") if password.nil?
-        
-        if !ip_dns.nil?
-          errors << I18n.t("vagrant_vcloud.config.ip_dns") if !ip_dns.kind_of?(Array)
-        end
-        errors << I18n.t("vagrant_vcloud.config.catalog_name") if catalog_name.nil?
-        errors << I18n.t("vagrant_vcloud.config.vdc_name") if vdc_name.nil?
-        errors << I18n.t("vagrant_vcloud.config.vdc_network_name") if vdc_network_name.nil?
+        errors << I18n.t('vagrant_vcloud.config.hostname') if hostname.nil?
+        errors << I18n.t('vagrant_vcloud.config.org_name') if org_name.nil?
+        errors << I18n.t('vagrant_vcloud.config.username') if username.nil?
+        errors << I18n.t('vagrant_vcloud.config.password') if password.nil?
 
-        { "vCloud Provider" => errors }
+        unless ip_dns.nil?
+          unless ip_dns.kind_of?(Array)
+            errors << I18n.t('vagrant_vcloud.config.ip_dns')
+          end
+        end
+
+        if catalog_name.nil?
+          errors << I18n.t('vagrant_vcloud.config.catalog_name')
+        end
+
+        if vdc_name.nil?
+          errors << I18n.t('vagrant_vcloud.config.vdc_name')
+        end
+
+        if vdc_network_name.nil?
+          errors << I18n.t('vagrant_vcloud.config.vdc_network_name')
+        end
+
+        { 'vCloud Provider' => errors }
       end
     end
   end
