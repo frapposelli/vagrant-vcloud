@@ -1251,7 +1251,7 @@ module VagrantPlugins
           nat_rule_1 = Nokogiri::XML::Node.new 'NatRule', response
           rule_type = Nokogiri::XML::Node.new 'RuleType', response
           rule_type.content = 'DNAT'
-          nat_rule_1.add_child ruleType
+          nat_rule_1.add_child rule_type
 
           is_enabled = Nokogiri::XML::Node.new 'IsEnabled', response
           is_enabled.content = 'true'
@@ -1268,7 +1268,7 @@ module VagrantPlugins
 
           original_ip = Nokogiri::XML::Node.new 'OriginalIp', response
           original_ip.content = edge_gateway_ip
-          gatewayNatRule.add_child original_ip
+          gateway_nat_rule.add_child original_ip
 
           original_port = Nokogiri::XML::Node.new 'OriginalPort', response
           original_port.content = 'any'
@@ -1301,11 +1301,11 @@ module VagrantPlugins
 
           is_enabled = Nokogiri::XML::Node.new 'IsEnabled', response
           is_enabled.content = 'true'
-          nat_rule_2.add_child isEnabled
+          nat_rule_2.add_child is_enabled
 
           gateway_nat_rule = Nokogiri::XML::Node.new 'GatewayNatRule',
                                                      response
-          nat_rule_2.add_child gatewayNatRule
+          nat_rule_2.add_child gateway_nat_rule
 
           interface = Nokogiri::XML::Node.new 'Interface', response
           interface['href'] = edge_network_id
@@ -1314,7 +1314,7 @@ module VagrantPlugins
 
           original_ip = Nokogiri::XML::Node.new 'OriginalIp', response
           original_ip.content = edge_vapp_ip
-          gatewayNatRule.add_child original_ip
+          gateway_nat_rule.add_child original_ip
 
           translated_ip = Nokogiri::XML::Node.new 'TranslatedIp', response
           translated_ip.content = edge_gateway_ip
@@ -1444,7 +1444,7 @@ module VagrantPlugins
 
             end
             if node.css('RuleType').text == 'SNAT'
-              gw_node = node.css('gatewayNatRule')
+              gw_node = node.css('GatewayNatRule')
               nat_fw_rules << {
                 :rule_type      => 'SNAT',
                 :interface_name => gw_node.css('Interface').first['name'],

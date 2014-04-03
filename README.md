@@ -1,16 +1,20 @@
 [Vagrant](http://www.vagrantup.com) provider for VMware vCloud Director®
 =============
 
-[Version 0.2.0](https://github.com/frapposelli/vagrant-vcloud/releases/tag/v0.2.0) has been released!
+[Version 0.2.1](https://github.com/frapposelli/vagrant-vcloud/releases/tag/v0.2.1) has been released!
 -------------
 
 Please note that this software is still Alpha/Beta quality and is not recommended for production usage.
 
 Right now a [Precise32](http://vagrant.tsugliani.fr/precise32.box) is available for use, or you can roll your own as you please, make sure to install VMware tools in it.
 
+Features of Version 0.2.1 are:
+
+- Critical Bugfixes
+
 Features of Version 0.2.0 are:
 
-- It's now possible to connect to an existing VDC network without creating a vShield Edge [ISSUE #23].
+- It's now possible to connect to an existing VDC network without creating a vShield Edge using ```network_bridge = true``` in the Vagrantfile [ISSUE #23]. *experimental*
 - Added a ```upload_chunksize``` parameter to specify the chunk dimension during box uploads [ISSUE #21].
 - Added support for [vCloud® Hybrid Service™](http://www.vmware.com/products/vcloud-hybrid-service) API version 5.7.
 - Added a new command to vagrant called ```vcloud-status``` that shows the current status of the vCloud instance relative to the Vagrant deployment. *experimental*
