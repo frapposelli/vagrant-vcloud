@@ -46,12 +46,10 @@ module VagrantPlugins
           else
 
             @logger.debug('Getting port forwarding rules...')
-            rules = cnx.get_vapp_port_forwarding_rules(vAppId)
+            rules = cnx.get_vapp_port_forwarding_rules(vapp_id)
 
             rules.each do |rule|
-              if rule[:vapp_scoped_local_id] == myhash[:vapp_scoped_local_id] \
-                 && rule[:nat_internal_port] == '22'
-
+              if rule[:vapp_scoped_local_id] == myhash[:vapp_scoped_local_id] && rule[:nat_internal_port] == '22'
                 @external_ip = rule[:nat_external_ip]
                 @external_port = rule[:nat_external_port]
                 break
