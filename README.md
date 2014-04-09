@@ -1,12 +1,16 @@
 [Vagrant](http://www.vagrantup.com) provider for VMware vCloud Director®
 =============
 
-[Version 0.2.1](https://github.com/frapposelli/vagrant-vcloud/releases/tag/v0.2.1) has been released!
+[Version 0.2.2](https://github.com/frapposelli/vagrant-vcloud/releases/tag/v0.2.2) has been released!
 -------------
 
 Please note that this software is still Alpha/Beta quality and is not recommended for production usage.
 
 Right now a [Precise32](http://vagrant.tsugliani.fr/precise32.box) is available for use, or you can roll your own as you please, make sure to install VMware tools in it.
+
+Features of Version 0.2.2 are:
+
+- Fixed Issue #32 - Port Forwarding rules are deleted when Halting a VM.
 
 Features of Version 0.2.1 are:
 
