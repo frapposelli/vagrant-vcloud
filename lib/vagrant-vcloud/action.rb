@@ -3,6 +3,8 @@ require 'vagrant/action/builder'
 
 module VagrantPlugins
   module VCloud
+    # This module dictates the actions to be performed by Vagrant when called
+    # with a specific command
     module Action
       include Vagrant::Action::Builtin
 
@@ -69,9 +71,6 @@ module VagrantPlugins
           b.use Call, IsPaused do |env, b2|
             b2.use Resume if env[:result]
           end
-          b.use Call, IsBridged do |env, b2|
-            b2.use UnmapPortForwardings unless env[:bridged_network]
-          end
           b.use PowerOff
         end
       end
@@ -106,6 +105,11 @@ module VagrantPlugins
               b2.use Call, IsRunning do |env2, b3|
               # If the VM is running, must power off
                 b3.use action_halt if env2[:result]
+                # Check if the network is bridged
+                b3.use Call, IsBridged do |env3, b4|
+                  # if it's not, delete port forwardings.
+                  b4.use UnmapPortForwardings unless env3[:bridged_network]
+                end
                 b3.use Destroy
               end
             else
