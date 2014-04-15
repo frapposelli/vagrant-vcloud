@@ -191,9 +191,9 @@ module VagrantPlugins
             b2.use HandleBox unless env[:result]
           end
           b.use ConnectVCloud
-          b.use InventoryCheck
           b.use Call, IsCreated do |env, b2|
             unless env[:result]
+              b2.use InventoryCheck
               b2.use BuildVApp
             end
           end
