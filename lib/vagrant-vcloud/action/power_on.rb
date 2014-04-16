@@ -16,12 +16,12 @@ module VagrantPlugins
 
           env[:ui].info('Powering on VM...')
 
+          poweron_vm = cnx.poweron_vm(env[:machine].id)
+          cnx.wait_task_completion(poweron_vm)
+
           if cfg.network_bridge.nil?
             test_ip = cnx.get_vapp_edge_public_ip(vapp_id)
           end
-
-          poweron_vm = cnx.poweron_vm(env[:machine].id)
-          cnx.wait_task_completion(poweron_vm)
 
           if test_ip.nil? && \
              cfg.vdc_edge_gateway_ip && \
