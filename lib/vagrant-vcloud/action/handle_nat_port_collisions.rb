@@ -42,67 +42,83 @@ module VagrantPlugins
           cnx = cfg.vcloud_cnx.driver
           vapp_id = env[:machine].get_vapp_id
 
+          @logger.debug('Getting VM info...')
+          vm_name = env[:machine].name
+          vm = cnx.get_vapp(vapp_id)
+          vm_info = vm[:vms_hash][vm_name.to_sym]
+
           @logger.debug('Getting port forwarding rules...')
           rules = cnx.get_vapp_port_forwarding_external_ports(vapp_id)
-
+          nat_rules = cnx.get_vapp_port_forwarding_rules(vapp_id)
           # Pass two, detect/handle any collisions
           with_forwarded_ports(env) do |options|
             guest_port = options[:guest]
             host_port  = options[:host]
 
-            # If the port is open (listening for TCP connections)
-            if rules.include?(host_port)
-              if !options[:auto_correct]
-                raise Errors::ForwardPortCollision,
-                  :guest_port => guest_port.to_s,
-                  :host_port  => host_port.to_s
-              end
-
-              @logger.info("Attempting to repair FP collision: #{host_port}")
-
-              repaired_port = nil
-              while !usable_ports.empty?
-                # Attempt to repair the forwarded port
-                repaired_port = usable_ports.to_a.sort[0]
-                usable_ports.delete(repaired_port)
-
-                # If the port is in use, then we can't use this either...
-                if rules.include?(repaired_port)
-                  @logger.info(
-                    "Repaired port also in use: #{repaired_port}." +
-                    'Trying another...'
-                  )
-                  next
+            # Find if there already is a NAT rule to guest_port of this VM
+            if r = nat_rules.find { |rule| (rule[:vapp_scoped_local_id] == vm_info[:vapp_scoped_local_id] &&
+                                            rule[:nat_internal_port] == guest_port.to_s) }
+              host_port = r[:nat_external_port].to_i
+              @logger.info(
+                "Found existing port forwarding rule #{host_port} to #{guest_port}"
+              )
+              options[:host] = host_port
+              options[:already_exists] = true
+            else
+              # If the port is open (listening for TCP connections)
+              if rules.include?(host_port)
+                if !options[:auto_correct]
+                  raise Errors::ForwardPortCollision,
+                    :guest_port => guest_port.to_s,
+                    :host_port  => host_port.to_s
                 end
 
-                # We have a port so break out
-                break
-              end
+                @logger.info("Attempting to repair FP collision: #{host_port}")
 
-              # If we have no usable ports then we can't repair
-              if !repaired_port && usable_ports.empty?
-                raise Errors::ForwardPortAutolistEmpty,
-                      :vm_name    => env[:machine].name,
-                      :guest_port => guest_port.to_s,
-                      :host_port  => host_port.to_s
-              end
+                repaired_port = nil
+                while !usable_ports.empty?
+                  # Attempt to repair the forwarded port
+                  repaired_port = usable_ports.to_a.sort[0]
+                  usable_ports.delete(repaired_port)
 
-              # Modify the args in place
-              options[:host] = repaired_port
+                  # If the port is in use, then we can't use this either...
+                  if rules.include?(repaired_port)
+                    @logger.info(
+                      "Repaired port also in use: #{repaired_port}." +
+                      'Trying another...'
+                    )
+                    next
+                  end
 
-              @logger.info(
-                "Repaired FP collision: #{host_port} to #{repaired_port}"
-              )
+                  # We have a port so break out
+                  break
+                end
 
-              # Notify the user
-              env[:ui].info(
-                I18n.t(
-                  'vagrant.actions.vm.forward_ports.fixed_collision',
-                  :host_port  => host_port.to_s,
-                  :guest_port => guest_port.to_s,
-                  :new_port   => repaired_port.to_s
+                # If we have no usable ports then we can't repair
+                if !repaired_port && usable_ports.empty?
+                  raise Errors::ForwardPortAutolistEmpty,
+                        :vm_name    => env[:machine].name,
+                        :guest_port => guest_port.to_s,
+                        :host_port  => host_port.to_s
+                end
+
+                # Modify the args in place
+                options[:host] = repaired_port
+
+                @logger.info(
+                  "Repaired FP collision: #{host_port} to #{repaired_port}"
                 )
-              )
+
+                # Notify the user
+                env[:ui].info(
+                  I18n.t(
+                    'vagrant.actions.vm.forward_ports.fixed_collision',
+                    :host_port  => host_port.to_s,
+                    :guest_port => guest_port.to_s,
+                    :new_port   => repaired_port.to_s
+                  )
+                )
+              end
             end
           end
 
