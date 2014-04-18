@@ -1092,46 +1092,6 @@ module VagrantPlugins
         end
 
         ##
-        # Get vApp port forwarding rules external ports used and returns a set
-        # instead of an HASH.
-        #
-        # - vapp_id: id of the vApp
-        def get_vapp_port_forwarding_external_ports(vapp_id)
-          params = {
-            'method'  => :get,
-            'command' => "/vApp/vapp-#{vapp_id}/networkConfigSection"
-          }
-
-          response, _headers = send_request(params)
-
-          # FIXME: this will return nil if the vApp uses multiple vApp Networks
-          # with Edge devices in natRouted/portForwarding mode.
-          config = response.css(
-            'NetworkConfigSection/NetworkConfig/Configuration'
-          )
-          fence_mode = config.css('/FenceMode').text
-          nat_type = config.css('/Features/NatService/NatType').text
-
-          unless fence_mode == 'natRouted'
-            raise InvalidStateError,
-                  'Invalid request because FenceMode must be natRouted.'
-          end
-
-          unless nat_type == 'portForwarding'
-            raise InvalidStateError,
-                  'Invalid request because NatType must be portForwarding.'
-          end
-
-          nat_rules = Set.new
-          config.css('/Features/NatService/NatRule').each do |rule|
-            # portforwarding rules information
-            vm_rule = rule.css('VmRule')
-            nat_rules.add(vm_rule.css('ExternalPort').text.to_i)
-          end
-          nat_rules
-        end
-
-        ##
         # Find an edge gateway id from the edge name and vdc_id
         #
         # - edge_gateway_name: Name of the vSE

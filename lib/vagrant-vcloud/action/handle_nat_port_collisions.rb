@@ -48,8 +48,9 @@ module VagrantPlugins
           vm_info = vm[:vms_hash][vm_name.to_sym]
 
           @logger.debug('Getting port forwarding rules...')
-          rules = cnx.get_vapp_port_forwarding_external_ports(vapp_id)
           nat_rules = cnx.get_vapp_port_forwarding_rules(vapp_id)
+          rules = nat_rules.map{|r| r[:nat_external_port]}.to_set
+
           # Pass two, detect/handle any collisions
           with_forwarded_ports(env) do |options|
             guest_port = options[:guest]
