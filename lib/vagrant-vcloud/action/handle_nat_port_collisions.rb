@@ -47,9 +47,18 @@ module VagrantPlugins
           vm = cnx.get_vapp(vapp_id)
           vm_info = vm[:vms_hash][vm_name.to_sym]
 
+          @logger.debug('Getting edge gateway port forwarding rules...')
+          edge_gateway_rules = cnx.get_edge_gateway_rules(cfg.vdc_edge_gateway,
+                                                          cfg.vdc_id)
+
+          edge_ports_in_use = edge_gateway_rules.select {|r| (r[:rule_type] == 'DNAT')}.map{|r| r[:original_port].to_i}.to_set
+
           @logger.debug('Getting port forwarding rules...')
           nat_rules = cnx.get_vapp_port_forwarding_rules(vapp_id)
-          rules = nat_rules.map{|r| r[:nat_external_port].to_i}.to_set
+          ports_in_use = nat_rules.map{|r| r[:nat_external_port].to_i}.to_set
+
+          # merge the vapp ports and the edge gateway ports together, all are in use
+          ports_in_use = ports_in_use | edge_ports_in_use
 
           # Pass two, detect/handle any collisions
           with_forwarded_ports(env) do |options|
@@ -67,7 +76,7 @@ module VagrantPlugins
               options[:already_exists] = true
             else
               # If the port is open (listening for TCP connections)
-              if rules.include?(host_port)
+              if ports_in_use.include?(host_port)
                 if !options[:auto_correct]
                   raise Errors::ForwardPortCollision,
                     :guest_port => guest_port.to_s,
@@ -83,7 +92,7 @@ module VagrantPlugins
                   usable_ports.delete(repaired_port)
 
                   # If the port is in use, then we can't use this either...
-                  if rules.include?(repaired_port)
+                  if ports_in_use.include?(repaired_port)
                     @logger.info(
                       "Repaired port also in use: #{repaired_port}." +
                       'Trying another...'
