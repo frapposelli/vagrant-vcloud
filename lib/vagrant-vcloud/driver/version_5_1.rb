@@ -631,19 +631,6 @@ module VagrantPlugins
         end
 
         ##
-        # Boot a given vm
-        def poweron_vm(vm_id)
-          params = {
-            'method'  => :post,
-            'command' => "/vApp/vm-#{vm_id}/power/action/powerOn"
-          }
-
-          _response, headers = send_request(params)
-          task_id = headers['Location'].gsub("#{@api_url}/task/", '')
-          task_id
-        end
-
-        ##
         # Create a catalog in an organization
         def create_catalog(org_id, catalog_name, catalog_description)
           builder = Nokogiri::XML::Builder.new do |xml|
