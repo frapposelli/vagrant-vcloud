@@ -39,6 +39,7 @@ module VagrantPlugins
           @org_name = org_name
           @api_version = '5.1'
           @id = nil
+          @cached_vapp_edge_public_ips = {}
         end
 
         ##
@@ -1374,8 +1375,7 @@ module VagrantPlugins
                     xml.OriginalPort port
                     xml.TranslatedIp edge_vapp_ip
                     xml.TranslatedPort port
-                    xml.Protocol 'tcp' # 'TCP_UDP' ??
-#                    xml.IcmpSubType 'any'
+                    xml.Protocol 'tcpudp'
                   }
                 }
             end
@@ -1438,6 +1438,7 @@ module VagrantPlugins
           task_id
         end
 
+        
         ##
         # get vApp edge public IP from the vApp ID
         # Only works when:
@@ -1447,6 +1448,8 @@ module VagrantPlugins
         # This will be required to know how to connect to VMs behind the Edge
         # device.
         def get_vapp_edge_public_ip(vapp_id)
+          return @cached_vapp_edge_public_ips[vapp_id] unless @cached_vapp_edge_public_ips[vapp_id].nil?
+
           # Check the network configuration section
           params = {
             'method' => :get,
@@ -1480,6 +1483,7 @@ module VagrantPlugins
           if edge_ip == ''
             return nil
           else
+            @cached_vapp_edge_public_ips[vapp_id] = edge_ip
             return edge_ip
           end
         end

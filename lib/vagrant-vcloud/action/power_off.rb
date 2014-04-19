@@ -21,6 +21,8 @@ module VagrantPlugins
           )
 
           if test_vapp[:vms_hash].count == 1
+            # this is a helper to get vapp_edge_ip into cache for later destroy of edge gateway rules
+            vapp_edge_ip = cnx.get_vapp_edge_public_ip(vapp_id)
 
             # Poweroff vApp
             env[:ui].info('Powering off vApp...')
