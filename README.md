@@ -94,6 +94,8 @@ Vagrant.configure("2") do |config|
 
   # vCloud Director provider settings
   config.vm.provider :vcloud do |vcloud|
+    vcloud.vapp_prefix = "multibox-sample"
+
     vcloud.hostname = "https://my.cloudprovider.com"
     vcloud.username = "MyUserName"
     vcloud.password = "MySup3rS3cr3tPassw0rd!"
