@@ -50,12 +50,12 @@ module VagrantPlugins
           @logger.debug('Getting edge gateway port forwarding rules...')
           edge_gateway_rules = cnx.get_edge_gateway_rules(cfg.vdc_edge_gateway,
                                                           cfg.vdc_id)
-
-          edge_ports_in_use = edge_gateway_rules.select {|r| (r[:rule_type] == 'DNAT')}.map{|r| r[:original_port].to_i}.to_set
+          edge_dnat_rules = edge_gateway_rules.select {|r| (r[:rule_type] == 'DNAT')}
+          edge_ports_in_use = edge_dnat_rules.map{|r| r[:original_port].to_i}.to_set
 
           @logger.debug('Getting port forwarding rules...')
-          nat_rules = cnx.get_vapp_port_forwarding_rules(vapp_id)
-          ports_in_use = nat_rules.map{|r| r[:nat_external_port].to_i}.to_set
+          vapp_nat_rules = cnx.get_vapp_port_forwarding_rules(vapp_id)
+          ports_in_use = vapp_nat_rules.map{|r| r[:nat_external_port].to_i}.to_set
 
           # merge the vapp ports and the edge gateway ports together, all are in use
           ports_in_use = ports_in_use | edge_ports_in_use
@@ -65,9 +65,19 @@ module VagrantPlugins
             guest_port = options[:guest]
             host_port  = options[:host]
 
+            # Find if there already is a DNAT rule to this vApp
+            if r = edge_dnat_rules.find { |rule| (rule[:translated_ip] == vm_info[:ip] &&
+                                                  rule[:translated_port] == guest_port.to_s) }
+
+              @logger.info(
+                "Found existing edge gateway port forwarding rule #r[:original_port] to #{guest_port}"
+              )
+              options[:already_exists_on_edge] = true
+            end
+
             # Find if there already is a NAT rule to guest_port of this VM
-            if r = nat_rules.find { |rule| (rule[:vapp_scoped_local_id] == vm_info[:vapp_scoped_local_id] &&
-                                            rule[:nat_internal_port] == guest_port.to_s) }
+            if r = vapp_nat_rules.find { |rule| (rule[:vapp_scoped_local_id] == vm_info[:vapp_scoped_local_id] &&
+                                                 rule[:nat_internal_port] == guest_port.to_s) }
               host_port = r[:nat_external_port].to_i
               @logger.info(
                 "Found existing port forwarding rule #{host_port} to #{guest_port}"
