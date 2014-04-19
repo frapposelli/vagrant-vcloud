@@ -93,6 +93,12 @@ module VagrantPlugins
       # @return [String]
       attr_accessor :vdc_edge_gateway_ip
 
+      # Name of the vApp prefix [optional, defaults to 'Vagrant' ]
+      #
+      # @return [String]
+      attr_accessor :vapp_prefix
+
+
       ##
       ## vCloud Director config runtime values
       ##
