@@ -1488,6 +1488,145 @@ module VagrantPlugins
           task_id
         end
 
+        #
+        # Add Org Edge port forwarding and firewall rules
+        #
+        # - vapp_id: id of the vapp to be modified
+        # - network_name: name of the vapp network to be modified
+        # - ports: array with port numbers to forward 1:1 to vApp.
+        def add_edge_gateway_rules(edge_gateway_name, vdc_id, edge_gateway_ip, vapp_id, ports)
+          edge_vapp_ip = get_vapp_edge_public_ip(vapp_id)
+          edge_network_id = find_edge_gateway_network(
+            edge_gateway_name,
+            vdc_id,
+            edge_gateway_ip
+          )
+          edge_gateway_id = find_edge_gateway_id(edge_gateway_name, vdc_id)
+
+          ### FIXME: tsugliani
+          # We need to check the previous variables, especially (edge_*)
+          # which can fail in some *weird* situations.
+          params = {
+             'method'   => :get,
+             'command'  => "/admin/edgeGateway/#{edge_gateway_id}"
+           }
+
+          response, _headers = send_request(params)
+
+          interesting = response.css(
+            'EdgeGateway Configuration EdgeGatewayServiceConfiguration'
+          )
+
+          add_snat_rule = true
+          interesting.css('NatService NatRule').each do |node|
+            if node.css('RuleType').text == 'DNAT' &&
+               node.css('GatewayNatRule/OriginalIp').text == edge_gateway_ip &&
+               node.css('GatewayNatRule/TranslatedIp').text == edge_vapp_ip &&
+               node.css('GatewayNatRule/OriginalPort').text == 'any'
+               # remove old DNAT rule any -> any from older vagrant-vcloud versions
+              node.remove
+            end
+            if node.css('RuleType').text == 'SNAT' &&
+               node.css('GatewayNatRule/OriginalIp').text == edge_vapp_ip &&
+               node.css('GatewayNatRule/TranslatedIp').text == edge_gateway_ip
+              add_snat_rule = false
+            end
+          end
+
+          add_firewall_rule = true
+          interesting.css('FirewallService FirewallRule').each do |node|
+            if node.css('Port').text == '-1' &&
+               node.css('DestinationIp').text == edge_gateway_ip &&
+               node.css('DestinationPortRange').text == 'Any'
+              add_firewall_rule = false
+            end
+          end
+
+          builder = Nokogiri::XML::Builder.new
+          builder << interesting
+
+          set_edge_rules = Nokogiri::XML(builder.to_xml) do |config|
+            config.default_xml.noblanks
+          end
+
+          nat_rules = set_edge_rules.at_css('NatService')
+
+          # Add all DNAT port rules edge -> vApp for the given list
+          ports.each do |port| 
+            nat_rule = Nokogiri::XML::Builder.new do |xml|
+                xml.NatRule {
+                  xml.RuleType 'DNAT'
+                  xml.IsEnabled 'true'
+                  xml.GatewayNatRule {
+                    xml.Interface('href' => edge_network_id )
+                    xml.OriginalIp edge_gateway_ip
+                    xml.OriginalPort port
+                    xml.TranslatedIp edge_vapp_ip
+                    xml.TranslatedPort port
+                    xml.Protocol 'tcp' # 'TCP_UDP' ??
+#                    xml.IcmpSubType 'any'
+                  }
+                }
+            end
+            nat_rules << nat_rule.doc.root.to_xml
+          end
+
+          if (add_snat_rule)
+            snat_rule = Nokogiri::XML::Builder.new do |xml|
+                xml.NatRule {
+                  xml.RuleType 'SNAT'
+                  xml.IsEnabled 'true'
+                  xml.GatewayNatRule {
+                    xml.Interface('href' => edge_network_id )
+                    xml.OriginalIp edge_vapp_ip
+                    xml.TranslatedIp edge_gateway_ip
+                    xml.Protocol 'any'
+                  }
+                }
+            end             
+            nat_rules << snat_rule.doc.root.to_xml
+          end
+
+
+          if (add_firewall_rule)
+          firewall_rule_1 = Nokogiri::XML::Builder.new do |xml|
+              xml.FirewallRule {
+                xml.IsEnabled 'true'
+                xml.Description 'Allow Vagrant Communications'
+                xml.Policy 'allow'
+                xml.Protocols {
+                  xml.Any 'true'
+                }
+                xml.DestinationPortRange 'Any'
+                xml.DestinationIp edge_gateway_ip
+                xml.SourcePortRange 'Any'
+                xml.SourceIp 'Any'
+                xml.EnableLogging 'false'
+              }
+          end           
+          fw_rules = set_edge_rules.at_css('FirewallService')
+            fw_rules << firewall_rule_1.doc.root.to_xml
+          end
+
+          xml = set_edge_rules.at_css 'EdgeGatewayServiceConfiguration'
+          xml['xmlns'] = 'http://www.vmware.com/vcloud/v1.5'
+
+          params = {
+            'method'  => :post,
+            'command' => "/admin/edgeGateway/#{edge_gateway_id}/action/" +
+                         'configureServices'
+          }
+
+          _response, headers = send_request(
+            params,
+            set_edge_rules.to_xml,
+            'application/vnd.vmware.admin.edgeGatewayServiceConfiguration+xml'
+          )
+
+          task_id = headers['Location'].gsub("#{@api_url}/task/", '')
+          task_id
+        end
+
         ##
         # get vApp edge public IP from the vApp ID
         # Only works when:
