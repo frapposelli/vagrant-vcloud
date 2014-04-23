@@ -18,6 +18,9 @@ module VagrantPlugins
               options    = scoped_hash_override(options, :vcloud)
               id         = options[:id]
 
+              # skip forwarded rules already found in handle_nat_port_collisions
+              next if options[:already_exists]
+
               mappings[host_port] =
                 Model::ForwardedPort.new(id, host_port, guest_port, options)
             end
