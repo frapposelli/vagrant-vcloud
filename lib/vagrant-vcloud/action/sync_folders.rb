@@ -77,7 +77,7 @@ module VagrantPlugins
 
             # on windows rsync.exe requires cygdrive-style paths
             if Vagrant::Util::Platform.windows?
-              hostpath = hostpath.gsub(/^(\w):/) { "/cygdrive/\1" }
+              hostpath = hostpath.gsub(/^(\w):/) { "/cygdrive/#{$1}" }
             end
 
             env[:ui].info(
