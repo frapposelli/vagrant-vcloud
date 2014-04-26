@@ -118,35 +118,44 @@ module VagrantPlugins
             network_table << :separator
 
             # Fetching Destination NAT Rules for each vApp/Edge/VM/Mapping
-            edge_gateway_rules.each do |edge_gateway_rule|
-              vapp_edge_rules.each do |vapp_edge_rule|
+            vapp_edge_rules.each do |vapp_edge_rule|
+              edge_gateway_rule = edge_gateway_rules.find {|r|
+                      (r[:rule_type] == 'DNAT' &&
+                       r[:original_ip] == cfg.vdc_edge_gateway_ip &&
+                       r[:translated_ip] == vapp_edge_ip)}
 
-                # Only check DNAT and src/dst
-                if edge_gateway_rule[:rule_type] == 'DNAT' &&
-                   edge_gateway_rule[:original_ip] == cfg.vdc_edge_gateway_ip &&
-                   edge_gateway_rule[:translated_ip] == vapp_edge_ip
+              # Loop on every VM in the vApp
+              vapp[:vms_hash].each do |vm|
+                # Only Map valid vAppEdge scope to VM scope
+                vm_scope = vm[1][:vapp_scoped_local_id]
+                vapp_edge_scope = vapp_edge_rule[:vapp_scoped_local_id]
 
-                   # Loop on every VM in the vApp
-                  vapp[:vms_hash].each do |vm|
-                    # Only Map valid vAppEdge scope to VM scope
-                    vm_scope = vm[1][:vapp_scoped_local_id]
-                    vapp_edge_scope = vapp_edge_rule[:vapp_scoped_local_id]
+                if vm_scope == vapp_edge_scope
 
-                    if vm_scope == vapp_edge_scope
-
-                      # Generate DNAT Mappings for the valid machines
-                      # If rules don't match, you will not see them !
-                      network_table << [
-                        "#{vm[0]}",
-                        "#{cfg.vdc_edge_gateway_ip}:" +
-                        "#{vapp_edge_rule[:nat_external_port]}" +
-                        " -> #{vapp_edge_ip}:" +
-                        "#{vapp_edge_rule[:nat_external_port]}" +
-                        " -> #{vm[1][:addresses][0]}:" +
-                        "#{vapp_edge_rule[:nat_internal_port]}",
-                        edge_gateway_rule[:is_enabled]
-                      ]
-                    end
+                  # Generate DNAT Mappings for the valid machines
+                  # If rules don't match, you will not see them !
+                  if edge_gateway_rule
+                    # DNAT rule from edge to vapp to vm
+                    network_table << [
+                      "#{vm[0]}",
+                      "#{cfg.vdc_edge_gateway_ip}:" +
+                      "#{vapp_edge_rule[:nat_external_port]}" +
+                      " -> #{vapp_edge_ip}:" +
+                      "#{vapp_edge_rule[:nat_external_port]}" +
+                      " -> #{vm[1][:addresses][0]}:" +
+                      "#{vapp_edge_rule[:nat_internal_port]}",
+                      edge_gateway_rule[:is_enabled]
+                    ]
+                  else
+                    # DNAT rule only from vapp to vm
+                    network_table << [
+                      "#{vm[0]}",
+                      "#{vapp_edge_ip}:" +
+                      "#{vapp_edge_rule[:nat_external_port]}" +
+                      " -> #{vm[1][:addresses][0]}:" +
+                      "#{vapp_edge_rule[:nat_internal_port]}",
+                      true
+                    ]
                   end
                 end
               end
