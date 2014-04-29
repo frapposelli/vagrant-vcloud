@@ -14,7 +14,7 @@ module VagrantPlugins
           cnx = cfg.vcloud_cnx.driver
           vapp_id = env[:machine].get_vapp_id
 
-          env[:ui].info('Booting VM...')
+          env[:ui].info('Powering on VM...')
 
           if cfg.network_bridge.nil?
             test_ip = cnx.get_vapp_edge_public_ip(vapp_id)
