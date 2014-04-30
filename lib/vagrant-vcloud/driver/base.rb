@@ -309,7 +309,7 @@ module VagrantPlugins
             # Massive debug when LOG=DEBUG
             # Using awesome_print to get nice XML output for better readability
             if @logger.level == 1
-              ap "SEND #{url}"
+              ap "SEND #{params['method'].upcase} #{url}"
               if payload
                 payload_xml = Nokogiri.XML(payload)
                 ap payload_xml

@@ -53,14 +53,14 @@ module VagrantPlugins
               b2.use MessageAlreadyRunning
               next
             end
-            b2.use Call, IsPaused do |env2, b3|
-              if env2[:result]
-                b3.use Resume
-                next
-              end
-              b3.use action_boot
+          end
+          b.use Call, IsPaused do |env, b2|
+            if env[:result]
+              b3.use Resume
+              next
             end
           end
+          b.use PowerOn
         end
       end
 
@@ -191,13 +191,15 @@ module VagrantPlugins
             b2.use HandleBox unless env[:result]
           end
           b.use ConnectVCloud
+          b.use InventoryCheck
           b.use Call, IsCreated do |env, b2|
-            unless env[:result]
-              b2.use InventoryCheck
+            if env[:result]
+              b2.use action_start
+            else
               b2.use BuildVApp
+              b2.use action_boot
             end
           end
-          b.use action_start
           b.use DisconnectVCloud
         end
       end

@@ -24,6 +24,7 @@ module VagrantPlugins
 
         def forward_ports
           ports = []
+          edge_ports = []
 
           cfg = @env[:machine].provider_config
           cnx = cfg.vcloud_cnx.driver
@@ -42,12 +43,6 @@ module VagrantPlugins
           vm_info = vm[:vms_hash][vm_name.to_sym]
 
           @env[:forwarded_ports].each do |fp|
-            # FIXME: Useless variable assignement 'message_attributes'
-            # (tsugliani)
-            message_attributes = {
-              :guest_port   => fp.guest_port,
-              :host_port    => fp.host_port
-            }
 
             @env[:ui].info(
               "Forwarding Ports: VM port #{fp.guest_port} -> " +
@@ -64,6 +59,8 @@ module VagrantPlugins
               :nat_protocol           => fp.protocol.upcase,
               :vapp_scoped_local_id   => vm_info[:vapp_scoped_local_id]
             }
+
+            edge_ports << fp.host_port
           end
 
           if !ports.empty?
@@ -89,8 +86,36 @@ module VagrantPlugins
               raise Errors::ComposeVAppError, :message => wait[:errormsg]
             end
 
-          end
 
+            if cfg.vdc_edge_gateway_ip && \
+               cfg.vdc_edge_gateway && \
+               cfg.network_bridge.nil?
+
+
+              edge_ports.each do |port|
+                @env[:ui].info(
+                  "Creating NAT rules on [#{cfg.vdc_edge_gateway}] " +
+                  "for IP [#{cfg.vdc_edge_gateway_ip}] port #{port}."
+                )
+              end
+
+              # Add the vShield Edge Gateway rules
+              add_ports = cnx.add_edge_gateway_rules(
+                cfg.vdc_edge_gateway,
+                cfg.vdc_id,
+                cfg.vdc_edge_gateway_ip,
+                vapp_id,
+                edge_ports
+              )
+
+              wait = cnx.wait_task_completion(add_ports)
+
+              if !wait[:errormsg].nil?
+                raise Errors::ComposeVAppError, :message => wait[:errormsg]
+              end
+
+            end
+          end
         end
       end
     end
