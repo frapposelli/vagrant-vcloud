@@ -53,14 +53,14 @@ module VagrantPlugins
               b2.use MessageAlreadyRunning
               next
             end
-            b2.use Call, IsPaused do |env2, b3|
-              if env2[:result]
-                b3.use Resume
-                next
-              end
-              b3.use action_boot
+          end
+          b.use Call, IsPaused do |env, b2|
+            if env[:result]
+              b3.use Resume
+              next
             end
           end
+          b.use PowerOn
         end
       end
 
@@ -105,12 +105,19 @@ module VagrantPlugins
               b2.use Call, IsRunning do |env2, b3|
               # If the VM is running, must power off
                 b3.use action_halt if env2[:result]
-                # Check if the network is bridged
-                b3.use Call, IsBridged do |env3, b4|
-                  # if it's not, delete port forwardings.
-                  b4.use UnmapPortForwardings unless env3[:bridged_network]
+              end
+              b2.use Call, IsLastVM do |env2, b3|
+                if env2[:result]
+                  # Check if the network is bridged
+                  b3.use Call, IsBridged do |env3, b4|
+                    # if it's not, delete port forwardings.
+                    b4.use UnmapPortForwardings unless env3[:bridged_network]
+                  end
+                  b3.use PowerOffVApp
+                  b3.use DestroyVApp
+                else
+                  b3.use DestroyVM
                 end
-                b3.use Destroy
               end
             else
               b2.use MessageWillNotDestroy
@@ -191,13 +198,15 @@ module VagrantPlugins
             b2.use HandleBox unless env[:result]
           end
           b.use ConnectVCloud
+          b.use InventoryCheck
           b.use Call, IsCreated do |env, b2|
-            unless env[:result]
-              b2.use InventoryCheck
+            if env[:result]
+              b2.use action_start
+            else
               b2.use BuildVApp
+              b2.use action_boot
             end
           end
-          b.use action_start
           b.use DisconnectVCloud
         end
       end
@@ -210,8 +219,10 @@ module VagrantPlugins
                action_root.join('build_vapp')
       autoload :ConnectVCloud,
                action_root.join('connect_vcloud')
-      autoload :Destroy,
-               action_root.join('destroy')
+      autoload :DestroyVM,
+               action_root.join('destroy_vm')
+      autoload :DestroyVApp,
+               action_root.join('destroy_vapp')
       autoload :DisconnectVCloud,
                action_root.join('disconnect_vcloud')
       autoload :ForwardPorts,
@@ -228,6 +239,8 @@ module VagrantPlugins
                action_root.join('is_paused')
       autoload :IsRunning,
                action_root.join('is_running')
+      autoload :IsLastVM,
+               action_root.join('is_last_vm')
       autoload :MessageAlreadyRunning,
                action_root.join('message_already_running')
       autoload :MessageCannotSuspend,
@@ -238,6 +251,8 @@ module VagrantPlugins
                action_root.join('message_will_not_destroy')
       autoload :PowerOff,
                action_root.join('power_off')
+      autoload :PowerOffVApp,
+               action_root.join('power_off_vapp')
       autoload :PowerOn,
                action_root.join('power_on')
       autoload :ReadSSHInfo,
