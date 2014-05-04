@@ -10,7 +10,7 @@ Right now a [Precise32](http://vagrant.tsugliani.fr/precise32.box) is available 
 
 Features of Version 0.3.0 are:
 
-A substantial release, major kudos to Stefan Scherer who submitted some substantious PRs!
+A substantial release, major kudos to [Stefan Scherer](https://github.com/StefanScherer) who submitted some substantious PRs!
 
 - Added support for port mapping at the Organization Edge Gateway.
 - Added a new configuration options ```vapp_prefix``` to change vApp prefix (defaults to Vagrant).
@@ -42,7 +42,7 @@ Features of Version 0.2.0 are:
 
 Features of Version 0.1.2 are:
 
-- Fix ssh_key array for the sync_folder [ISSUE #30 thanks @JMG-OICR]
+- Fix ssh_key array for the sync_folder [ISSUE #30 thanks [@JMG-OICR](https://github.com/JMG-OICR)]
 
 Features of Version 0.1.1 are:
 
