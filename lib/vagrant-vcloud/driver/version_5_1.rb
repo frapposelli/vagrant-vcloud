@@ -1700,7 +1700,7 @@ module VagrantPlugins
             @logger.debug(
               "Evaluating taskid: #{task_id}, current status #{task[:status]}"
             )
-            break if task[:status] != 'running'
+            break if !['queued','preRunning','running'].include?(task[:status])
             sleep 5
           end
 
