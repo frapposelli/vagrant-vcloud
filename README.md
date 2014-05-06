@@ -20,8 +20,8 @@ A substantial release, major kudos to [Stefan Scherer](https://github.com/Stefan
 - Added a new configuration options ```vapp_prefix``` to change vApp prefix (defaults to Vagrant).
 - Improved vcloud-status command.
 - Fixed cygdrive path for rsync on Windows.
-- Fixed Issue [[#33](../../issues/33)]. - Error removing/creating NAT rules on second vagrant up.
-- Fixed Issue [[#43](../../issues/43)]. - Destroy fails if VMs are halted.
+- Fixed Issue [[#33](../../issues/33)] - Error removing/creating NAT rules on second vagrant up.
+- Fixed Issue [[#43](../../issues/43)] - Destroy fails if VMs are halted.
 
 Features of Version 0.2.2 are:
 
