@@ -1,12 +1,16 @@
 [Vagrant](http://www.vagrantup.com) provider for VMware vCloud Director®
 =============
 
-[Version 0.3.0](https://github.com/frapposelli/vagrant-vcloud/releases/tag/v0.3.0) has been released!
+[Version 0.3.1](https://github.com/frapposelli/vagrant-vcloud/releases/tag/v0.3.1) has been released!
 -------------
 
 Please note that this software is still Alpha/Beta quality and is not recommended for production usage.
 
 Right now a [Precise32](http://vagrant.tsugliani.fr/precise32.box) is available for use, or you can roll your own as you please, make sure to install VMware tools in it.
+
+Features of Version 0.3.1 are:
+
+- Small hotfix to include "preRunning" condition when using vCloud Director 5.5 [Issue #44]
 
 Features of Version 0.3.0 are:
 
