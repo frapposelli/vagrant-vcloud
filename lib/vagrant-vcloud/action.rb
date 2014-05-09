@@ -56,7 +56,7 @@ module VagrantPlugins
           end
           b.use Call, IsPaused do |env, b2|
             if env[:result]
-              b3.use Resume
+              b2.use Resume
               next
             end
           end
