@@ -47,9 +47,10 @@ module VagrantPlugins
           # Instantiate the proper version driver for vCloud
           @logger.debug("Finding driver for vCloud version: #{@version}")
           driver_map   = {
-            "5.1" => Version_5_1,
-            "5.5" => Version_5_1, # Binding vCloud 5.5 API on our current 5.1 implementation
-            "5.7" => Version_5_1 # Binding vCHS API on our current 5.1 implementation
+            '5.1' => Version_5_1,
+            '5.5' => Version_5_1, # Binding vCloud 5.5 API on our current 5.1 implementation
+            '5.6' => Version_5_1, # Binding vCHS API on our current 5.1 implementation
+            '5.7' => Version_5_1  # Binding vCHS API on our current 5.1 implementation
           }
 
           if @version.start_with?('0.9') ||
@@ -138,11 +139,20 @@ module VagrantPlugins
             end
 
             version_info = Nokogiri.parse(response.body)
-            # FIXME: Find a smarter way to check for vCloud API version
-            # Changed from .first to .last because that's the way it's defined
-            # in the request answer.
+
             api_version = version_info.css('VersionInfo Version')
-            api_version.last.text
+
+            api_version_supported = 0.0
+
+            # Go through each available Version and return the latest supported
+            # version
+            api_version.each do |api_available_version|
+              if api_version_supported.to_f < api_available_version.text.to_f
+                api_version_supported = api_available_version.text
+              end
+            end
+
+            api_version_supported
 
           rescue SocketError
             raise Errors::HostNotFound, :message => host_url

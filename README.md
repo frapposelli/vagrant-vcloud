@@ -1,12 +1,23 @@
 [Vagrant](http://www.vagrantup.com) provider for VMware vCloud Director®
 =============
 
-[Version 0.2.2](https://github.com/frapposelli/vagrant-vcloud/releases/tag/v0.2.2) has been released!
+[Version 0.3.0](https://github.com/frapposelli/vagrant-vcloud/releases/tag/v0.3.0) has been released!
 -------------
 
 Please note that this software is still Alpha/Beta quality and is not recommended for production usage.
 
 Right now a [Precise32](http://vagrant.tsugliani.fr/precise32.box) is available for use, or you can roll your own as you please, make sure to install VMware tools in it.
+
+Features of Version 0.3.0 are:
+
+A substantial release, major kudos to [Stefan Scherer](https://github.com/StefanScherer) who submitted some substantious PRs!
+
+- Added support for port mapping at the Organization Edge Gateway.
+- Added a new configuration options ```vapp_prefix``` to change vApp prefix (defaults to Vagrant).
+- Improved vcloud-status command.
+- Fixed cygdrive path for rsync on Windows.
+- Fixed Issue #33 - Error removing/creating NAT rules on second vagrant up.
+- Fixed Issue #43 - Destroy fails if VMs are halted.
 
 Features of Version 0.2.2 are:
 
@@ -31,7 +42,7 @@ Features of Version 0.2.0 are:
 
 Features of Version 0.1.2 are:
 
-- Fix ssh_key array for the sync_folder [ISSUE #30 thanks @JMG-OICR]
+- Fix ssh_key array for the sync_folder [ISSUE #30 thanks [@JMG-OICR](https://github.com/JMG-OICR)]
 
 Features of Version 0.1.1 are:
 
