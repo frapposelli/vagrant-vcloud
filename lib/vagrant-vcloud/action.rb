@@ -145,7 +145,6 @@ module VagrantPlugins
       # key.
       def self.action_read_ssh_info
         Vagrant::Action::Builder.new.tap do |b|
-          b.use ConfigValidate
           b.use ConnectVCloud
           b.use ReadSSHInfo
         end
