@@ -163,15 +163,22 @@ module VagrantPlugins
 
       def self.action_ssh
         Vagrant::Action::Builder.new.tap do |b|
-          b.use ConfigValidate
+          # b.use ConfigValidate
           b.use Call, IsCreated do |env, b2|
             unless env[:result]
               b2.use MessageNotCreated
               next
             end
-            # This calls our helper that announces the IP used to connect
-            # to the VM, either directly to the vApp vShield or to the Org Edge
-            b2.use AnnounceSSHExec
+
+            b2.use Call, IsRunning do |env2, b3|
+              unless env2[:result]
+                b3.use MessageNotRunning
+                next
+              end
+              # This calls our helper that announces the IP used to connect
+              # to the VM, either directly to the vApp vShield or to the Org Edge
+              b3.use AnnounceSSHExec
+            end
           end
         end
       end
