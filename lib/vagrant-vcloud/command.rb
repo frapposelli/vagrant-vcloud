@@ -174,7 +174,8 @@ module VagrantPlugins
         edge_gw_id = cnx.find_edge_gateway_id(cfg.vdc_edge_gateway, cfg.vdc_id)
         task_id = cnx.redeploy_edge_gateway(edge_gw_id)
 
-        puts 'Redeploying vShield Edge Gateway ... (This can take a few minutes)'
+        puts "Redeploying #{cfg.vdc_edge_gateway} vShield Edge Gateway... " +
+             '(This task can take a few minutes)'
         cnx.wait_task_completion(task_id)
         puts 'Done'
       end
