@@ -249,6 +249,8 @@ module VagrantPlugins
                action_root.join('is_last_vm')
       autoload :MessageAlreadyRunning,
                action_root.join('message_already_running')
+      autoload :MessageNotRunning,
+               action_root.join('message_not_running')
       autoload :MessageCannotSuspend,
                action_root.join('message_cannot_suspend')
       autoload :MessageNotCreated,
