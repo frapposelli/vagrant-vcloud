@@ -165,6 +165,20 @@ module VagrantPlugins
         puts network_table
       end
 
+      def command_vcloud_redeploy_edge_gw(cfg)
+        cnx = cfg.vcloud_cnx.driver
+
+        organization = cnx.get_organization_by_name(cfg.org_name)
+        cfg.vdc_id = cnx.get_vdc_id_by_name(organization, cfg.vdc_name)
+
+        edge_gw_id = cnx.find_edge_gateway_id(cfg.vdc_edge_gateway, cfg.vdc_id)
+        task_id = cnx.redeploy_edge_gateway(edge_gw_id)
+
+        puts 'Redeploying vShield Edge Gateway ... (This can take a few minutes)'
+        cnx.wait_task_completion(task_id)
+        puts 'Done'
+      end
+
       def execute
         options = {}
         opts = OptionParser.new do |o|
@@ -186,6 +200,15 @@ module VagrantPlugins
           ) do |f|
             options[:status] = true
           end
+
+          o.on(
+            '-r',
+            '--redeploy-edge-gw',
+            'Redeploy the vCloud Director Edge Gateway'
+          ) do |f|
+            options[:redeploy_edge_gw] = true
+          end
+
         end
 
         @argv = parse_options(opts)
@@ -232,6 +255,8 @@ module VagrantPlugins
             command_vcloud_status(cfg, vapp_id)
           when :network
             command_vcloud_network(cfg, vapp_id)
+          when :redeploy_edge_gw
+            command_vcloud_redeploy_edge_gw(cfg)
           end
         end
 
