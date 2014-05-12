@@ -1108,6 +1108,22 @@ module VagrantPlugins
         end
 
         ##
+        # Redeploy the vShield Edge Gateway VM, due to some knowns issues
+        # where the current rules are not "applied" and the EdgeGW is in an
+        # unmanageable state.
+        #
+        def redeploy_edge_gateway(edge_gateway_id)
+          params = {
+            'method'  => :post,
+            'command' => "/admin/edgeGateway/#{edge_gateway_id}/action/redeploy"
+          }
+
+          _response, headers = send_request(params)
+          task_id = headers['Location'].gsub("#{@api_url}/task/", '')
+          task_id
+        end
+
+        ##
         # Find an edge gateway network from the edge name and vdc_id, and ip
         #
         # - edge_gateway_name: Name of the vSE
@@ -1364,7 +1380,7 @@ module VagrantPlugins
           nat_rules = set_edge_rules.at_css('NatService')
 
           # Add all DNAT port rules edge -> vApp for the given list
-          ports.each do |port| 
+          ports.each do |port|
             nat_rule = Nokogiri::XML::Builder.new do |xml|
                 xml.NatRule {
                   xml.RuleType 'DNAT'
@@ -1394,7 +1410,7 @@ module VagrantPlugins
                     xml.Protocol 'any'
                   }
                 }
-            end             
+            end
             nat_rules << snat_rule.doc.root.to_xml
           end
 
@@ -1414,7 +1430,7 @@ module VagrantPlugins
                 xml.SourceIp 'Any'
                 xml.EnableLogging 'false'
               }
-          end           
+          end
           fw_rules = set_edge_rules.at_css('FirewallService')
             fw_rules << firewall_rule_1.doc.root.to_xml
           end
@@ -1438,7 +1454,7 @@ module VagrantPlugins
           task_id
         end
 
-        
+
         ##
         # get vApp edge public IP from the vApp ID
         # Only works when:
