@@ -1,3 +1,6 @@
+# vCloud rest-connection for a complete vagrant run
+$global_vcloud_cnx = nil
+
 module VagrantPlugins
   module VCloud
     module Action
@@ -8,7 +11,12 @@ module VagrantPlugins
         end
 
         def call(env)
+
           config = env[:machine].provider_config
+
+          if !config.vcloud_cnx && $global_vcloud_cnx
+            config.vcloud_cnx = $global_vcloud_cnx
+          end
 
           if !config.vcloud_cnx or !config.vcloud_cnx.driver.auth_key
             @logger.info('Connecting to vCloud Director...')
@@ -36,9 +44,12 @@ module VagrantPlugins
               @logger.debug(
                 "x-vcloud-authorization=#{config.vcloud_cnx.driver.auth_key}"
               )
+              # persist connection for this vagrant run
+              $global_vcloud_cnx = config.vcloud_cnx
             else
               @logger.info("Login failed in to #{config.hostname}.")
               env[:ui].error("Login failed in to #{config.hostname}.")
+              $global_vcloud_cnx = nil
               raise
             end
           else
