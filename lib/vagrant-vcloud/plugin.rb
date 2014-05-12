@@ -32,7 +32,7 @@ module VagrantPlugins
 
       # Added a vagrant vcloud-status command to enhance troubleshooting and
       # visibility.
-      command('vcloud-status') do
+      command('vcloud') do
         require_relative 'command'
         Command
       end

@@ -105,12 +105,19 @@ module VagrantPlugins
               b2.use Call, IsRunning do |env2, b3|
               # If the VM is running, must power off
                 b3.use action_halt if env2[:result]
-                # Check if the network is bridged
-                b3.use Call, IsBridged do |env3, b4|
-                  # if it's not, delete port forwardings.
-                  b4.use UnmapPortForwardings unless env3[:bridged_network]
+              end
+              b2.use Call, IsLastVM do |env2, b3|
+                if env2[:result]
+                  # Check if the network is bridged
+                  b3.use Call, IsBridged do |env3, b4|
+                    # if it's not, delete port forwardings.
+                    b4.use UnmapPortForwardings unless env3[:bridged_network]
+                  end
+                  b3.use PowerOffVApp
+                  b3.use DestroyVApp
+                else
+                  b3.use DestroyVM
                 end
-                b3.use Destroy
               end
             else
               b2.use MessageWillNotDestroy
@@ -138,7 +145,6 @@ module VagrantPlugins
       # key.
       def self.action_read_ssh_info
         Vagrant::Action::Builder.new.tap do |b|
-          b.use ConfigValidate
           b.use ConnectVCloud
           b.use ReadSSHInfo
         end
@@ -157,15 +163,22 @@ module VagrantPlugins
 
       def self.action_ssh
         Vagrant::Action::Builder.new.tap do |b|
-          b.use ConfigValidate
+          # b.use ConfigValidate
           b.use Call, IsCreated do |env, b2|
             unless env[:result]
               b2.use MessageNotCreated
               next
             end
-            # This calls our helper that announces the IP used to connect
-            # to the VM, either directly to the vApp vShield or to the Org Edge
-            b2.use AnnounceSSHExec
+
+            b2.use Call, IsRunning do |env2, b3|
+              unless env2[:result]
+                b3.use MessageNotRunning
+                next
+              end
+              # This calls our helper that announces the IP used to connect
+              # to the VM, either directly to the vApp vShield or to the Org Edge
+              b3.use AnnounceSSHExec
+            end
           end
         end
       end
@@ -212,8 +225,10 @@ module VagrantPlugins
                action_root.join('build_vapp')
       autoload :ConnectVCloud,
                action_root.join('connect_vcloud')
-      autoload :Destroy,
-               action_root.join('destroy')
+      autoload :DestroyVM,
+               action_root.join('destroy_vm')
+      autoload :DestroyVApp,
+               action_root.join('destroy_vapp')
       autoload :DisconnectVCloud,
                action_root.join('disconnect_vcloud')
       autoload :ForwardPorts,
@@ -230,8 +245,12 @@ module VagrantPlugins
                action_root.join('is_paused')
       autoload :IsRunning,
                action_root.join('is_running')
+      autoload :IsLastVM,
+               action_root.join('is_last_vm')
       autoload :MessageAlreadyRunning,
                action_root.join('message_already_running')
+      autoload :MessageNotRunning,
+               action_root.join('message_not_running')
       autoload :MessageCannotSuspend,
                action_root.join('message_cannot_suspend')
       autoload :MessageNotCreated,
@@ -240,6 +259,8 @@ module VagrantPlugins
                action_root.join('message_will_not_destroy')
       autoload :PowerOff,
                action_root.join('power_off')
+      autoload :PowerOffVApp,
+               action_root.join('power_off_vapp')
       autoload :PowerOn,
                action_root.join('power_on')
       autoload :ReadSSHInfo,
