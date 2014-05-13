@@ -38,6 +38,9 @@ module VagrantPlugins
 
         def initialize
           @logger = Log4r::Logger.new('vagrant::provider::vcloud::base')
+
+          @cached_responses = {}
+          @cached_headers = {}
         end
 
         ##
@@ -282,6 +285,19 @@ module VagrantPlugins
           # Sends a synchronous request to the vCloud API and returns the
           # response as parsed XML + headers using HTTPClient.
           def send_request(params, payload = nil, content_type = nil)
+            if params['cachable']
+              if @cached_response_bodies[params['command']]
+                @logger.info('reusing cached_response_headers and bodies')
+                return [Nokogiri.parse(@cached_response_bodies[params['command']]), @cached_response_headers[params['command']]]
+              end
+            end
+            if params['method'] != :get
+              # not another get request, discard all caches
+              @logger.info('discard cached_response_headers and bodies')
+              @cached_response_headers = {}
+              @cached_response_bodies = {}
+            end
+
             # Create a new HTTP client
             clnt = HTTPClient.new
 
@@ -309,6 +325,7 @@ module VagrantPlugins
             # Massive debug when LOG=DEBUG
             # Using awesome_print to get nice XML output for better readability
             if @logger.level == 1
+              @logger.info "SEND #{params['method'].upcase} #{url}"
               ap "SEND #{params['method'].upcase} #{url}"
               if payload
                 payload_xml = Nokogiri.XML(payload)
@@ -340,6 +357,13 @@ module VagrantPlugins
                 if !url.index('/task/')
                   ap nicexml
                 end
+              end
+
+              # cache some repeating get requests
+              if params['cachable']
+                @logger.info('put response in cached_response_headers and bodies')
+                @cached_response_bodies[params['command']] = response.body
+                @cached_response_headers[params['command']] = response.headers
               end
 
               [Nokogiri.parse(response.body), response.headers]
