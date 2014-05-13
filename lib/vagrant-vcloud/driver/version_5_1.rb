@@ -79,7 +79,7 @@ module VagrantPlugins
           params = {
             'method'  => :get,
             'command' => '/org',
-            'cachable' => true
+            'cacheable' => true
           }
 
           response, _headers = send_request(params)
@@ -135,7 +135,7 @@ module VagrantPlugins
           params = {
             'method'  => :get,
             'command' => "/org/#{org_id}",
-            'cachable' => true
+            'cacheable' => true
           }
 
           response, _headers = send_request(params)
@@ -190,7 +190,7 @@ module VagrantPlugins
           params = {
             'method'  => :get,
             'command' => "/catalog/#{catalog_id}",
-            'cachable' => true
+            'cacheable' => true
           }
 
           response, _headers = send_request(params)
@@ -249,7 +249,7 @@ module VagrantPlugins
           params = {
             'method'  => :get,
             'command' => "/vdc/#{vdc_id}",
-            'cachable' => true
+            'cacheable' => true
           }
 
           response, _headers = send_request(params)
@@ -318,7 +318,7 @@ module VagrantPlugins
           params = {
             'method'  => :get,
             'command' => "/catalogItem/#{catalog_item_id}",
-            'cachable' => true
+            'cacheable' => true
           }
 
           response, _headers = send_request(params)
@@ -357,7 +357,7 @@ module VagrantPlugins
               params = {
                 'method'  => :get,
                 'command' => "/vAppTemplate/vappTemplate-#{catalog_item_id}",
-                'cachable' => true
+                'cacheable' => true
               }
               response, _headers = send_request(params)
 
@@ -392,7 +392,7 @@ module VagrantPlugins
           params = {
             'method'  => :get,
             'command' => "/vApp/vapp-#{vapp_id}",
-            'cachable' => true
+            'cacheable' => true
           }
 
           response, _headers = send_request(params)
@@ -889,7 +889,7 @@ module VagrantPlugins
           params = {
             'method'  => :get,
             'command' => "/vAppTemplate/vappTemplate-#{vapp_id}",
-            'cachable' => true
+            'cacheable' => true
           }
 
           response, _headers = send_request(params)
@@ -1048,7 +1048,7 @@ module VagrantPlugins
           params = {
             'method'  => :get,
             'command' => "/vApp/vapp-#{vapp_id}/networkConfigSection",
-            'cachable' => true
+            'cacheable' => true
           }
 
           response, _headers = send_request(params)
@@ -1101,7 +1101,7 @@ module VagrantPlugins
                          'format=records&' \
                          "filter=vdc==#{@api_url}/vdc/#{vdc_id}&" +
                          "filter=name==#{edge_gateway_name}",
-            'cachable' => true
+            'cacheable' => true
           }
 
           response, _headers = send_request(params)
@@ -1148,7 +1148,7 @@ module VagrantPlugins
                          'format=records&' \
                          "filter=vdc==#{@api_url}/vdc/#{vdc_id}&" +
                          "filter=name==#{edge_gateway_name}",
-            'cachable' => true
+            'cacheable' => true
           }
 
           response, _headers = send_request(params)
@@ -1164,7 +1164,7 @@ module VagrantPlugins
           params = {
             'method'  => :get,
             'command' => "/admin/edgeGateway/#{edge_gateway_id}",
-            'cachable' => true
+            'cacheable' => true
           }
 
           response, _headers = send_request(params)
@@ -1207,7 +1207,7 @@ module VagrantPlugins
           params = {
             'method'  => :get,
             'command' => "/admin/edgeGateway/#{edge_gateway_id}",
-            'cachable' => true
+            'cacheable' => true
           }
 
           response, _headers = send_request(params)
@@ -1277,7 +1277,7 @@ module VagrantPlugins
           params = {
            'method'  => :get,
            'command' => "/admin/edgeGateway/#{edge_gateway_id}",
-            'cachable' => true
+            'cacheable' => true
           }
 
           response, _headers = send_request(params)
@@ -1351,7 +1351,7 @@ module VagrantPlugins
           params = {
             'method'   => :get,
             'command'  => "/admin/edgeGateway/#{edge_gateway_id}",
-            'cachable' => true
+            'cacheable' => true
            }
 
           response, _headers = send_request(params)
@@ -1485,7 +1485,7 @@ module VagrantPlugins
           params = {
             'method' => :get,
             'command' => "/vApp/vapp-#{vapp_id}/networkConfigSection",
-            'cachable' => true
+            'cacheable' => true
           }
 
           response, _headers = send_request(params)
@@ -1590,7 +1590,7 @@ module VagrantPlugins
             params = {
               'method'  => :get,
               'command' => "/vAppTemplate/vappTemplate-#{vapp_template}",
-              'cachable' => true
+              'cacheable' => true
             }
 
             response, _headers = send_request(params)
@@ -1628,7 +1628,7 @@ module VagrantPlugins
             params = {
               'method'  => :get,
               'command' => "/vAppTemplate/vappTemplate-#{vapp_template}",
-              'cachable' => true
+              'cacheable' => true
             }
             response, _headers = send_request(params)
             response.css(
@@ -1684,7 +1684,7 @@ module VagrantPlugins
             params = {
               'method'  => :get,
               'command' => "/vAppTemplate/vappTemplate-#{vapp_template}",
-              'cachable' => true
+              'cacheable' => true
             }
             response, _headers = send_request(params)
 
@@ -1709,7 +1709,7 @@ module VagrantPlugins
           params = {
             'method'  => :get,
             'command' => "/task/#{task_id}",
-            'cachable' => false
+            'cacheable' => false
           }
 
           response, _headers = send_request(params)
@@ -1864,7 +1864,7 @@ module VagrantPlugins
           params = {
             'method'  => :get,
             'command' => "/vApp/vm-#{vm_id}",
-            'cachable' => true
+            'cacheable' => true
           }
 
           response, _headers = send_request(params)

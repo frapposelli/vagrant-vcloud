@@ -285,13 +285,13 @@ module VagrantPlugins
           # Sends a synchronous request to the vCloud API and returns the
           # response as parsed XML + headers using HTTPClient.
           def send_request(params, payload = nil, content_type = nil)
-            if params['cachable']
+            if params['cacheable']
               if @cached_response_bodies[params['command']]
                 @logger.info('reusing cached_response_headers and bodies')
                 return [Nokogiri.parse(@cached_response_bodies[params['command']]), @cached_response_headers[params['command']]]
               end
             end
-            if params['method'] != :get || !params['cachable']
+            if params['method'] != :get || !params['cacheable']
               # not another get request, discard all caches
               # or the task get request awaiting some new responses to any get request
               @logger.info('discard cached_response_headers and bodies')
@@ -361,7 +361,7 @@ module VagrantPlugins
               end
 
               # cache some repeating get requests
-              if params['cachable']
+              if params['cacheable']
                 @logger.info('put response in cached_response_headers and bodies')
                 @cached_response_bodies[params['command']] = response.body
                 @cached_response_headers[params['command']] = response.headers
