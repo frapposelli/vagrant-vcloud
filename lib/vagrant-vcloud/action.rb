@@ -36,7 +36,6 @@ module VagrantPlugins
             end
             b2.use action_halt
             b2.use action_start
-#            b2.use DisconnectVCloud
           end
         end
       end
@@ -213,7 +212,6 @@ module VagrantPlugins
               b2.use action_boot
             end
           end
-#          b.use DisconnectVCloud
         end
       end
 
