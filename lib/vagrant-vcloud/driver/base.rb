@@ -39,8 +39,8 @@ module VagrantPlugins
         def initialize
           @logger = Log4r::Logger.new('vagrant::provider::vcloud::base')
 
-          @cached_responses = {}
-          @cached_headers = {}
+          @cached_response_bodies = {}
+          @cached_response_headers = {}
         end
 
         ##
@@ -291,8 +291,9 @@ module VagrantPlugins
                 return [Nokogiri.parse(@cached_response_bodies[params['command']]), @cached_response_headers[params['command']]]
               end
             end
-            if params['method'] != :get
+            if params['method'] != :get || !params['cachable']
               # not another get request, discard all caches
+              # or the task get request awaiting some new responses to any get request
               @logger.info('discard cached_response_headers and bodies')
               @cached_response_headers = {}
               @cached_response_bodies = {}
