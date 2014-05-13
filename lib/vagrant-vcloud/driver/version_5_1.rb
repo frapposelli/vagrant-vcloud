@@ -78,7 +78,8 @@ module VagrantPlugins
         def get_organizations
           params = {
             'method'  => :get,
-            'command' => '/org'
+            'command' => '/org',
+            'cachable' => true
           }
 
           response, _headers = send_request(params)
@@ -133,7 +134,8 @@ module VagrantPlugins
         def get_organization(org_id)
           params = {
             'method'  => :get,
-            'command' => "/org/#{org_id}"
+            'command' => "/org/#{org_id}",
+            'cachable' => true
           }
 
           response, _headers = send_request(params)
@@ -187,7 +189,8 @@ module VagrantPlugins
         def get_catalog(catalog_id)
           params = {
             'method'  => :get,
-            'command' => "/catalog/#{catalog_id}"
+            'command' => "/catalog/#{catalog_id}",
+            'cachable' => true
           }
 
           response, _headers = send_request(params)
@@ -245,7 +248,8 @@ module VagrantPlugins
         def get_vdc(vdc_id)
           params = {
             'method'  => :get,
-            'command' => "/vdc/#{vdc_id}"
+            'command' => "/vdc/#{vdc_id}",
+            'cachable' => true
           }
 
           response, _headers = send_request(params)
@@ -313,7 +317,8 @@ module VagrantPlugins
         def get_catalog_item(catalog_item_id)
           params = {
             'method'  => :get,
-            'command' => "/catalogItem/#{catalog_item_id}"
+            'command' => "/catalogItem/#{catalog_item_id}",
+            'cachable' => true
           }
 
           response, _headers = send_request(params)
@@ -351,7 +356,8 @@ module VagrantPlugins
               # Fetch the catalogItemId information
               params = {
                 'method'  => :get,
-                'command' => "/vAppTemplate/vappTemplate-#{catalog_item_id}"
+                'command' => "/vAppTemplate/vappTemplate-#{catalog_item_id}",
+                'cachable' => true
               }
               response, _headers = send_request(params)
 
@@ -385,7 +391,8 @@ module VagrantPlugins
         def get_vapp(vapp_id)
           params = {
             'method'  => :get,
-            'command' => "/vApp/vapp-#{vapp_id}"
+            'command' => "/vApp/vapp-#{vapp_id}",
+            'cachable' => true
           }
 
           response, _headers = send_request(params)
@@ -881,7 +888,8 @@ module VagrantPlugins
         def get_vapp_template(vapp_id)
           params = {
             'method'  => :get,
-            'command' => "/vAppTemplate/vappTemplate-#{vapp_id}"
+            'command' => "/vAppTemplate/vappTemplate-#{vapp_id}",
+            'cachable' => true
           }
 
           response, _headers = send_request(params)
@@ -1039,7 +1047,8 @@ module VagrantPlugins
         def get_vapp_port_forwarding_rules(vapp_id)
           params = {
             'method'  => :get,
-            'command' => "/vApp/vapp-#{vapp_id}/networkConfigSection"
+            'command' => "/vApp/vapp-#{vapp_id}/networkConfigSection",
+            'cachable' => true
           }
 
           response, _headers = send_request(params)
@@ -1091,7 +1100,8 @@ module VagrantPlugins
             'command' => '/query?type=edgeGateway&' \
                          'format=records&' \
                          "filter=vdc==#{@api_url}/vdc/#{vdc_id}&" +
-                         "filter=name==#{edge_gateway_name}"
+                         "filter=name==#{edge_gateway_name}",
+            'cachable' => true
           }
 
           response, _headers = send_request(params)
@@ -1137,7 +1147,8 @@ module VagrantPlugins
             'command' => '/query?type=edgeGateway&' \
                          'format=records&' \
                          "filter=vdc==#{@api_url}/vdc/#{vdc_id}&" +
-                         "filter=name==#{edge_gateway_name}"
+                         "filter=name==#{edge_gateway_name}",
+            'cachable' => true
           }
 
           response, _headers = send_request(params)
@@ -1152,7 +1163,8 @@ module VagrantPlugins
 
           params = {
             'method'  => :get,
-            'command' => "/admin/edgeGateway/#{edge_gateway_id}"
+            'command' => "/admin/edgeGateway/#{edge_gateway_id}",
+            'cachable' => true
           }
 
           response, _headers = send_request(params)
@@ -1194,7 +1206,8 @@ module VagrantPlugins
 
           params = {
             'method'  => :get,
-            'command' => "/admin/edgeGateway/#{edge_gateway_id}"
+            'command' => "/admin/edgeGateway/#{edge_gateway_id}",
+            'cachable' => true
           }
 
           response, _headers = send_request(params)
@@ -1263,7 +1276,8 @@ module VagrantPlugins
 
           params = {
            'method'  => :get,
-           'command' => "/admin/edgeGateway/#{edge_gateway_id}"
+           'command' => "/admin/edgeGateway/#{edge_gateway_id}",
+            'cachable' => true
           }
 
           response, _headers = send_request(params)
@@ -1335,8 +1349,9 @@ module VagrantPlugins
           # We need to check the previous variables, especially (edge_*)
           # which can fail in some *weird* situations.
           params = {
-             'method'   => :get,
-             'command'  => "/admin/edgeGateway/#{edge_gateway_id}"
+            'method'   => :get,
+            'command'  => "/admin/edgeGateway/#{edge_gateway_id}",
+            'cachable' => true
            }
 
           response, _headers = send_request(params)
@@ -1469,7 +1484,8 @@ module VagrantPlugins
           # Check the network configuration section
           params = {
             'method' => :get,
-            'command' => "/vApp/vapp-#{vapp_id}/networkConfigSection"
+            'command' => "/vApp/vapp-#{vapp_id}/networkConfigSection",
+            'cachable' => true
           }
 
           response, _headers = send_request(params)
@@ -1573,7 +1589,8 @@ module VagrantPlugins
           begin
             params = {
               'method'  => :get,
-              'command' => "/vAppTemplate/vappTemplate-#{vapp_template}"
+              'command' => "/vAppTemplate/vappTemplate-#{vapp_template}",
+              'cachable' => true
             }
 
             response, _headers = send_request(params)
@@ -1610,7 +1627,8 @@ module VagrantPlugins
             # Start uploading OVF VMDK files
             params = {
               'method'  => :get,
-              'command' => "/vAppTemplate/vappTemplate-#{vapp_template}"
+              'command' => "/vAppTemplate/vappTemplate-#{vapp_template}",
+              'cachable' => true
             }
             response, _headers = send_request(params)
             response.css(
@@ -1665,7 +1683,8 @@ module VagrantPlugins
             # Get vAppTemplate Task
             params = {
               'method'  => :get,
-              'command' => "/vAppTemplate/vappTemplate-#{vapp_template}"
+              'command' => "/vAppTemplate/vappTemplate-#{vapp_template}",
+              'cachable' => true
             }
             response, _headers = send_request(params)
 
@@ -1689,7 +1708,8 @@ module VagrantPlugins
         def get_task(task_id)
           params = {
             'method'  => :get,
-            'command' => "/task/#{task_id}"
+            'command' => "/task/#{task_id}",
+            'cachable' => false
           }
 
           response, _headers = send_request(params)
@@ -1843,7 +1863,8 @@ module VagrantPlugins
         def get_vm(vm_id)
           params = {
             'method'  => :get,
-            'command' => "/vApp/vm-#{vm_id}"
+            'command' => "/vApp/vm-#{vm_id}",
+            'cachable' => true
           }
 
           response, _headers = send_request(params)
