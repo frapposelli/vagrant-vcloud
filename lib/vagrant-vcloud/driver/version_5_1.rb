@@ -1277,7 +1277,7 @@ module VagrantPlugins
           params = {
            'method'  => :get,
            'command' => "/admin/edgeGateway/#{edge_gateway_id}",
-            'cacheable' => true
+            'cacheable' => false # always get up-to-date values from vCloud
           }
 
           response, _headers = send_request(params)
@@ -1351,7 +1351,7 @@ module VagrantPlugins
           params = {
             'method'   => :get,
             'command'  => "/admin/edgeGateway/#{edge_gateway_id}",
-            'cacheable' => true
+            'cacheable' => false # always get up-to-date values from vCloud
            }
 
           response, _headers = send_request(params)
@@ -1590,7 +1590,7 @@ module VagrantPlugins
             params = {
               'method'  => :get,
               'command' => "/vAppTemplate/vappTemplate-#{vapp_template}",
-              'cacheable' => true
+              'cacheable' => false # always get up-to-date values from vCloud
             }
 
             response, _headers = send_request(params)
@@ -1628,7 +1628,7 @@ module VagrantPlugins
             params = {
               'method'  => :get,
               'command' => "/vAppTemplate/vappTemplate-#{vapp_template}",
-              'cacheable' => true
+              'cacheable' => false # always get up-to-date values from vCloud
             }
             response, _headers = send_request(params)
             response.css(
@@ -1684,7 +1684,7 @@ module VagrantPlugins
             params = {
               'method'  => :get,
               'command' => "/vAppTemplate/vappTemplate-#{vapp_template}",
-              'cacheable' => true
+              'cacheable' => false # always get up-to-date values from vCloud
             }
             response, _headers = send_request(params)
 
@@ -1709,7 +1709,7 @@ module VagrantPlugins
           params = {
             'method'  => :get,
             'command' => "/task/#{task_id}",
-            'cacheable' => false
+            'cacheable' => false # always get up-to-date values from vCloud
           }
 
           response, _headers = send_request(params)
