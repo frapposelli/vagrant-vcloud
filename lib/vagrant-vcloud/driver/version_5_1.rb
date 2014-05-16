@@ -1733,9 +1733,9 @@ module VagrantPlugins
           task, errormsg = nil
           loop do
             task = get_task(task_id)
-            @logger.debug(
-              "Evaluating taskid: #{task_id}, current status #{task[:status]}"
-            )
+            # @logger.debug(
+            #  "Evaluating taskid: #{task_id}, current status #{task[:status]}"
+            # )
             break if !['queued','preRunning','running'].include?(task[:status])
             sleep 5
           end
