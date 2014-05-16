@@ -13,6 +13,28 @@ module VagrantPlugins
           @app.call env
         end
 
+        # Small method to check the tcp connection to an ip:port works.
+        # Return false if anything fails, and true if it succeeded.
+        def check_for_ssh(ip, port)
+          begin
+            Timeout::timeout(1) do
+              begin
+                s = TCPSocket.new(ip, port)
+                s.close
+                @logger.debug("SSH Connection successful !")
+                return true
+              rescue Errno::ECONNREFUSED, Errno::EHOSTUNREACH
+                @logger.debug("SSH Connection Refused/Host Unreachable...")
+                return false
+              end
+            end
+          rescue Timeout::Error
+            @logger.debug("SSH Connection Timeout...")
+          end
+
+          return false
+        end
+
         def read_ssh_info(env)
           return nil if env[:machine].id.nil?
 
@@ -73,9 +95,32 @@ module VagrantPlugins
             "SSH INFO: IP #{@external_ip} and Port #{@external_port}"
           )
 
+          # tsugliani: Temporary Fix for Issue #56
+          # SSH unavailable makes the deployment fails.
+          # Wait infinitely right now for SSH...
+          # sleep_counter incremented by 1s each loop.
+          #
+          # This should be fixed with implementing Vagrant::Util::Retryable
+          # and something like:
+          #
+          # retryable(:on => Vagrant::Errors::SSHSomething, :tries => 10, :sleep => 5) do
+          #   check_for_ssh(ip, port, :error_class => Vagrant::Errors::SSHSomething)
+          # end
+          #
+          sleep_counter = 5
+
+          while check_for_ssh(@external_ip, @external_port) == false
+            env[:ui].info(
+              "Waiting for SSH Access on #{@external_ip}:#{@external_port} ... "
+            )
+            sleep sleep_counter
+            sleep_counter += 1
+          end
+
+          # If we are here, then SSH is ready, continue
           {
-              :host => @external_ip,
-              :port => @external_port
+            :host => @external_ip,
+            :port => @external_port
           }
         end
       end
