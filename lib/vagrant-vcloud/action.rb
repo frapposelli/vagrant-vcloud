@@ -50,10 +50,16 @@ module VagrantPlugins
             # If the VM is running, then our work here is done, exit
             if env[:result]
               b2.use MessageAlreadyRunning
-            else
-              b2.use PowerOn
+              next
             end
           end
+          b.use Call, IsPaused do |env, b2|
+            if env[:result]
+              b3.use Resume
+              next
+            end
+          end
+          b.use PowerOn
         end
       end
 

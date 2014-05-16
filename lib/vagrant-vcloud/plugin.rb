@@ -30,12 +30,6 @@ module VagrantPlugins
         Provider
       end
 
-      # Add vagrant share support
-      provider_capability('vcloud', 'public_address') do
-        require_relative 'cap/public_address'
-        Cap::PublicAddress
-      end
-
       # Added a vagrant vcloud-status command to enhance troubleshooting and
       # visibility.
       command('vcloud') do
