@@ -1855,8 +1855,8 @@ module VagrantPlugins
             type = item.css('rasd|ResourceType').first
             if type.content == '3'
               # cpus
-              if (cfg.cpus)
-                if (item.at_css('rasd|VirtualQuantity').content != cfg.cpus.to_s)
+              if cfg.cpus
+                if item.at_css('rasd|VirtualQuantity').content != cfg.cpus.to_s
                   item.at_css('rasd|VirtualQuantity').content = cfg.cpus
                   item.at_css('rasd|ElementName').content = "#{cfg.cpus} virtual CPU(s)"
                   changed = true
@@ -1864,8 +1864,8 @@ module VagrantPlugins
               end
             elsif type.content == '4'
               # memory
-              if (cfg.memory)
-                if (item.at_css('rasd|VirtualQuantity').content != cfg.memory.to_s)
+              if cfg.memory
+                if item.at_css('rasd|VirtualQuantity').content != cfg.memory.to_s
                   item.at_css('rasd|VirtualQuantity').content = cfg.memory
                   item.at_css('rasd|ElementName').content = "#{cfg.memory} MB of memory"
                   changed = true
@@ -1874,7 +1874,7 @@ module VagrantPlugins
             end 
           end
 
-          if (changed)
+          if changed
             params = {
               'method'  => :put,
               'command' => "/vApp/vm-#{vm_id}/virtualHardwareSection"
