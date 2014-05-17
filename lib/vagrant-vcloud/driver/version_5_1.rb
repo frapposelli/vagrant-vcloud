@@ -1839,6 +1839,64 @@ module VagrantPlugins
         end
 
         ##
+        # Set memory and number of cpus in virtualHardwareSection of a given vm
+        def set_vm_hardware(vm_id, memory_size, num_vcpus)
+          params = {
+            'method'  => :get,
+            'command' => "/vApp/vm-#{vm_id}/virtualHardwareSection"
+          }
+
+puts 'DEB: GET request'
+          response, _headers = send_request(params)
+
+puts 'DEB: response of GET request'
+puts response
+
+
+
+# css dings
+          response.css('ovf|Item').each do |item|
+            type = item.css('rasd|ResourceType').first
+puts 'DEB: type ' + type
+            if type.to_s == '3'
+              # cpus
+puts 'DEB: set cpus ' + num_vcpus
+puts 'DEB: rasd:VirtualQuantity' + item['rasd:VirtualQuantity']
+puts 'DEB: rasd|VirtualQuantity' + item['rasd|VirtualQuantity']
+
+              item['rasd:VirtualQuantity'] = num_vcpus
+              item['rasd:ElementName'] = "#{num_vcpus} virtual CPU(s)"
+              
+            elsif type == 4
+              # memory
+puts 'DEB: set memory ' + memory_size
+              item['rasd:VirtualQuantity'] = memory_size
+              item['rasd:ElementName'] = "#{num_vcpus} MB of memory"
+            end 
+          end
+exit()
+          params = {
+            'method'  => :put,
+            'command' => "/vApp/vm-#{vm_id}/virtualHardwareSection"
+          }
+
+puts 'DEB: PUT request'
+
+          _response, headers = send_request(
+            params,
+            response.to_xml,
+            'application/vnd.vmware.vcloud.virtualhardwaresection+xml'
+          )
+
+puts 'DEB: response of PUT request'
+puts _response
+
+          task_id = headers['Location'].gsub("#{@api_url}/task/", '')
+          task_id
+        end
+
+
+        ##
         # Fetch details about a given VM
         def get_vm(vm_id)
           params = {
