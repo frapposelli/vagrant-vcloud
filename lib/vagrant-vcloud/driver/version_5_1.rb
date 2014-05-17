@@ -1855,16 +1855,16 @@ puts response
 
           response.css('ovf|Item').each do |item|
             type = item.css('rasd|ResourceType').first
-puts 'DEB: type ' + type.to_s
+puts 'DEB: type ' + type.content
 ap type
-            if type.to_s == '<rasd:ResourceType>3</rasd:ResourceType>'
+            if type.content == '3'
               # cpus
 puts 'DEB: set cpus ' + num_vcpus.to_s
 
               item.at_css('rasd|VirtualQuantity').content = num_vcpus
               item.at_css('rasd|ElementName').content = "#{num_vcpus} virtual CPU(s)"
               
-            elsif type.to_s == '<rasd:ResourceType>4</rasd:ResourceType>'
+            elsif type.content == '4'
               # memory
 puts 'DEB: set memory ' + memory_size.to_s
               item.at_css('rasd|VirtualQuantity').content = memory_size
