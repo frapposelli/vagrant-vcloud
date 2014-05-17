@@ -18,6 +18,7 @@
 require 'ruby-progressbar'
 require 'set'
 require 'netaddr'
+require 'awesome_print'
 
 module VagrantPlugins
   module VCloud
@@ -1852,29 +1853,25 @@ puts 'DEB: GET request'
 puts 'DEB: response of GET request'
 puts response
 
-
-
-# css dings
           response.css('ovf|Item').each do |item|
             type = item.css('rasd|ResourceType').first
-puts 'DEB: type ' + type
-            if type.to_s == '3'
+puts 'DEB: type ' + type.to_s
+ap type
+            if type.to_s == '<rasd:ResourceType>3</rasd:ResourceType>'
               # cpus
-puts 'DEB: set cpus ' + num_vcpus
-puts 'DEB: rasd:VirtualQuantity' + item['rasd:VirtualQuantity']
-puts 'DEB: rasd|VirtualQuantity' + item['rasd|VirtualQuantity']
+puts 'DEB: set cpus ' + num_vcpus.to_s
 
-              item['rasd:VirtualQuantity'] = num_vcpus
-              item['rasd:ElementName'] = "#{num_vcpus} virtual CPU(s)"
+              item.at_css('rasd|VirtualQuantity').content = num_vcpus
+              item.at_css('rasd|ElementName').content = "#{num_vcpus} virtual CPU(s)"
               
-            elsif type == 4
+            elsif type.to_s == '<rasd:ResourceType>4</rasd:ResourceType>'
               # memory
-puts 'DEB: set memory ' + memory_size
-              item['rasd:VirtualQuantity'] = memory_size
-              item['rasd:ElementName'] = "#{num_vcpus} MB of memory"
+puts 'DEB: set memory ' + memory_size.to_s
+              item.at_css('rasd|VirtualQuantity').content = memory_size
+              item.at_css('rasd|ElementName').content = "#{memory_size} MB of memory"
             end 
           end
-exit()
+
           params = {
             'method'  => :put,
             'command' => "/vApp/vm-#{vm_id}/virtualHardwareSection"
