@@ -18,7 +18,6 @@
 require 'ruby-progressbar'
 require 'set'
 require 'netaddr'
-require 'awesome_print'
 
 module VagrantPlugins
   module VCloud
