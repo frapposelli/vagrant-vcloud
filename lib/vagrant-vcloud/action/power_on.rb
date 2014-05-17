@@ -17,7 +17,7 @@ module VagrantPlugins
 
           memory_size = 2048
           num_vcpus = 2
-          set_vm_hardware = cnx.set_vm_hardware(env[:machine].id, memory_size, num_vcpus)
+          set_vm_hardware = cnx.set_vm_hardware(env[:machine].id, cfg)
           if set_vm_hardware
             cnx.wait_task_completion(set_vm_hardware)
           end

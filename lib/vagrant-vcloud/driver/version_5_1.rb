@@ -1841,55 +1841,56 @@ module VagrantPlugins
 
         ##
         # Set memory and number of cpus in virtualHardwareSection of a given vm
-        def set_vm_hardware(vm_id, memory_size, num_vcpus)
+        # returns task_id or nil if there is no task to wait for
+        def set_vm_hardware(vm_id, cfg)
           params = {
             'method'  => :get,
             'command' => "/vApp/vm-#{vm_id}/virtualHardwareSection"
           }
 
-puts 'DEB: GET request'
+          changed = false
           response, _headers = send_request(params)
-
-puts 'DEB: response of GET request'
-puts response
 
           response.css('ovf|Item').each do |item|
             type = item.css('rasd|ResourceType').first
-puts 'DEB: type ' + type.content
-ap type
             if type.content == '3'
               # cpus
-puts 'DEB: set cpus ' + num_vcpus.to_s
-
-              item.at_css('rasd|VirtualQuantity').content = num_vcpus
-              item.at_css('rasd|ElementName').content = "#{num_vcpus} virtual CPU(s)"
-              
+              if (cfg.cpus)
+                if (item.at_css('rasd|VirtualQuantity').content != cfg.cpus.to_s)
+                  item.at_css('rasd|VirtualQuantity').content = cfg.cpus
+                  item.at_css('rasd|ElementName').content = "#{cfg.cpus} virtual CPU(s)"
+                  changed = true
+                end
+              end
             elsif type.content == '4'
               # memory
-puts 'DEB: set memory ' + memory_size.to_s
-              item.at_css('rasd|VirtualQuantity').content = memory_size
-              item.at_css('rasd|ElementName').content = "#{memory_size} MB of memory"
+              if (cfg.memory)
+                if (item.at_css('rasd|VirtualQuantity').content != cfg.memory.to_s)
+                  item.at_css('rasd|VirtualQuantity').content = cfg.memory
+                  item.at_css('rasd|ElementName').content = "#{cfg.memory} MB of memory"
+                  changed = true
+                end
+              end
             end 
           end
 
-          params = {
-            'method'  => :put,
-            'command' => "/vApp/vm-#{vm_id}/virtualHardwareSection"
-          }
+          if (changed)
+            params = {
+              'method'  => :put,
+              'command' => "/vApp/vm-#{vm_id}/virtualHardwareSection"
+            }
 
-puts 'DEB: PUT request'
+            _response, headers = send_request(
+              params,
+              response.to_xml,
+              'application/vnd.vmware.vcloud.virtualhardwaresection+xml'
+            )
 
-          _response, headers = send_request(
-            params,
-            response.to_xml,
-            'application/vnd.vmware.vcloud.virtualhardwaresection+xml'
-          )
-
-puts 'DEB: response of PUT request'
-puts _response
-
-          task_id = headers['Location'].gsub("#{@api_url}/task/", '')
-          task_id
+            task_id = headers['Location'].gsub("#{@api_url}/task/", '')
+            task_id
+          else
+            return nil
+          end
         end
 
 
