@@ -11,11 +11,29 @@ module VagrantPlugins
         #
         # @return [Hash<Integer, Integer>] Host => Guest port mappings.
         def self.forwarded_ports(machine)
-          {}.tap do |result|
-            machine.provider.driver.read_forwarded_ports.each do |_, _, h, g|
-              result[h] = g
+          result = {}
+
+          cfg = machine.provider_config
+          cnx = cfg.vcloud_cnx.driver
+          vapp_id = machine.get_vapp_id
+          vm_name = machine.name
+          vm = cnx.get_vapp(vapp_id)
+          myhash = vm[:vms_hash][vm_name.to_sym]
+
+          if vm.nil?
+            return
+          end
+
+          if cfg.network_bridge.nil?
+            rules = cnx.get_vapp_port_forwarding_rules(vapp_id)
+
+            rules.each do |rule|
+              if rule[:vapp_scoped_local_id] == myhash[:vapp_scoped_local_id]
+                result[rule[:nat_external_port]] = rule[:nat_internal_port]
+              end
             end
           end
+          result
         end
 
       end
