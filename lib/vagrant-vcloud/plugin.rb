@@ -36,6 +36,11 @@ module VagrantPlugins
         Cap::PublicAddress
       end
 
+      provider_capability(:vcloud, :forwarded_ports) do
+        require_relative "cap/forwarded_ports"
+        Cap::ForwardedPorts
+      end
+
       # Added a vagrant vcloud-status command to enhance troubleshooting and
       # visibility.
       command('vcloud') do
