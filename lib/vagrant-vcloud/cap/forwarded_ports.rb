@@ -29,7 +29,7 @@ module VagrantPlugins
 
             rules.each do |rule|
               if rule[:vapp_scoped_local_id] == myhash[:vapp_scoped_local_id]
-                result[rule[:nat_external_port]] = rule[:nat_internal_port]
+                result[rule[:nat_external_port].to_i] = rule[:nat_internal_port].to_i
               end
             end
           end
