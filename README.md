@@ -12,10 +12,10 @@ If you're unsure about what are the correct network settings for your Vagrantfil
 
 Features of Version 0.3.2 are:
 
-- Added support for ```vagrant share``` command [[#31](https://github.com/frapposelli/vagrant-vcloud/issues/31)] Support vagrant share
-- Restructured the ```vagrant vcloud-status``` to ```vagrant vcloud status``` for future-proofing [[#53](https://github.com/frapposelli/vagrant-vcloud/issues/53)]
-- Added ```vagrant vcloud --redeploy-edge-gw``` to redeploy Edge Gateway [[#54](https://github.com/frapposelli/vagrant-vcloud/issues/54)]
-- Several Bug Fixes [[#45](https://github.com/frapposelli/vagrant-vcloud/issues/45)], [[#46](https://github.com/frapposelli/vagrant-vcloud/issues/46)], [[#47](https://github.com/frapposelli/vagrant-vcloud/issues/47)], [[#48](https://github.com/frapposelli/vagrant-vcloud/issues/48)], [[#50](https://github.com/frapposelli/vagrant-vcloud/issues/50)], [[#51](https://github.com/frapposelli/vagrant-vcloud/issues/51)], [[#52](https://github.com/frapposelli/vagrant-vcloud/issues/52)], [[#56](https://github.com/frapposelli/vagrant-vcloud/issues/56)], [[#57](https://github.com/frapposelli/vagrant-vcloud/issues/57)], [[#61](https://github.com/frapposelli/vagrant-vcloud/issues/61)]
+- Added support for ```vagrant share``` command [Issue [#31](https://github.com/frapposelli/vagrant-vcloud/issues/31)]
+- Restructured the ```vagrant vcloud-status``` to ```vagrant vcloud``` namespace for future-proofing [Issue [#53](https://github.com/frapposelli/vagrant-vcloud/issues/53)]
+- Added ```vagrant vcloud --redeploy-edge-gw``` to redeploy Edge Gateway [Issue [#54](https://github.com/frapposelli/vagrant-vcloud/issues/54)]
+- Several Bug Fixes [Issues [#45](https://github.com/frapposelli/vagrant-vcloud/issues/45), [#46](https://github.com/frapposelli/vagrant-vcloud/issues/46), [#47](https://github.com/frapposelli/vagrant-vcloud/issues/47), [#48](https://github.com/frapposelli/vagrant-vcloud/issues/48), [#51](https://github.com/frapposelli/vagrant-vcloud/issues/51), [#52](https://github.com/frapposelli/vagrant-vcloud/issues/52), [#56](https://github.com/frapposelli/vagrant-vcloud/issues/56), [#57](https://github.com/frapposelli/vagrant-vcloud/issues/57), [#61](https://github.com/frapposelli/vagrant-vcloud/issues/61)]
 
 Features of Version 0.3.1 are:
 
