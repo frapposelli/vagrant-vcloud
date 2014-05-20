@@ -10,7 +10,7 @@ module VagrantPlugins
         def call(env)
           config = env[:machine].provider_config
 
-          if !config.vcloud_cnx
+          if !config.vcloud_cnx or !config.vcloud_cnx.driver.auth_key
             @logger.info('Connecting to vCloud Director...')
 
               @logger.debug("config.hostname    : #{config.hostname}")

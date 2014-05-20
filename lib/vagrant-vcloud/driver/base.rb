@@ -309,9 +309,12 @@ module VagrantPlugins
             # Massive debug when LOG=DEBUG
             # Using awesome_print to get nice XML output for better readability
             if @logger.level == 1
-              ap "SEND #{params['method'].upcase} #{url}"
+              ap "[#{Time.now.ctime}] -> SEND #{params['method'].upcase} #{url}"
               if payload
                 payload_xml = Nokogiri.XML(payload)
+                ap 'SEND HEADERS'
+                ap extheader
+                ap 'SEND BODY'
                 ap payload_xml
               end
             end
@@ -335,9 +338,12 @@ module VagrantPlugins
               # Massive debug when LOG=DEBUG
               # Using awesome_print to get nice XML output for readability
               if @logger.level == 1
-                ap "RECV #{response.status}"
+                ap "[#{Time.now.ctime}] <- RECV #{response.status}"
                 # Just avoid the task spam.
                 if !url.index('/task/')
+                  ap 'RECV HEADERS'
+                  ap response.headers
+                  ap 'RECV BODY'
                   ap nicexml
                 end
               end

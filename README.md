@@ -1,12 +1,21 @@
 [Vagrant](http://www.vagrantup.com) provider for VMware vCloud Director®
 =============
 
-[Version 0.3.1](../../releases/tag/v0.3.1) has been released!
+[Version 0.3.2](../../releases/tag/v0.3.2) has been released!
 -------------
 
 Please note that this software is still Alpha/Beta quality and is not recommended for production usage.
 
 Right now a [Precise32](http://vagrant.tsugliani.fr/precise32.box) is available for use, or you can roll your own as you please, make sure to install VMware tools in it.
+
+If you're unsure about what are the correct network settings for your Vagrantfile make sure to check out the [Network Deployment Options](https://github.com/frapposelli/vagrant-vcloud/wiki/Network-Deployment-Options) wiki page.
+
+Features of Version 0.3.2 are:
+
+- Added support for ```vagrant share``` command [[#31](https://github.com/frapposelli/vagrant-vcloud/issues/31)] Support vagrant share
+- Restructured the ```vagrant vcloud-status``` to ```vagrant vcloud status``` for future-proofing [[#53](https://github.com/frapposelli/vagrant-vcloud/issues/53)]
+- Added ```vagrant vcloud --redeploy-edge-gw``` to redeploy Edge Gateway [[#54](https://github.com/frapposelli/vagrant-vcloud/issues/54)]
+- Several Bug Fixes [[#45](https://github.com/frapposelli/vagrant-vcloud/issues/45)], [[#46](https://github.com/frapposelli/vagrant-vcloud/issues/46)], [[#47](https://github.com/frapposelli/vagrant-vcloud/issues/47)], [[#48](https://github.com/frapposelli/vagrant-vcloud/issues/48)], [[#50](https://github.com/frapposelli/vagrant-vcloud/issues/50)], [[#51](https://github.com/frapposelli/vagrant-vcloud/issues/51)], [[#52](https://github.com/frapposelli/vagrant-vcloud/issues/52)], [[#56](https://github.com/frapposelli/vagrant-vcloud/issues/56)], [[#57](https://github.com/frapposelli/vagrant-vcloud/issues/57)], [[#61](https://github.com/frapposelli/vagrant-vcloud/issues/61)]
 
 Features of Version 0.3.1 are:
 

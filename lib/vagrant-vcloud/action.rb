@@ -51,16 +51,10 @@ module VagrantPlugins
             # If the VM is running, then our work here is done, exit
             if env[:result]
               b2.use MessageAlreadyRunning
-              next
+            else
+              b2.use PowerOn
             end
           end
-          b.use Call, IsPaused do |env, b2|
-            if env[:result]
-              b3.use Resume
-              next
-            end
-          end
-          b.use PowerOn
         end
       end
 
@@ -145,7 +139,6 @@ module VagrantPlugins
       # key.
       def self.action_read_ssh_info
         Vagrant::Action::Builder.new.tap do |b|
-          b.use ConfigValidate
           b.use ConnectVCloud
           b.use ReadSSHInfo
         end
@@ -164,15 +157,22 @@ module VagrantPlugins
 
       def self.action_ssh
         Vagrant::Action::Builder.new.tap do |b|
-          b.use ConfigValidate
+          # b.use ConfigValidate
           b.use Call, IsCreated do |env, b2|
             unless env[:result]
               b2.use MessageNotCreated
               next
             end
-            # This calls our helper that announces the IP used to connect
-            # to the VM, either directly to the vApp vShield or to the Org Edge
-            b2.use AnnounceSSHExec
+
+            b2.use Call, IsRunning do |env2, b3|
+              unless env2[:result]
+                b3.use MessageNotRunning
+                next
+              end
+              # This calls our helper that announces the IP used to connect
+              # to the VM, either directly to the vApp vShield or to the Org Edge
+              b3.use AnnounceSSHExec
+            end
           end
         end
       end
@@ -243,6 +243,8 @@ module VagrantPlugins
                action_root.join('is_last_vm')
       autoload :MessageAlreadyRunning,
                action_root.join('message_already_running')
+      autoload :MessageNotRunning,
+               action_root.join('message_not_running')
       autoload :MessageCannotSuspend,
                action_root.join('message_cannot_suspend')
       autoload :MessageNotCreated,
