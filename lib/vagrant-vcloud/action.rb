@@ -140,7 +140,21 @@ module VagrantPlugins
       def self.action_read_ssh_info
         Vagrant::Action::Builder.new.tap do |b|
           b.use ConnectVCloud
-          b.use ReadSSHInfo
+          b.use ReadSSHInfo, 22
+        end
+      end
+
+      def self.action_read_winrm_info
+        Vagrant::Action::Builder.new.tap do |b|
+          b.use ConnectVCloud
+          b.use ReadSSHInfo, 5985
+        end
+      end
+
+      def self.action_read_rdp_info
+        Vagrant::Action::Builder.new.tap do |b|
+          b.use ConnectVCloud
+          b.use ReadSSHInfo, 3389
         end
       end
 
