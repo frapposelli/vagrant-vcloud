@@ -2,9 +2,7 @@ module VagrantPlugins
   module VCloud
     module Cap
       module PublicAddress
-
         def self.public_address(machine)
-
           # Initial try for vagrant share feature.
           # It seems ssh_info[:port] is given automatically.
           # I think this feature was built planning that the port forwarding

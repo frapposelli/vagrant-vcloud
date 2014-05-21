@@ -2,7 +2,6 @@ module VagrantPlugins
   module VCloud
     module Cap
       module ForwardedPorts
-
         # Reads the forwarded ports that currently exist on the machine
         # itself. This raises an exception if the machine isn't running.
         #
@@ -20,9 +19,7 @@ module VagrantPlugins
           vm = cnx.get_vapp(vapp_id)
           myhash = vm[:vms_hash][vm_name.to_sym]
 
-          if vm.nil?
-            return
-          end
+          return if vm.nil?
 
           if cfg.network_bridge.nil?
             rules = cnx.get_vapp_port_forwarding_rules(vapp_id)
@@ -35,9 +32,7 @@ module VagrantPlugins
           end
           result
         end
-
       end
     end
   end
 end
-
