@@ -2,8 +2,9 @@ module VagrantPlugins
   module VCloud
     module Action
       class ReadSSHInfo
-        def initialize(app, env)
+        def initialize(app, env, port = 22)
           @app = app
+          @port = port
           @logger = Log4r::Logger.new('vagrant_vcloud::action::read_ssh_info')
         end
 
@@ -68,14 +69,14 @@ module VagrantPlugins
             )
 
             @external_ip = vm_info[:networks]['Vagrant-vApp-Net'][:ip]
-            @external_port = '22'
+            @external_port = "#{@port}"
           else
 
             @logger.debug('Getting port forwarding rules...')
             rules = cnx.get_vapp_port_forwarding_rules(vapp_id)
 
             rules.each do |rule|
-              if rule[:vapp_scoped_local_id] == myhash[:vapp_scoped_local_id] && rule[:nat_internal_port] == '22'
+              if rule[:vapp_scoped_local_id] == myhash[:vapp_scoped_local_id] && rule[:nat_internal_port] == "#{@port}"
                 @external_ip = rule[:nat_external_ip]
                 @external_port = rule[:nat_external_port]
                 break
@@ -109,12 +110,14 @@ module VagrantPlugins
           #
           sleep_counter = 5
 
-          while check_for_ssh(@external_ip, @external_port) == false
-            env[:ui].info(
-              "Waiting for SSH Access on #{@external_ip}:#{@external_port} ... "
-            )
-            sleep sleep_counter
-            sleep_counter += 1
+          if @port == 22
+            while check_for_ssh(@external_ip, @external_port) == false
+              env[:ui].info(
+                "Waiting for SSH Access on #{@external_ip}:#{@external_port} ... "
+              )
+              sleep sleep_counter
+              sleep_counter += 1
+            end
           end
 
           # If we are here, then SSH is ready, continue
