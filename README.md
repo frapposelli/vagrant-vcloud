@@ -1,7 +1,7 @@
 [Vagrant](http://www.vagrantup.com) provider for VMware vCloud Director®
 =============
 
-[Version 0.3.2](../../releases/tag/v0.3.2) has been released!
+[Version 0.3.3](../../releases/tag/v0.3.3) has been released!
 -------------
 
 Please note that this software is still Alpha/Beta quality and is not recommended for production usage.
@@ -9,6 +9,10 @@ Please note that this software is still Alpha/Beta quality and is not recommende
 Right now a [Precise32](http://vagrant.tsugliani.fr/precise32.box) is available for use, or you can roll your own as you please, make sure to install VMware tools in it.
 
 If you're unsure about what are the correct network settings for your Vagrantfile make sure to check out the [Network Deployment Options](https://github.com/frapposelli/vagrant-vcloud/wiki/Network-Deployment-Options) wiki page.
+
+Features of Version 0.3.3 are:
+
+- Critical Bug Fix for ```network_bridge``` users [[#67](../../issues/67)]
 
 Features of Version 0.3.2 are:
 
