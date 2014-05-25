@@ -44,7 +44,7 @@ module VagrantPlugins
         puts table
       end
 
-      def command_vcloud_network(cfg, vapp_id)
+      def command_vcloud_network(cfg, vapp_id, ssh_host)
         # FIXME: this needs to be fixed to accomodate the bridged scenario
         # potentially showing only the assigned IPs in the VMs
 
@@ -97,10 +97,23 @@ module VagrantPlugins
                 # If rules don't match, you will not see them !
                 if edge_gateway_rule
                   # DNAT rule from edge to vapp to vm
+                  connect_host = nil
+
+                  # Add support for config.ssh.host
+                  if ssh_host
+                    connect_host = "#{ssh_host}:" +
+                                   "#{vapp_edge_rule[:nat_external_port]}" +
+                                   ' -> ' +
+                                   "#{cfg.vdc_edge_gateway_ip}:" +
+                                   "#{vapp_edge_rule[:nat_external_port]}"
+                  else
+                    connect_host = "#{cfg.vdc_edge_gateway_ip}:" +
+                                   "#{vapp_edge_rule[:nat_external_port]}"
+                  end
+
                   network_table << [
                     "#{vm[0]}",
-                    "#{cfg.vdc_edge_gateway_ip}:" +
-                    "#{vapp_edge_rule[:nat_external_port]}" +
+                    "#{connect_host}" +
                     " -> #{vapp_edge_ip}:" +
                     "#{vapp_edge_rule[:nat_external_port]}" +
                     " -> #{vm[1][:addresses][0]}:" +
@@ -223,6 +236,7 @@ module VagrantPlugins
 
         puts 'Initializing vCloud Director provider...'
         # initialize some variables
+        ssh_host = nil
         vapp_id = nil
         cfg = nil
 
@@ -246,6 +260,7 @@ module VagrantPlugins
           # populate cfg & vApp Id for later use.
           cfg = machine.provider_config
           vapp_id = machine.get_vapp_id
+          ssh_host = machine.config.ssh.host
           break
         end
 
@@ -255,7 +270,7 @@ module VagrantPlugins
           when :status
             command_vcloud_status(cfg, vapp_id)
           when :network
-            command_vcloud_network(cfg, vapp_id)
+            command_vcloud_network(cfg, vapp_id, ssh_host)
           when :redeploy_edge_gw
             command_vcloud_redeploy_edge_gw(cfg)
           end
