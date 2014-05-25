@@ -75,7 +75,8 @@ module VagrantPlugins
             rules = cnx.get_vapp_port_forwarding_rules(vapp_id)
 
             rules.each do |rule|
-              if rule[:vapp_scoped_local_id] == myhash[:vapp_scoped_local_id] && rule[:nat_internal_port] == '22'
+              if rule[:vapp_scoped_local_id] == myhash[:vapp_scoped_local_id] &&
+                 rule[:nat_internal_port] == '22'
                 @external_ip = rule[:nat_external_ip]
                 @external_port = rule[:nat_external_port]
                 break
@@ -87,7 +88,23 @@ module VagrantPlugins
               @logger.debug(
                 "We're running vagrant behind an Organization vDC Edge"
               )
-              @external_ip = cfg.vdc_edge_gateway_ip
+
+              #
+              # Add config.ssh.host support
+              # http://docs.vagrantup.com/v2/vagrantfile/ssh_settings.html
+              #
+              if env[:machine].config.ssh.host
+                @logger.debug(
+                  'SSH Host setting configured too: ' \
+                  "#{env[:machine].config.ssh.host}"
+                )
+                @external_ip = env[:machine].config.ssh.host
+              else
+                @logger.debug(
+                  "Using Edge Gateway IP: #{cfg.vdc_edge_gateway_ip}"
+                )
+                @external_ip = cfg.vdc_edge_gateway_ip
+              end
             end
           end
 
