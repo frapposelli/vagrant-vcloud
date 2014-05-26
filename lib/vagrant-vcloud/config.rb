@@ -133,6 +133,9 @@ module VagrantPlugins
       # vApp Id (String)
       attr_accessor :vAppId
 
+      # NestedHypervisor (Bool)
+      attr_accessor :nested_hypervisor
+
       def validate(machine)
         errors = _detected_errors
 
