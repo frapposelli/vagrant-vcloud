@@ -47,10 +47,12 @@ module VagrantPlugins
           vm = cnx.get_vapp(vapp_id)
           vm_info = vm[:vms_hash][vm_name.to_sym]
 
+          vapp_edge_ip = cnx.get_vapp_edge_public_ip(vapp_id)
+
           @logger.debug('Getting edge gateway port forwarding rules...')
           edge_gateway_rules = cnx.get_edge_gateway_rules(cfg.vdc_edge_gateway,
                                                           cfg.vdc_id)
-          edge_dnat_rules = edge_gateway_rules.select {|r| (r[:rule_type] == 'DNAT')}
+          edge_dnat_rules = edge_gateway_rules.select {|r| (r[:rule_type] == 'DNAT' && r[:translated_ip] != vapp_edge_ip)}
           edge_ports_in_use = edge_dnat_rules.map{|r| r[:original_port].to_i}.to_set
 
           @logger.debug('Getting port forwarding rules...')
@@ -64,16 +66,6 @@ module VagrantPlugins
           with_forwarded_ports(env) do |options|
             guest_port = options[:guest]
             host_port  = options[:host]
-
-            # Find if there already is a DNAT rule to this vApp
-            if r = edge_dnat_rules.find { |rule| (rule[:translated_ip] == vm_info[:ip] &&
-                                                  rule[:translated_port] == guest_port.to_s) }
-
-              @logger.info(
-                "Found existing edge gateway port forwarding rule #r[:original_port] to #{guest_port}"
-              )
-              options[:already_exists_on_edge] = true
-            end
 
             # Find if there already is a NAT rule to guest_port of this VM
             if r = vapp_nat_rules.find { |rule| (rule[:vapp_scoped_local_id] == vm_info[:vapp_scoped_local_id] &&
