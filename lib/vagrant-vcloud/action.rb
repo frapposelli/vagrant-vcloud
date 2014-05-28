@@ -96,21 +96,28 @@ module VagrantPlugins
             if env[:result]
               b2.use ConfigValidate
               b2.use ConnectVCloud
-              b2.use Call, IsRunning do |env2, b3|
-              # If the VM is running, must power off
-                b3.use action_halt if env2[:result]
-              end
-              b2.use Call, IsLastVM do |env2, b3|
-                if env2[:result]
-                  # Check if the network is bridged
-                  b3.use Call, IsBridged do |env3, b4|
-                    # if it's not, delete port forwardings.
-                    b4.use UnmapPortForwardings unless env3[:bridged_network]
+              b2.use Call, IsCreated do |env2, b3|
+                unless env2[:result]
+                  b3.use MessageNotCreated
+                  next
+                end
+
+                b3.use Call, IsRunning do |env3, b4|
+                # If the VM is running, must power off
+                  b4.use action_halt if env3[:result]
+                end
+                b3.use Call, IsLastVM do |env3, b4|
+                  if env3[:result]
+                    # Check if the network is bridged
+                    b4.use Call, IsBridged do |env4, b5|
+                      # if it's not, delete port forwardings.
+                      b5.use UnmapPortForwardings unless env4[:bridged_network]
+                    end
+                    b4.use PowerOffVApp
+                    b4.use DestroyVApp
+                  else
+                    b4.use DestroyVM
                   end
-                  b3.use PowerOffVApp
-                  b3.use DestroyVApp
-                else
-                  b3.use DestroyVM
                 end
               end
             else
