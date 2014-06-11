@@ -16,21 +16,21 @@ module VagrantPlugins
 
         # Small method to check the tcp connection to an ip:port works.
         # Return false if anything fails, and true if it succeeded.
-        def check_for_ssh(ip, port)
+        def check_for_port(ip, port, port_name)
           begin
             Timeout::timeout(1) do
               begin
                 s = TCPSocket.new(ip, port)
                 s.close
-                @logger.debug("SSH Connection successful !")
+                @logger.debug("#{port_name} Connection successful !")
                 return true
               rescue Errno::ECONNREFUSED, Errno::EHOSTUNREACH
-                @logger.debug("SSH Connection Refused/Host Unreachable...")
+                @logger.debug("#{port_name} Connection Refused/Host Unreachable...")
                 return false
               end
             end
           rescue Timeout::Error
-            @logger.debug("SSH Connection Timeout...")
+            @logger.debug("#{port_name} Connection Timeout...")
           end
 
           return false
@@ -105,15 +105,19 @@ module VagrantPlugins
           # and something like:
           #
           # retryable(:on => Vagrant::Errors::SSHSomething, :tries => 10, :sleep => 5) do
-          #   check_for_ssh(ip, port, :error_class => Vagrant::Errors::SSHSomething)
+          #   check_for_port(ip, port, "SSH", :error_class => Vagrant::Errors::SSHSomething)
           # end
           #
           sleep_counter = 5
+          port_name = "SSH"
+          if @port == 3389
+            port_name = "WinRM"
+          end
 
-          if @port == 22
-            while check_for_ssh(@external_ip, @external_port) == false
+          if @port == 22 || @port == 3389
+            while check_for_port(@external_ip, @external_port, port_name) == false
               env[:ui].info(
-                "Waiting for SSH Access on #{@external_ip}:#{@external_port} ... "
+                "Waiting for #{port_name} Access on #{@external_ip}:#{@external_port} ... "
               )
               sleep sleep_counter
               sleep_counter += 1
