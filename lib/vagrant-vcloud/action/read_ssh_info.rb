@@ -92,8 +92,13 @@ module VagrantPlugins
             end
           end
 
+          port_name = "SSH"
+          if @port == 5985
+            port_name = "WinRM"
+          end
+
           @logger.debug(
-            "SSH INFO: IP #{@external_ip} and Port #{@external_port}"
+            "#{port_name} INFO: IP #{@external_ip} and Port #{@external_port}"
           )
 
           # tsugliani: Temporary Fix for Issue #56
@@ -109,12 +114,8 @@ module VagrantPlugins
           # end
           #
           sleep_counter = 5
-          port_name = "SSH"
-          if @port == 3389
-            port_name = "WinRM"
-          end
 
-          if @port == 22 || @port == 3389
+          if @port == 22 || @port == 5985
             while check_for_port(@external_ip, @external_port, port_name) == false
               env[:ui].info(
                 "Waiting for #{port_name} Access on #{@external_ip}:#{@external_port} ... "
