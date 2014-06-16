@@ -20,7 +20,14 @@ module VagrantPlugins
           cnx = cfg.vcloud_cnx.driver
 
           box_dir = env[:machine].box.directory.to_s
-          box_file = env[:machine].box.name.to_s
+
+          if env[:machine].box.name.to_s.include? '/'
+            box_file = env[:machine].box.name.rpartition('/').last.to_s
+            box_name = env[:machine].box.name.to_s
+          else
+            box_file = env[:machine].box.name.to_s
+            box_name = box_file
+          end
 
           box_ovf = "#{box_dir}/#{box_file}.ovf"
 
@@ -29,7 +36,7 @@ module VagrantPlugins
           @logger.debug("OVF File: #{box_ovf}")
           upload_ovf = cnx.upload_ovf(
             cfg.vdc_id,
-            env[:machine].box.name.to_s,
+            box_name,
             'Vagrant Box',
             box_ovf,
             cfg.catalog_id,
@@ -40,7 +47,7 @@ module VagrantPlugins
           )
 
           env[:ui].info(
-            "Adding [#{env[:machine].box.name.to_s}] to " +
+            "Adding [#{box_name}] to " +
             "Catalog [#{cfg.catalog_name}]"
           )
           add_ovf_to_catalog = cnx.wait_task_completion(upload_ovf)
@@ -53,7 +60,7 @@ module VagrantPlugins
           # Retrieve catalog_item ID
           cfg.catalog_item = cnx.get_catalog_item_by_name(
             cfg.catalog_id,
-            env[:machine].box.name.to_s
+            box_name
           )
         end
 
@@ -81,6 +88,14 @@ module VagrantPlugins
           # Instance and will setup the global environment config values
           cfg = env[:machine].provider_config
           cnx = cfg.vcloud_cnx.driver
+
+          if env[:machine].box.name.to_s.include? '/'
+            box_file = env[:machine].box.name.rpartition('/').last.to_s
+            box_name = env[:machine].box.name.to_s
+          else
+            box_file = env[:machine].box.name.to_s
+            box_name = box_file
+          end
 
           cfg.org = cnx.get_organization_by_name(cfg.org_name)
           cfg.org_id = cnx.get_organization_id_by_name(cfg.org_name)
@@ -113,11 +128,11 @@ module VagrantPlugins
 
           @logger.debug(
             "Getting catalog item with cfg.catalog_id: [#{cfg.catalog_id}] " +
-            "and machine name [#{env[:machine].box.name.to_s}]"
+            "and machine name [#{box_name}]"
           )
           cfg.catalog_item = cnx.get_catalog_item_by_name(
             cfg.catalog_id,
-            env[:machine].box.name.to_s
+            box_name
           )
 
           @logger.debug("Catalog item is now #{cfg.catalog_item}")
@@ -148,18 +163,18 @@ module VagrantPlugins
 
           if !cfg.catalog_item
             env[:ui].warn(
-              "Catalog item [#{env[:machine].box.name.to_s}] " +
+              "Catalog item [#{box_name}] " +
               "in Catalog [#{cfg.catalog_name}] does not exist!"
             )
 
             user_input = env[:ui].ask(
-              "Would you like to upload the [#{env[:machine].box.name.to_s}] " +
+              "Would you like to upload the [#{box_name}] " +
               "box to [#{cfg.catalog_name}] Catalog?\n" +
               'Choice (yes/no): '
             )
 
             if user_input.downcase == 'yes' || user_input.downcase == 'y'
-              env[:ui].info("Uploading [#{env[:machine].box.name.to_s}]...")
+              env[:ui].info("Uploading [#{box_name}]...")
               vcloud_upload_box(env)
             else
               env[:ui].error('Catalog item not available, exiting...')
@@ -171,7 +186,7 @@ module VagrantPlugins
 
           else
             @logger.info(
-              "Using catalog item [#{env[:machine].box.name.to_s}] " +
+              "Using catalog item [#{box_name}] " +
               "in Catalog [#{cfg.catalog_name}]..."
             )
           end

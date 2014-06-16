@@ -112,9 +112,7 @@ module VagrantPlugins
             env[:ui].info('Building vApp...')
 
             vapp_prefix = cfg.vapp_prefix
-            if vapp_prefix.nil?
-              vapp_prefix = "Vagrant"
-            end
+            vapp_prefix = 'Vagrant' if vapp_prefix.nil?
 
             compose = cnx.compose_vapp_from_vm(
               cfg.vdc_id,
@@ -124,7 +122,7 @@ module VagrantPlugins
               "#{Socket.gethostname.downcase} using vagrant-vcloud on " +
               "#{Time.now.strftime("%B %d, %Y")}",
               {
-                vm_name => cfg.catalog_item[:vms_hash][env[:machine].box.name.to_s][:id]
+                vm_name => cfg.catalog_item[:vms_hash].first.last[:id]
               },
               network_options
             )
@@ -180,7 +178,7 @@ module VagrantPlugins
             recompose = cnx.recompose_vapp_from_vm(
               env[:machine].get_vapp_id,
               {
-                vm_name => cfg.catalog_item[:vms_hash][env[:machine].box.name.to_s][:id]
+                vm_name => cfg.catalog_item[:vms_hash].first.last[:id]
               },
               network_options
             )
