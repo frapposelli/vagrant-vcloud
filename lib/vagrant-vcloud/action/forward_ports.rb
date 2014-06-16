@@ -59,8 +59,6 @@ module VagrantPlugins
               :nat_protocol           => fp.protocol.upcase,
               :vapp_scoped_local_id   => vm_info[:vapp_scoped_local_id]
             }
-
-            edge_ports << fp.host_port
           end
 
           if !ports.empty?
@@ -91,27 +89,41 @@ module VagrantPlugins
                cfg.vdc_edge_gateway && \
                cfg.network_bridge.nil?
 
+              vapp_edge_ip = cnx.get_vapp_edge_public_ip(vapp_id)
+              @logger.debug('Getting edge gateway port forwarding rules...')
+              edge_gateway_rules = cnx.get_edge_gateway_rules(cfg.vdc_edge_gateway,
+                                                              cfg.vdc_id)
+              vapp_edge_dnat_rules = edge_gateway_rules.select {|r| (r[:rule_type] == 'DNAT' &&
+                                                                r[:translated_ip] == vapp_edge_ip)}
+              vapp_edge_ports_in_use = vapp_edge_dnat_rules.map{|r| r[:original_port].to_i}.to_set
 
-              edge_ports.each do |port|
-                @env[:ui].info(
-                  "Creating NAT rules on [#{cfg.vdc_edge_gateway}] " +
-                  "for IP [#{cfg.vdc_edge_gateway_ip}] port #{port}."
-                )
+              ports.each do |port|
+                if port[:vapp_scoped_local_id] == vm_info[:vapp_scoped_local_id] &&
+                  !vapp_edge_ports_in_use.include?(port[:nat_external_port])
+                  @env[:ui].info(
+                    "Creating NAT rules on [#{cfg.vdc_edge_gateway}] " +
+                    "for IP [#{vapp_edge_ip}] port #{port[:nat_external_port]}."
+                  )
+
+                  edge_ports << port[:nat_external_port]
+                end
               end
 
-              # Add the vShield Edge Gateway rules
-              add_ports = cnx.add_edge_gateway_rules(
-                cfg.vdc_edge_gateway,
-                cfg.vdc_id,
-                cfg.vdc_edge_gateway_ip,
-                vapp_id,
-                edge_ports
-              )
+              if !edge_ports.empty?
+                # Add the vShield Edge Gateway rules
+                add_ports = cnx.add_edge_gateway_rules(
+                  cfg.vdc_edge_gateway,
+                  cfg.vdc_id,
+                  cfg.vdc_edge_gateway_ip,
+                  vapp_id,
+                  edge_ports
+                )
 
-              wait = cnx.wait_task_completion(add_ports)
+                wait = cnx.wait_task_completion(add_ports)
 
-              if !wait[:errormsg].nil?
-                raise Errors::ComposeVAppError, :message => wait[:errormsg]
+                if !wait[:errormsg].nil?
+                  raise Errors::ComposeVAppError, :message => wait[:errormsg]
+                end
               end
 
             end
