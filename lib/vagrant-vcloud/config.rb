@@ -139,6 +139,9 @@ module VagrantPlugins
       # VM number of cpus (Integer)
       attr_accessor :cpus
 
+      # NestedHypervisor (Bool)
+      attr_accessor :nested_hypervisor
+
       def validate(machine)
         errors = _detected_errors
 
