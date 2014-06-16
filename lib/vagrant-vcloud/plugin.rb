@@ -41,6 +41,16 @@ module VagrantPlugins
         Cap::ForwardedPorts
       end
 
+      provider_capability(:vcloud, :winrm_info) do
+        require_relative "cap/winrm_info"
+        Cap::WinRM
+      end
+
+      provider_capability(:vcloud, :rdp_info) do
+        require_relative "cap/rdp_info"
+        Cap::RDP
+      end
+
       # Added a vagrant vcloud-status command to enhance troubleshooting and
       # visibility.
       command('vcloud') do

@@ -1838,6 +1838,74 @@ module VagrantPlugins
           task_id
         end
 
+        # Enable VM Nested Hardware-Assisted Virtualization
+        def set_vm_nested_hypervisor(vm_id, enable)
+          action = enable ? "enable" : "disable"
+          params = {
+            'method'  => :post,
+            'command' => "/vApp/vm-#{vm_id}/action/#{action}NestedHypervisor"
+          }
+
+          _response, headers = send_request(params)
+          task_id = headers['Location'].gsub("#{@api_url}/task/", '')
+          task_id
+        end
+
+        ##
+        # Set memory and number of cpus in virtualHardwareSection of a given vm
+        # returns task_id or nil if there is no task to wait for
+        def set_vm_hardware(vm_id, cfg)
+          params = {
+            'method'  => :get,
+            'command' => "/vApp/vm-#{vm_id}/virtualHardwareSection"
+          }
+
+          changed = false
+          response, _headers = send_request(params)
+
+          response.css('ovf|Item').each do |item|
+            type = item.css('rasd|ResourceType').first
+            if type.content == '3'
+              # cpus
+              if cfg.cpus
+                if item.at_css('rasd|VirtualQuantity').content != cfg.cpus.to_s
+                  item.at_css('rasd|VirtualQuantity').content = cfg.cpus
+                  item.at_css('rasd|ElementName').content = "#{cfg.cpus} virtual CPU(s)"
+                  changed = true
+                end
+              end
+            elsif type.content == '4'
+              # memory
+              if cfg.memory
+                if item.at_css('rasd|VirtualQuantity').content != cfg.memory.to_s
+                  item.at_css('rasd|VirtualQuantity').content = cfg.memory
+                  item.at_css('rasd|ElementName').content = "#{cfg.memory} MB of memory"
+                  changed = true
+                end
+              end
+            end 
+          end
+
+          if changed
+            params = {
+              'method'  => :put,
+              'command' => "/vApp/vm-#{vm_id}/virtualHardwareSection"
+            }
+
+            _response, headers = send_request(
+              params,
+              response.to_xml,
+              'application/vnd.vmware.vcloud.virtualhardwaresection+xml'
+            )
+
+            task_id = headers['Location'].gsub("#{@api_url}/task/", '')
+            task_id
+          else
+            return nil
+          end
+        end
+
+
         ##
         # Fetch details about a given VM
         def get_vm(vm_id)
