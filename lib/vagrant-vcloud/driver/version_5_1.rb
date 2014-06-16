@@ -1838,6 +1838,19 @@ module VagrantPlugins
           task_id
         end
 
+        # Enable VM Nested Hardware-Assisted Virtualization
+        def set_vm_nested_hypervisor(vm_id, enable)
+          action = enable ? "enable" : "disable"
+          params = {
+            'method'  => :post,
+            'command' => "/vApp/vm-#{vm_id}/action/#{action}NestedHypervisor"
+          }
+
+          _response, headers = send_request(params)
+          task_id = headers['Location'].gsub("#{@api_url}/task/", '')
+          task_id
+        end
+
         ##
         # Fetch details about a given VM
         def get_vm(vm_id)
