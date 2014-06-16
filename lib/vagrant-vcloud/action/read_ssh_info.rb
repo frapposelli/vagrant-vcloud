@@ -24,7 +24,7 @@ module VagrantPlugins
                 s.close
                 @logger.debug("#{port_name} Connection successful !")
                 return true
-              rescue Errno::ECONNREFUSED, Errno::EHOSTUNREACH
+              rescue Errno::ECONNREFUSED, Errno::EHOSTUNREACH, Errno::EHOSTDOWN
                 @logger.debug("#{port_name} Connection Refused/Host Unreachable...")
                 return false
               end
