@@ -246,6 +246,9 @@ module VagrantPlugins
                        catalog_id, upload_options = {})
         end
 
+        def set_vm_hardware(vm_id, cfg)
+        end
+
         ##
         # Fetch information for a given task
         def get_task(task_id)

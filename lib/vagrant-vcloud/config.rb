@@ -133,6 +133,12 @@ module VagrantPlugins
       # vApp Id (String)
       attr_accessor :vAppId
 
+      # VM memory size in MB (Integer)
+      attr_accessor :memory
+
+      # VM number of cpus (Integer)
+      attr_accessor :cpus
+
       def validate(machine)
         errors = _detected_errors
 
