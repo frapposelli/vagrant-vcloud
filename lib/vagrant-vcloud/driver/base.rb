@@ -335,10 +335,10 @@ module VagrantPlugins
                 msg = "Warning: unattended code #{response.status}" +
                 " #{response.reason}"
                 if response.status.to_i == 400
-                  nicexml = Nokogiri.XML(response.body)
-                  elems = nicexml.xpath("//*[@message]")
-                  message = elems[0].attr('message')
-                  msg = msg + ": " + message.to_s
+                  res = Nokogiri.parse(response.body)
+                  error = res.css("Error").first
+                  message = error['message']
+                  msg = msg + ": " + message
                 end
                 if @logger.level == 1
                   ap "[#{Time.now.ctime}] <- RECV #{response.status}"
@@ -347,8 +347,7 @@ module VagrantPlugins
                   ap response.headers
                   ap 'RECV BODY'
                   if response.status.to_i == 400
-                    nicexml = Nokogiri.XML(response.body)
-                    ap nicexml
+                    ap Nokogiri.XML(response.body)
                   else
                     ap respone.body
                   end
