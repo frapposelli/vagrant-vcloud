@@ -21,6 +21,7 @@ module VagrantPlugins
               b2.use ForwardPorts
             end
           end
+          b.use WaitForCommunicator, [:starting, :running]
           b.use Provision
           b.use SyncFolders
         end
