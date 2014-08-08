@@ -129,13 +129,14 @@ module VagrantPlugins
           # Suppress SSL depth message
           clnt.ssl_config.verify_callback = proc { |ok, ctx|; true }
 
-          url = "#{host_url}/api/versions"
+          uri = URI(host_url)
+          url = "#{uri.scheme}://#{uri.host}:#{uri.port}/api/versions"
 
           begin
             response = clnt.request('GET', url, nil, nil, nil)
-            if !response.ok?
-              raise "Warning: unattended code #{response.status} " +
-                    "#{response.reason}"
+            unless response.ok?
+              fail Errors::UnattendedCodeError,
+                   :message => response.status + ' ' + response.reason
             end
 
             version_info = Nokogiri.parse(response.body)
@@ -154,10 +155,9 @@ module VagrantPlugins
 
             api_version_supported
 
-          rescue SocketError
-            raise Errors::HostNotFound, :message => host_url
-          rescue Errno::EADDRNOTAVAIL
-            raise Errors::HostNotFound, :message => host_url
+          rescue SocketError, Errno::EADDRNOTAVAIL
+            raise Errors::EndpointUnavailable,
+                  :endpoint => "#{uri.scheme}://#{uri.host}:#{uri.port}/api"
           end
         end
       end

@@ -9,7 +9,6 @@ module VagrantPlugins
       class RsyncError < VCloudError
         error_key(:rsync_error)
       end
-
       class MkdirError < VCloudError
         error_key(:mkdir_error)
       end
@@ -18,12 +17,6 @@ module VagrantPlugins
       end
       class CatalogAddError < VCloudError
         error_key(:catalog_add_error)
-      end
-      class HostNotFound < VCloudError
-        error_key(:host_not_found)
-      end
-      class HostRedirect < VCloudError
-        error_key(:host_redirect)
       end
       class UnauthorizedAccess < VCloudError
         error_key(:unauthorized_access)
@@ -60,6 +53,15 @@ module VagrantPlugins
       end
       class InvalidStateError < RestError
         error_key(:invalid_state_error)
+      end
+      class InvalidRequestError < RestError
+        error_key(:invalid_request_error)
+      end
+      class UnattendedCodeError < RestError
+        error_key(:unattended_code_error)
+      end
+      class EndpointUnavailable < RestError
+        error_key(:endpoint_unavailable)
       end
       class SyncError < VCloudError
         error_key(:sync_error)
