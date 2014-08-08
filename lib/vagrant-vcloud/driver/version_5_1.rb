@@ -219,6 +219,34 @@ module VagrantPlugins
             end
           end
 
+          if result.nil?
+            # catalog not found, search in global catalogs as well
+            # that are not listed in organization directly
+            params = {
+              'method'  => :get,
+              'command' => "/catalogs/query/",
+              'cacheable' => true
+            }
+
+            response, _headers = send_request(params)
+
+            catalogs = {}
+            response.css(
+              "CatalogRecord"
+            ).each do |item|
+              catalogs[item['name']] = item['href'].gsub(
+                "#{@api_url}/catalog/", ''
+              )
+            end
+
+            catalogs.each do |catalog|
+              if catalog[0].downcase == catalog_name.downcase
+                result = catalog[1]
+              end
+            end
+
+          end
+
           result
         end
 
