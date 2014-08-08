@@ -1,7 +1,7 @@
 [Vagrant](http://www.vagrantup.com) provider for VMware vCloud Director®
 =============
 
-[Version 0.4.0](../../releases/tag/v0.4.0) has been released!
+[Version 0.4.1](../../releases/tag/v0.4.1) has been released!
 -------------
 
 Please note that this software is still Alpha/Beta quality and is not recommended for production usage.
@@ -22,6 +22,15 @@ Latest version can be easily installed by running the following command:
 Vagrant will download all the required gems during the installation process.
 
 After the install has completed a ```vagrant up --provider=vcloud``` will trigger the newly installed provider.
+
+Upgrade
+-------------
+
+If you already have vagrant-vcloud installed you can update to the latest version available by issuing:
+
+```vagrant plugin update vagrant-vcloud```
+
+Vagrant will take care of the upgrade process.
 
 Configuration
 -------------
