@@ -224,7 +224,7 @@ module VagrantPlugins
             # that are not listed in organization directly
             params = {
               'method'  => :get,
-              'command' => "/catalogs/query/",
+              'command' => '/catalogs/query/',
               'cacheable' => true
             }
 
@@ -232,10 +232,10 @@ module VagrantPlugins
 
             catalogs = {}
             response.css(
-              "CatalogRecord"
+              'CatalogRecord'
             ).each do |item|
-              catalogs[item['name']] = item['href'].gsub(
-                "#{@api_url}/catalog/", ''
+              catalogs[item['name']] = URI(item['href']).path.gsub(
+                '/api/catalog/', ''
               )
             end
 
