@@ -20,8 +20,9 @@ module VagrantPlugins
         Config
       end
 
-      provider(:vcloud) do
-        # TODO: add logging
+      # We provide support for multiple box formats, including the new standard
+      # 'vmware_ovf' and the legacy 'vcloud' and 'vcenter'.
+      provider(:vcloud, box_format: %w[vmware_ovf vcloud vcenter]) do
         setup_logging
         setup_i18n
 
