@@ -1,4 +1,4 @@
-$:.unshift File.expand_path('../lib', __FILE__)
+$LOAD_PATH.unshift File.expand_path('../lib', __FILE__)
 require 'vagrant-vcloud/version'
 
 Gem::Specification.new do |s|
@@ -14,7 +14,7 @@ Gem::Specification.new do |s|
 
   s.add_runtime_dependency 'i18n', '~> 0.6.4'
   s.add_runtime_dependency 'log4r', '~> 1.1.10'
-  s.add_runtime_dependency 'nokogiri', '~> 1.5.5'
+  s.add_runtime_dependency 'nokogiri', '~> 1.6'
   s.add_runtime_dependency 'httpclient', '~> 2.3.4.1'
   s.add_runtime_dependency 'ruby-progressbar', '~> 1.1.1'
   s.add_runtime_dependency 'netaddr', '~> 1.5.0'
