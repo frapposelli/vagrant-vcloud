@@ -1,7 +1,7 @@
 [Vagrant](http://www.vagrantup.com) provider for VMware vCloud Director®
 =============
 
-[Version 0.4.2](../../releases/tag/v0.4.2) has been released!
+[Version 0.4.3](../../releases/tag/v0.4.3) has been released!
 -------------
 
 Please note that this software is still Alpha/Beta quality and is not recommended for production usage.
