@@ -98,6 +98,10 @@ module VagrantPlugins
       # @return [String]
       attr_accessor :vapp_prefix
 
+      # Name of the VM [optional]
+      #
+      # @return [String]
+      attr_accessor :name
 
       ##
       ## vCloud Director config runtime values

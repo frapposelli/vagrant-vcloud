@@ -17,7 +17,7 @@ module VagrantPlugins
 
           cfg = env[:machine].provider_config
           cnx = cfg.vcloud_cnx.driver
-          vm_name = env[:machine].name
+          vm_name = cfg.name ? cfg.name.to_sym : env[:machine].name
 
           if cfg.ip_dns.nil?
             dns_address1 = '8.8.8.8'

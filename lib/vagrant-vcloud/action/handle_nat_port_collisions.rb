@@ -43,7 +43,7 @@ module VagrantPlugins
           vapp_id = env[:machine].get_vapp_id
 
           @logger.debug('Getting VM info...')
-          vm_name = env[:machine].name
+          vm_name = cfg.name ? cfg.name.to_sym : env[:machine].name
           vm = cnx.get_vapp(vapp_id)
           vm_info = vm[:vms_hash][vm_name.to_sym]
 
