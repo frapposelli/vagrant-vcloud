@@ -27,6 +27,12 @@ module VagrantPlugins
       class ComposeVAppError < VCloudError
         error_key(:compose_vapp_error)
       end
+      class ModifyVAppError < VCloudError
+        error_key(:modify_vapp_error)
+      end
+      class PoweronVAppError < VCloudError
+        error_key(:poweron_vapp_error)
+      end
       class InvalidNetSpecification < VCloudError
         error_key(:invalid_network_specification)
       end
