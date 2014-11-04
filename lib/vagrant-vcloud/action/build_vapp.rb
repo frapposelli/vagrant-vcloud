@@ -111,13 +111,18 @@ module VagrantPlugins
           if env[:machine].get_vapp_id.nil?
             env[:ui].info('Building vApp...')
 
-            vapp_prefix = cfg.vapp_prefix
-            vapp_prefix = 'Vagrant' if vapp_prefix.nil?
+            if cfg.vapp_name
+              vapp_name = cfg.vapp_name
+            else
+              vapp_prefix = cfg.vapp_prefix
+              vapp_prefix = 'Vagrant' if vapp_prefix.nil?
+              vapp_name = "#{vapp_prefix}-#{Etc.getlogin}-#{Socket.gethostname.downcase}-" +
+                          "#{SecureRandom.hex(4)}"
+            end
 
             compose = cnx.compose_vapp_from_vm(
               cfg.vdc_id,
-              "#{vapp_prefix}-#{Etc.getlogin}-#{Socket.gethostname.downcase}-" +
-              "#{SecureRandom.hex(4)}",
+              vapp_name,
               "vApp created by #{Etc.getlogin} running on " +
               "#{Socket.gethostname.downcase} using vagrant-vcloud on " +
               "#{Time.now.strftime("%B %d, %Y")}",
