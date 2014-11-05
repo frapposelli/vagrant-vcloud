@@ -750,16 +750,56 @@ module VagrantPlugins
         # - network_config: hash of the network configuration for the vapp
         def compose_vapp_from_vm(vdc, vapp_name, vapp_description, vm_list = {}, network_config = {})
           builder = Nokogiri::XML::Builder.new do |xml|
-            xml.ComposeVAppParams(
-              'xmlns' => 'http://www.vmware.com/vcloud/v1.5',
-              'xmlns:ovf' => 'http://schemas.dmtf.org/ovf/envelope/1',
-              'name' => vapp_name,
-              'deploy' => 'false',
-              'powerOn' => 'false') {
-              xml.Description vapp_description
-              xml.InstantiationParams {
-                xml.NetworkConfigSection {
-                  xml['ovf'].Info 'Configuration parameters for logical networks'
+          xml.ComposeVAppParams(
+            'xmlns' => 'http://www.vmware.com/vcloud/v1.5',
+            'xmlns:ovf' => 'http://schemas.dmtf.org/ovf/envelope/1',
+            'name' => vapp_name,
+            'deploy' => 'false',
+            'powerOn' => 'false') {
+            xml.Description vapp_description
+            xml.InstantiationParams {
+              xml.NetworkConfigSection {
+                xml['ovf'].Info 'Configuration parameters for logical networks'
+                if network_config.kind_of?(Array)
+                  network_config.each do |single_net|
+                    xml.NetworkConfig('networkName' => single_net[:name]) {
+                      xml.Configuration {
+                        if single_net[:fence_mode] != 'bridged'
+                          xml.IpScopes {
+                          xml.IpScope {
+                            xml.IsInherited(single_net[:is_inherited] || 'false')
+                            xml.Gateway single_net[:gateway]
+                            xml.Netmask single_net[:netmask]
+                            xml.Dns1 single_net[:dns1] if single_net[:dns1]
+                            xml.Dns2 single_net[:dns2] if single_net[:dns2]
+                            xml.DnsSuffix single_net[:dns_suffix] if single_net[:dns_suffix]
+                            xml.IpRanges {
+                              xml.IpRange {
+                                xml.StartAddress single_net[:start_address]
+                                xml.EndAddress single_net[:end_address]
+                                }
+                              }
+                            }
+                          }
+                        end
+                        xml.ParentNetwork("href" => "#{@api_url}/network/#{single_net[:parent_network]}") if single_net[:parent_network]
+                        xml.FenceMode single_net[:fence_mode]
+                        if single_net[:fence_mode] != 'bridged'
+                          xml.Features {
+                            xml.FirewallService {
+                              xml.IsEnabled(single_net[:enable_firewall] || "false")
+                            }
+                            xml.NatService {
+                              xml.IsEnabled "true"
+                              xml.NatType "portForwarding"
+                              xml.Policy(single_net[:nat_policy_type] || "allowTraffic")
+                            }
+                          }
+                        end
+                      }
+                    }
+                  end
+                else # network_config not an array
                   xml.NetworkConfig('networkName' => network_config[:name]) {
                     xml.Configuration {
                       if network_config[:fence_mode] != 'bridged'
@@ -796,7 +836,7 @@ module VagrantPlugins
                       end
                     }
                   }
-                }
+              end #networks
               }
               vm_list.each do |vm_name, vm_id|
                 xml.SourcedItem {
@@ -1912,7 +1952,7 @@ module VagrantPlugins
                   changed = true
                 end
               end
-            end 
+            end
           end
 
           if changed

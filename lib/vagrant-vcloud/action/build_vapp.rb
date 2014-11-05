@@ -19,15 +19,14 @@ module VagrantPlugins
           cnx = cfg.vcloud_cnx.driver
           vm_name = cfg.name ? cfg.name.to_sym : env[:machine].name
 
-          if cfg.ip_dns.nil?
-            dns_address1 = '8.8.8.8'
-            dns_address2 = '8.8.4.4'
-          else
-            dns_address1 = cfg.ip_dns.shift
-            dns_address2 = cfg.ip_dns.shift
-          end
-
           if !cfg.ip_subnet.nil?
+            if cfg.ip_dns.nil?
+              dns_address1 = '8.8.8.8'
+              dns_address2 = '8.8.4.4'
+            else
+              dns_address1 = cfg.ip_dns.shift
+              dns_address2 = cfg.ip_dns.shift
+            end
             @logger.debug("Input address: #{cfg.ip_subnet}")
 
             begin
@@ -87,6 +86,78 @@ module VagrantPlugins
             }
 
             env[:bridged_network] = true
+
+          elsif !cfg.networks.nil?
+            # Advanced network definition
+            network_options = []
+            if cfg.networks.org
+              cfg.networks.org.each do |net|
+                network_options.push({
+                  :name               => net,
+                  :fence_mode         => 'bridged',
+                  #:ip_allocation_mode => 'POOL',
+                  :parent_network     => net
+                })
+              end
+            end
+            if cfg.networks.vapp
+              cfg.networks.each_with_index do |net, i|
+                if net.ip_dns.nil?
+                  dns_address1 = '8.8.8.8'
+                  dns_address2 = '8.8.4.4'
+                else
+                  dns_address1 = net.ip_dns.shift
+                  dns_address2 = net.ip_dns.shift
+                end
+                @logger.debug("Input address[#{i}]: #{net.ip_subnet}")
+
+                begin
+                  cidr = NetAddr::CIDR.create(net.ip_subnet)
+                rescue NetAddr::ValidationError
+                  raise Errors::InvalidSubnet, :message => net.ip_subnet
+                end
+
+                if cidr.bits > 30
+                  @logger.debug('Subnet too small!')
+                  raise Errors::SubnetTooSmall, :message => net.ip_subnet
+                end
+
+                range_addresses = cidr.range(0)
+
+                @logger.debug("Range[#{i}]: #{range_addresses}")
+
+                # Delete the "network" address from the range.
+                range_addresses.shift
+                # Retrieve the first usable IP, to be used as a gateway.
+                gateway_ip = range_addresses.shift
+                # Reverse the array in place.
+                range_addresses.reverse!
+                # Delete the "broadcast" address from the range.
+                range_addresses.shift
+                # Reverse back the array.
+                range_addresses.reverse!
+
+                @logger.debug("Gateway IP[#{i}]: #{gateway_ip.to_s}")
+                @logger.debug("Netmask[#{i}]: #{cidr.wildcard_mask}")
+                @logger.debug("IP Pool[#{i}]: #{range_addresses.first}-#{range_addresses.last}")
+                @logger.debug("DNS1[#{i}]: #{dns_address1} DNS2[#{i}]: #{dns_address2}")
+                n =  {
+                  :name               => net[:name],
+                  :gateway            => gateway_ip.to_s,
+                  :netmask            => cidr.wildcard_mask,
+                  :start_address      => range_addresses.first,
+                  :end_address        => range_addresses.last,
+                  :fence_mode         => 'natRouted',
+                  :ip_allocation_mode => 'POOL',
+                  :enable_firewall    => 'false',
+                  :dns1               => dns_address1,
+                  :dns2               => dns_address2
+                }
+                n[:parent_network] = net.connection if net.connection
+
+                network_options.push(n)
+              end
+            end
 
           else
 
