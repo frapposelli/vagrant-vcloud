@@ -849,14 +849,15 @@ module VagrantPlugins
                     'href' => "#{@api_url}/vAppTemplate/vm-#{vm_id}/networkConnectionSection/") {
                       xml['ovf'].Info 'Network config for sourced item'
                       xml.PrimaryNetworkConnectionIndex '0'
-                      xml.NetworkConnection('network' => network_config[:name]) {
+                      xml.NetworkConnection('network' => 'TA-Build') {#network_config[:name]) {
                         xml.NetworkConnectionIndex '0'
                         xml.IsConnected 'true'
-                        xml.IpAddressAllocationMode(network_config[:ip_allocation_mode] || 'POOL')
+                        xml.IpAddressAllocationMode('POOL')# network_config[:ip_allocation_mode] || 'POOL')
                     }
                   }
                 }
-                xml.NetworkAssignment('containerNetwork' => network_config[:name], 'innerNetwork' => network_config[:name])
+                #xml.NetworkAssignment('containerNetwork' => network_config[:name], 'innerNetwork' => network_config[:name])
+                xml.NetworkAssignment('containerNetwork' => 'TA-Build', 'innerNetwork' => 'TA-Build')
               }
             end
             xml.AllEULAsAccepted 'true'
@@ -912,14 +913,15 @@ module VagrantPlugins
                     'href' => "#{@api_url}/vAppTemplate/vm-#{vm_id}/networkConnectionSection/") {
                       xml['ovf'].Info 'Network config for sourced item'
                       xml.PrimaryNetworkConnectionIndex '0'
-                      xml.NetworkConnection('network' => network_config[:name]) {
+                      xml.NetworkConnection('network' => 'TA-Build') {#network_config[:name]) {
                         xml.NetworkConnectionIndex '0'
                         xml.IsConnected 'true'
-                        xml.IpAddressAllocationMode(network_config[:ip_allocation_mode] || 'POOL')
+                        xml.IpAddressAllocationMode('POOL')# network_config[:ip_allocation_mode] || 'POOL')
                     }
                   }
                 }
-                xml.NetworkAssignment('containerNetwork' => network_config[:name], 'innerNetwork' => network_config[:name])
+                # xml.NetworkAssignment('containerNetwork' => network_config[:name], 'innerNetwork' => network_config[:name])
+                xml.NetworkAssignment('containerNetwork' => 'TA-Build', 'innerNetwork' => 'TA-Build')
               }
             end
             xml.AllEULAsAccepted 'true'
@@ -1986,51 +1988,37 @@ module VagrantPlugins
 
           response, _headers = send_request(params)
 
-          os_desc = response.css(
-            'ovf|OperatingSystemSection ovf|Description'
-          ).first.text
+          os_desc = response.css('ovf|OperatingSystemSection ovf|Description').first.text
 
           networks = {}
+          primary_network = response.css('PrimaryNetworkConnectionIndex').first.text
           response.css('NetworkConnection').each do |network|
             ip = network.css('IpAddress').first
             ip = ip.text if ip
+            primary = false
+            primary = true if network.css('NetworkConnectionIndex').first.text == primary_network
 
             networks[network['network']] = {
-              :index              => network.css(
-                                     'NetworkConnectionIndex'
-                                     ).first.text,
+              :primary            => primary,
+              :index              => network.css('NetworkConnectionIndex').first.text,
               :ip                 => ip,
-              :is_connected       => network.css(
-                                     'IsConnected'
-                                     ).first.text,
-              :mac_address        => network.css(
-                                     'MACAddress'
-                                     ).first.text,
-              :ip_allocation_mode => network.css(
-                                     'IpAddressAllocationMode'
-                                     ).first.text
+              :is_connected       => network.css('IsConnected').first.text,
+              :mac_address        => network.css('MACAddress').first.text,
+              :ip_allocation_mode => network.css('IpAddressAllocationMode').first.text
             }
           end
 
-          admin_password = response.css(
-            'GuestCustomizationSection AdminPassword'
-          ).first
+          admin_password = response.css('GuestCustomizationSection AdminPassword').first
           admin_password = admin_password.text if admin_password
 
           # make the lines shorter by adjusting the nokogiri css namespace
           guest_css = response.css('GuestCustomizationSection')
           guest_customizations = {
             :enabled                => guest_css.css('Enabled').first.text,
-            :admin_passwd_enabled   => guest_css.css(
-                                       'AdminPasswordEnabled'
-                                       ).first.text,
-            :admin_passwd_auto      => guest_css.css(
-                                       'AdminPasswordAuto'
-                                       ).first.text,
+            :admin_passwd_enabled   => guest_css.css('AdminPasswordEnabled').first.text,
+            :admin_passwd_auto      => guest_css.css('AdminPasswordAuto').first.text,
             :admin_passwd           => admin_password,
-            :reset_passwd_required  => guest_css.css(
-                                       'ResetPasswordRequired'
-                                       ).first.text,
+            :reset_passwd_required  => guest_css.css('ResetPasswordRequired').first.text,
             :computer_name          => guest_css.css('ComputerName').first.text
           }
 

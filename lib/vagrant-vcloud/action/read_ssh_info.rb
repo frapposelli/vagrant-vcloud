@@ -57,7 +57,26 @@ module VagrantPlugins
             return nil
           end
 
-          if !cfg.network_bridge.nil?
+          if !cfg.advanced_network.nil?
+            @logger.debug(
+              'We\'re running in advanced network mode, ' \
+              'fetching the IP directly from the primary NIC on the VM'
+            )
+            vm_info = cnx.get_vm(env[:machine].id)
+            # get primary network
+            primary_network = nil
+            vm_info[:networks].each do |net|
+              next if net[1][:primary] == false
+              primary_network = net[0]
+              break
+            end
+            @logger.debug(
+              "IP address for #{vm_name}: #{vm_info[:networks][primary_network][:ip]}"
+            )
+
+            @external_ip = vm_info[:networks][primary_network][:ip]
+            @external_port = "#{@port}"
+          elsif !cfg.network_bridge.nil?
             @logger.debug(
               'We\'re running in bridged mode, ' \
               'fetching the IP directly from the VM'
