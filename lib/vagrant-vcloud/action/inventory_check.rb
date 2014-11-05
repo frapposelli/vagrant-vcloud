@@ -138,14 +138,16 @@ module VagrantPlugins
           @logger.debug("Catalog item is now #{cfg.catalog_item}")
 
           # This only works with Org Admin role or higher
-          cfg.vdc_network_id = cfg.org[:networks][cfg.vdc_network_name]
-          if !cfg.vdc_network_id
-            # TEMP FIX: permissions issues at the Org Level for vApp authors
-            #           to "view" Org vDC Networks but they can see them at the
-            #           Organization vDC level (tsugliani)
-            cfg.vdc_network_id = cfg.vdc[:networks][cfg.vdc_network_name]
+          if cfg.vdc_network_name
+            cfg.vdc_network_id = cfg.org[:networks][cfg.vdc_network_name]
             if !cfg.vdc_network_id
-              raise 'vCloud User credentials has insufficient privileges'
+              # TEMP FIX: permissions issues at the Org Level for vApp authors
+              #           to "view" Org vDC Networks but they can see them at the
+              #           Organization vDC level (tsugliani)
+              cfg.vdc_network_id = cfg.vdc[:networks][cfg.vdc_network_name]
+              if !cfg.vdc_network_id
+                raise 'vCloud User credentials has insufficient privileges'
+              end
             end
           end
 

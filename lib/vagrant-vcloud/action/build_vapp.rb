@@ -87,39 +87,49 @@ module VagrantPlugins
 
             env[:bridged_network] = true
 
-          elsif !cfg.networks.nil?
+          elsif !cfg.advanced_network.nil?
             # Advanced network definition
+            env[:advanced_network] = true
             network_options = []
-            if cfg.networks.org
-              cfg.networks.org.each do |net|
+            if cfg.networks[:org]
+              cfg.networks[:org].each do |net|
+                net_id = cfg.org[:networks][net]
+                if !net_id
+                  # TEMP FIX: permissions issues at the Org Level for vApp authors
+                  #           to "view" Org vDC Networks but they can see them at the
+                  #           Organization vDC level (tsugliani)
+                  net_id = cfg.vdc[:networks][net]
+                  if !net_id
+                    raise 'vCloud User credentials has insufficient privileges'
+                  end
+                end
                 network_options.push({
                   :name               => net,
                   :fence_mode         => 'bridged',
-                  #:ip_allocation_mode => 'POOL',
-                  :parent_network     => net
+                  :parent_network     => net_id
                 })
               end
             end
-            if cfg.networks.vapp
-              cfg.networks.each_with_index do |net, i|
-                if net.ip_dns.nil?
+            if cfg.networks[:vapp]
+              cfg.networks[:vapp].each_with_index do |net, i|
+                if net[:ip_dns].nil?
                   dns_address1 = '8.8.8.8'
                   dns_address2 = '8.8.4.4'
                 else
-                  dns_address1 = net.ip_dns.shift
-                  dns_address2 = net.ip_dns.shift
+                  dns_address1 = net[:ip_dns].shift
+                  dns_address2 = net[:ip_dns].shift
                 end
-                @logger.debug("Input address[#{i}]: #{net.ip_subnet}")
+                @logger.debug("Input address[#{i}]: #{net[:ip_subnet]}")
 
                 begin
-                  cidr = NetAddr::CIDR.create(net.ip_subnet)
+                  cidr = NetAddr::CIDR.create(net[:ip_subnet])
                 rescue NetAddr::ValidationError
-                  raise Errors::InvalidSubnet, :message => net.ip_subnet
+                  raise Errors::InvalidSubnet, :message => net[:ip_subnet]
                 end
 
                 if cidr.bits > 30
                   @logger.debug('Subnet too small!')
-                  raise Errors::SubnetTooSmall, :message => net.ip_subnet
+                  raise Errors::SubnetTooSmall, :message => net[:ip_subnet]
                 end
 
                 range_addresses = cidr.range(0)
@@ -153,13 +163,32 @@ module VagrantPlugins
                   :dns1               => dns_address1,
                   :dns2               => dns_address2
                 }
-                n[:parent_network] = net.connection if net.connection
+                if net[:connection]
+                  net_id = cfg.org[:networks][net[:connection]]
+                  if !net_id
+                    # TEMP FIX: permissions issues at the Org Level for vApp authors
+                    #           to "view" Org vDC Networks but they can see them at the
+                    #           Organization vDC level (tsugliani)
+                    net_id = cfg.vdc[:networks][net[:connection]]
+                    if !net_id
+                      raise 'vCloud User credentials has insufficient privileges'
+                    end
+                  end
+                  n[:parent_network] = net[:connection]
+                end
 
                 network_options.push(n)
               end
             end
 
           else
+            if cfg.ip_dns.nil?
+              dns_address1 = '8.8.8.8'
+              dns_address2 = '8.8.4.4'
+            else
+              dns_address1 = cfg.ip_dns.shift
+              dns_address2 = cfg.ip_dns.shift
+            end
 
             @logger.debug("DNS1: #{dns_address1} DNS2: #{dns_address2}")
             # No IP subnet specified, reverting to defaults
@@ -227,21 +256,23 @@ module VagrantPlugins
               new_vm_properties = new_vapp[:vms_hash].fetch(vm_name)
               env[:machine].id = new_vm_properties[:id]
 
-              ### SET GUEST CONFIG
-              @logger.info(
-                "Setting Guest Customization on ID: [#{vm_name}] " +
-                "of vApp [#{new_vapp[:name]}]"
-              )
+              if cfg.guest_customizations.nil? || cfg.guest_customizations == true
+                ### SET GUEST CONFIG
+                @logger.info(
+                  "Setting Guest Customization on ID: [#{vm_name}] " +
+                  "of vApp [#{new_vapp[:name]}]"
+                )
 
-              set_custom = cnx.set_vm_guest_customization(
-                new_vm_properties[:id],
-                vm_name,
-                {
-                  :enabled              => true,
-                  :admin_passwd_enabled => false
-                }
-              )
-              cnx.wait_task_completion(set_custom)
+                set_custom = cnx.set_vm_guest_customization(
+                  new_vm_properties[:id],
+                  vm_name,
+                  {
+                    :enabled              => true,
+                    :admin_passwd_enabled => false
+                  }
+                )
+                cnx.wait_task_completion(set_custom)
+              end
 
             else
               env[:ui].error("vApp #{new_vapp[:name]} creation failed!")
@@ -270,21 +301,23 @@ module VagrantPlugins
               new_vm_properties = new_vapp[:vms_hash].fetch(vm_name)
               env[:machine].id = new_vm_properties[:id]
 
-              ### SET GUEST CONFIG
-              @logger.info(
-                'Setting Guest Customization on ID: ' +
-                "[#{new_vm_properties[:id]}] of vApp [#{new_vapp[:name]}]"
-              )
+              if cfg.guest_customizations.nil? || cfg.guest_customizations == true
+                ### SET GUEST CONFIG
+                @logger.info(
+                  'Setting Guest Customization on ID: ' +
+                  "[#{new_vm_properties[:id]}] of vApp [#{new_vapp[:name]}]"
+                )
 
-              set_custom = cnx.set_vm_guest_customization(
-                new_vm_properties[:id],
-                vm_name,
-                {
-                  :enabled              => true,
-                  :admin_passwd_enabled => false
-                }
-              )
-              cnx.wait_task_completion(set_custom)
+                set_custom = cnx.set_vm_guest_customization(
+                  new_vm_properties[:id],
+                  vm_name,
+                  {
+                    :enabled              => true,
+                    :admin_passwd_enabled => false
+                  }
+                )
+                cnx.wait_task_completion(set_custom)
+              end
 
             else
               env[:ui].error("VM #{vm_name} add to #{new_vapp[:name]} failed!")

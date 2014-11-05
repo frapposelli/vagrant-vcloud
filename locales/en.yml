@@ -24,6 +24,7 @@ en:
       template: "Configuration must specify a template name"
       username: "Configuration must specify a vCloud Director username"
       vdc_name: "Configuration must specify a vCloud Director Virtual Datacenter (Target Organization VDC)"
+      vdc_network_name: "Configuration must specify a vCloud Director vDC network name"
     errors:
       missing_compute_resource: "Configured compute resource not found"
       missing_datacenter: "Configured data center not found"

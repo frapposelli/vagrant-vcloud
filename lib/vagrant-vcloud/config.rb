@@ -102,6 +102,12 @@ module VagrantPlugins
       #
       # @return [String]
       attr_accessor :name
+      attr_accessor :vapp_name
+      attr_accessor :networks
+      attr_accessor :advanced_network
+      attr_accessor :guest_customizations
+      attr_accessor :add_hdds
+      attr_accessor :nics
 
       ##
       ## vCloud Director config runtime values
@@ -169,7 +175,7 @@ module VagrantPlugins
           errors << I18n.t('vagrant_vcloud.config.vdc_name')
         end
 
-        if vdc_network_name.nil?
+        if networks.nil? && vdc_network_name.nil?
           errors << I18n.t('vagrant_vcloud.config.vdc_network_name')
         end
 
