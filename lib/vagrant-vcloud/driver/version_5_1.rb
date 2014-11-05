@@ -760,42 +760,83 @@ module VagrantPlugins
             xml.InstantiationParams {
               xml.NetworkConfigSection {
                 xml['ovf'].Info 'Configuration parameters for logical networks'
-                xml.NetworkConfig('networkName' => network_config[:name]) {
-                  xml.Configuration {
-                    if network_config[:fence_mode] != 'bridged'
-                      xml.IpScopes {
-                      xml.IpScope {
-                        xml.IsInherited(network_config[:is_inherited] || 'false')
-                        xml.Gateway network_config[:gateway]
-                        xml.Netmask network_config[:netmask]
-                        xml.Dns1 network_config[:dns1] if network_config[:dns1]
-                        xml.Dns2 network_config[:dns2] if network_config[:dns2]
-                        xml.DnsSuffix network_config[:dns_suffix] if network_config[:dns_suffix]
-                        xml.IpRanges {
-                          xml.IpRange {
-                            xml.StartAddress network_config[:start_address]
-                            xml.EndAddress network_config[:end_address]
+                if network_config.kind_of?(Array)
+                  network_config.each do |single_net|
+                    xml.NetworkConfig('networkName' => single_net[:name]) {
+                      xml.Configuration {
+                        if single_net[:fence_mode] != 'bridged'
+                          xml.IpScopes {
+                          xml.IpScope {
+                            xml.IsInherited(single_net[:is_inherited] || 'false')
+                            xml.Gateway single_net[:gateway]
+                            xml.Netmask single_net[:netmask]
+                            xml.Dns1 single_net[:dns1] if single_net[:dns1]
+                            xml.Dns2 single_net[:dns2] if single_net[:dns2]
+                            xml.DnsSuffix single_net[:dns_suffix] if single_net[:dns_suffix]
+                            xml.IpRanges {
+                              xml.IpRange {
+                                xml.StartAddress single_net[:start_address]
+                                xml.EndAddress single_net[:end_address]
+                                }
+                              }
+                            }
+                          }
+                        end
+                        xml.ParentNetwork("href" => "#{@api_url}/network/#{single_net[:parent_network]}") if single_net[:parent_network]
+                        xml.FenceMode single_net[:fence_mode]
+                        if single_net[:fence_mode] != 'bridged'
+                          xml.Features {
+                            xml.FirewallService {
+                              xml.IsEnabled(single_net[:enable_firewall] || "false")
+                            }
+                            xml.NatService {
+                              xml.IsEnabled "true"
+                              xml.NatType "portForwarding"
+                              xml.Policy(single_net[:nat_policy_type] || "allowTraffic")
+                            }
+                          }
+                        end
+                      }
+                    }
+                  end
+                else # network_config not an array
+                  xml.NetworkConfig('networkName' => network_config[:name]) {
+                    xml.Configuration {
+                      if network_config[:fence_mode] != 'bridged'
+                        xml.IpScopes {
+                        xml.IpScope {
+                          xml.IsInherited(network_config[:is_inherited] || 'false')
+                          xml.Gateway network_config[:gateway]
+                          xml.Netmask network_config[:netmask]
+                          xml.Dns1 network_config[:dns1] if network_config[:dns1]
+                          xml.Dns2 network_config[:dns2] if network_config[:dns2]
+                          xml.DnsSuffix network_config[:dns_suffix] if network_config[:dns_suffix]
+                          xml.IpRanges {
+                            xml.IpRange {
+                              xml.StartAddress network_config[:start_address]
+                              xml.EndAddress network_config[:end_address]
+                              }
                             }
                           }
                         }
-                      }
-                    end
-                    xml.ParentNetwork("href" => "#{@api_url}/network/#{network_config[:parent_network]}")
-                    xml.FenceMode network_config[:fence_mode]
-                    if network_config[:fence_mode] != 'bridged'
-                      xml.Features {
-                        xml.FirewallService {
-                          xml.IsEnabled(network_config[:enable_firewall] || "false")
+                      end
+                      xml.ParentNetwork("href" => "#{@api_url}/network/#{network_config[:parent_network]}")
+                      xml.FenceMode network_config[:fence_mode]
+                      if network_config[:fence_mode] != 'bridged'
+                        xml.Features {
+                          xml.FirewallService {
+                            xml.IsEnabled(network_config[:enable_firewall] || "false")
+                          }
+                          xml.NatService {
+                            xml.IsEnabled "true"
+                            xml.NatType "portForwarding"
+                            xml.Policy(network_config[:nat_policy_type] || "allowTraffic")
+                          }
                         }
-                        xml.NatService {
-                          xml.IsEnabled "true"
-                          xml.NatType "portForwarding"
-                          xml.Policy(network_config[:nat_policy_type] || "allowTraffic")
-                        }
-                      }
-                    end
+                      end
+                    }
                   }
-                }
+              end #networks
               }
             }
             vm_list.each do |vm_name, vm_id|
@@ -1912,7 +1953,7 @@ module VagrantPlugins
                   changed = true
                 end
               end
-            end 
+            end
           end
 
           if changed
