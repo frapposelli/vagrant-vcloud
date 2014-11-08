@@ -20,10 +20,21 @@ module VagrantPlugins
               b2.use HandleNATPortCollisions
               b2.use ForwardPorts
             end
+            cfg = env[:machine].provider_config
+            if cfg.power_on.nil? || cfg.power_on == true
+              if cfg.ssh_enabled.nil? || cfg.ssh_enabled == true
+                b2.use WaitForCommunicator, [:starting, :running]
+              end
+            end
+            b2.use Provision
+            if cfg.power_on.nil? || cfg.power_on == true # can't ssh if not on
+              if cfg.ssh_enabled.nil? || cfg.ssh_enabled == true  # can't sync if ssh is disabled
+                if cfg.sync_enabled.nil? || cfg.sync_enabled == true
+                  b2.use SyncFolders
+                end
+              end
+            end
           end
-          b.use WaitForCommunicator, [:starting, :running]
-          b.use Provision
-          b.use SyncFolders
         end
       end
 

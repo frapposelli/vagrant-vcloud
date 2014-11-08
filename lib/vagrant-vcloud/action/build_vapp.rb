@@ -256,23 +256,21 @@ module VagrantPlugins
               new_vm_properties = new_vapp[:vms_hash].fetch(vm_name)
               env[:machine].id = new_vm_properties[:id]
 
-              if cfg.guest_customizations.nil? || cfg.guest_customizations == true
-                ### SET GUEST CONFIG
-                @logger.info(
-                  "Setting Guest Customization on ID: [#{vm_name}] " +
-                  "of vApp [#{new_vapp[:name]}]"
-                )
-
-                set_custom = cnx.set_vm_guest_customization(
-                  new_vm_properties[:id],
-                  vm_name,
-                  {
-                    :enabled              => true,
-                    :admin_passwd_enabled => false
-                  }
-                )
-                cnx.wait_task_completion(set_custom)
-              end
+              ### SET GUEST CONFIG
+              @logger.info(
+                "Setting Guest Customization on ID: [#{vm_name}] " +
+                "of vApp [#{new_vapp[:name]}]"
+              )
+              env[:ui].info('Setting VM guest customization...')
+              set_custom = cnx.set_vm_guest_customization(
+                new_vm_properties[:id],
+                vm_name,
+                {
+                  :enabled              => true,
+                  :admin_passwd_enabled => false
+                }
+              )
+              cnx.wait_task_completion(set_custom)
 
             else
               env[:ui].error("vApp #{new_vapp[:name]} creation failed!")
@@ -301,23 +299,21 @@ module VagrantPlugins
               new_vm_properties = new_vapp[:vms_hash].fetch(vm_name)
               env[:machine].id = new_vm_properties[:id]
 
-              if cfg.guest_customizations.nil? || cfg.guest_customizations == true
-                ### SET GUEST CONFIG
-                @logger.info(
-                  'Setting Guest Customization on ID: ' +
-                  "[#{new_vm_properties[:id]}] of vApp [#{new_vapp[:name]}]"
-                )
-
-                set_custom = cnx.set_vm_guest_customization(
-                  new_vm_properties[:id],
-                  vm_name,
-                  {
-                    :enabled              => true,
-                    :admin_passwd_enabled => false
-                  }
-                )
-                cnx.wait_task_completion(set_custom)
-              end
+              ### SET GUEST CONFIG
+              @logger.info(
+                "Setting Guest Customization on ID: [#{vm_name}] " +
+                "of vApp [#{new_vapp[:name]}]"
+              )
+              env[:ui].info('Setting VM guest customization...')
+              set_custom = cnx.set_vm_guest_customization(
+                new_vm_properties[:id],
+                vm_name,
+                {
+                  :enabled              => true,
+                  :admin_passwd_enabled => false
+                }
+              )
+              cnx.wait_task_completion(set_custom)
 
             else
               env[:ui].error("VM #{vm_name} add to #{new_vapp[:name]} failed!")
