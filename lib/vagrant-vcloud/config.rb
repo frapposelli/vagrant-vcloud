@@ -101,9 +101,11 @@ module VagrantPlugins
       attr_accessor :vapp_name
       attr_accessor :networks
       attr_accessor :advanced_network
-      attr_accessor :guest_customizations
       attr_accessor :add_hdds
       attr_accessor :nics
+      attr_accessor :ssh_enabled
+      attr_accessor :sync_enabled
+      attr_accessor :power_on
 
       ##
       ## vCloud Director config runtime values

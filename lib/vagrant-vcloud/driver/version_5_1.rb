@@ -1979,6 +1979,87 @@ module VagrantPlugins
 
 
         ##
+        # set_vm_nics
+        def set_vm_nics(vmid, cfg)
+          return nil if cfg.nics.nil? || cfg.nics.length == 0
+          params = {
+            'method'  => :get,
+            'command' => "/vApp/vm-#{vmid}/virtualHardwareSection/networkCards"
+          }
+
+          response, _headers = send_request(params)
+
+          i_nic = 0
+          response.css('Item').each do |item|
+            break if i_nic == cfg.nics.length
+            nic = cfg.nics[i_nic]
+            conn = item.css('rasd|Connection').first
+            conn.content = nic[:network]
+            if nic[:ip_mode].upcase == 'DHCP'
+              conn['vcloud:ipAddressingMode'] = 'DHCP'
+            elsif nic[:ip_mode].upcase == 'STATIC'
+              conn['vcloud:ipAddressingMode'] = 'MANUAL'
+              conn['vcloud:ipAddress'] = nic[:ip]
+            elsif nic[:ip_mode].upcase == 'POOL'
+              conn['vcloud:ipAddressingMode'] = 'POOL'
+              conn['vcloud:ipAddress'] = nic[:ip] if nic[:ip]
+            end
+            conn['vcloud:primaryNetworkConnection'] = nic[:primary]
+            # item.css('rasd|Description').first.content = "#{nic[:type] || :vmxnet3} ethernet adapter"
+            # item.css('rasd|ResourceSubType').first.content = nic[:type] || :vmxnet3
+            i_nic = i_nic + 1
+          end
+
+          cfg.nics.each_with_index do |nic, i|
+            next if i < i_nic
+            hdd_list = response.css('Item')
+            hdd_count = hdd_list.length
+            newhdd = Nokogiri::XML::Builder.new do |xml|
+              xml.root('xmlns:rasd' => 'http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_ResourceAllocationSettingData') do
+                xml.Item {
+                  xml['rasd'].AddressOnParent(hdd_count)
+                  xml['rasd'].AutomaticAllocation(true)
+                  xml['rasd'].Connection(nic[:network])
+                  xml['rasd'].Description("#{nic[:type] || :vmxnet3} ethernet adapter")
+                  xml['rasd'].ElementName("Network adapter #{hdd_count}")
+                  xml['rasd'].InstanceID(hdd_count)
+                  xml['rasd'].ResourceSubType(nic[:type] || :vmxnet3)
+                  xml['rasd'].ResourceType(10)
+                }
+              end
+            end
+            conn = newhdd.doc.css('rasd|Connection').first
+            conn['xmlns:vcloud'] = 'http://www.vmware.com/vcloud/v1.5'
+            if nic[:ip_mode].upcase == 'DHCP'
+              conn['vcloud:ipAddressingMode'] = 'DHCP'
+            elsif nic[:ip_mode].upcase == 'STATIC'
+              conn['vcloud:ipAddressingMode'] = 'MANUAL'
+              conn['vcloud:ipAddress'] = nic[:ip]
+            elsif nic[:ip_mode].upcase == 'POOL'
+              conn['vcloud:ipAddressingMode'] = 'POOL'
+              conn['vcloud:ipAddress'] = nic[:ip] if nic[:ip]
+            end
+            conn['vcloud:primaryNetworkConnection'] = nic[:primary]
+            hdd_list.last.add_next_sibling(newhdd.doc.css('Item'))
+          end
+          params = {
+            'method'  => :put,
+            'command' => "/vApp/vm-#{vmid}/virtualHardwareSection/networkCards"
+          }
+
+          _response, headers = send_request(
+            params,
+            response.to_xml,
+            'application/vnd.vmware.vcloud.rasdItemsList+xml; charset=ISO-8859-1'
+          )
+
+          task_id = URI(headers['Location']).path.gsub('/api/task/', '')
+          task_id
+
+        end
+
+
+        ##
         # Fetch details about a given VM
         def get_vm(vm_id)
           params = {
@@ -1991,12 +2072,12 @@ module VagrantPlugins
           os_desc = response.css('ovf|OperatingSystemSection ovf|Description').first.text
 
           networks = {}
-          primary_network = response.css('PrimaryNetworkConnectionIndex').first.text
+          primary_network = response.css('PrimaryNetworkConnectionIndex').first.text.to_i
           response.css('NetworkConnection').each do |network|
             ip = network.css('IpAddress').first
             ip = ip.text if ip
             primary = false
-            primary = true if network.css('NetworkConnectionIndex').first.text == primary_network
+            primary = true if network.css('NetworkConnectionIndex').first.text.to_i == primary_network
 
             networks[network['network']] = {
               :primary            => primary,
