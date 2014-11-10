@@ -169,13 +169,17 @@ module VagrantPlugins
               "in Catalog [#{cfg.catalog_name}] does not exist!"
             )
 
-            user_input = env[:ui].ask(
-              "Would you like to upload the [#{box_name}] " +
-              "box to [#{cfg.catalog_name}] Catalog?\n" +
-              'Choice (yes/no): '
-            )
+            if cfg.auto_yes_for_upload.nil? || cfg.auto_yes_for_upload == false
+	            user_input = env[:ui].ask(
+	              "Would you like to upload the [#{box_name}] " +
+	              "box to [#{cfg.catalog_name}] Catalog?\n" +
+	              'Choice (yes/no): '
+	            )
+	        else
+	        	auto_upload = cfg.auto_yes_for_upload
+	        end
 
-            if user_input.downcase == 'yes' || user_input.downcase == 'y'
+            if !auto_upload.nil? || user_input.downcase == 'yes' || user_input.downcase == 'y'
               env[:ui].info("Uploading [#{box_name}]...")
               vcloud_upload_box(env)
             else
