@@ -2132,6 +2132,63 @@ module VagrantPlugins
 
 
         ##
+        # Add metadata
+        def set_vapp_metadata(id, data)
+          task_id = set_metadata "vApp/vapp-#{id}", data
+          task_id
+        end
+
+
+        ##
+        # Add metadata
+        def set_vm_metadata(id, data)
+          task_id = set_metadata "vApp/vm-#{id}", data
+          task_id
+        end
+
+
+        ##
+        # Add metadata
+        def set_metadata(link, data)
+          params = {
+            'method'  => :post,
+            'command' => "/#{link}/metadata"
+          }
+
+          md = Nokogiri::XML::Builder.new do |xml|
+            xml.Metadata('xmlns' => 'http://www.vmware.com/vcloud/v1.5',
+                         'xmlns:xsi' => 'http://www.w3.org/2001/XMLSchema-instance',
+                         'type' => 'application/vnd.vmware.vcloud.metadata+xml') do
+              data.each do |d|
+                xml.MetadataEntry('type' => 'application/vnd.vmware.vcloud.metadata.value+xml') {
+                  xml.Key(d[0])
+                  if d[1].kind_of?(Integer)
+                    typ = 'MetadataNumberValue'
+                  elsif !!d[1] == d[1] # boolean
+                    typ = 'MetadataBooleanValue'
+                  else
+                    typ = 'MetadataStringValue'
+                  end
+                  xml.TypedValue('xsi:type' => typ) {
+                    xml.Value(d[1])
+                  }
+                }
+              end
+            end
+          end
+
+          _response, headers = send_request(
+            params,
+            md.to_xml,
+            'application/vnd.vmware.vcloud.metadata+xml'
+          )
+
+          task_id = URI(headers['Location']).path.gsub('/api/task/', '')
+          task_id
+
+        end
+
+        ##
         # Fetch details about a given VM
         def get_vm(vm_id)
           params = {
