@@ -2013,23 +2013,23 @@ module VagrantPlugins
 
           cfg.nics.each_with_index do |nic, i|
             next if i < i_nic
-            hdd_list = response.css('Item')
-            hdd_count = hdd_list.length
-            newhdd = Nokogiri::XML::Builder.new do |xml|
+            nic_list = response.css('Item')
+            nic_count = nic_list.length
+            newnic = Nokogiri::XML::Builder.new do |xml|
               xml.root('xmlns:rasd' => 'http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_ResourceAllocationSettingData') do
                 xml.Item {
-                  xml['rasd'].AddressOnParent(hdd_count)
+                  xml['rasd'].AddressOnParent(nic_count)
                   xml['rasd'].AutomaticAllocation(true)
                   xml['rasd'].Connection(nic[:network])
                   xml['rasd'].Description("#{nic[:type] || :vmxnet3} ethernet adapter")
-                  xml['rasd'].ElementName("Network adapter #{hdd_count}")
-                  xml['rasd'].InstanceID(hdd_count)
+                  xml['rasd'].ElementName("Network adapter #{nic_count}")
+                  xml['rasd'].InstanceID(nic_count)
                   xml['rasd'].ResourceSubType(nic[:type] || :vmxnet3)
                   xml['rasd'].ResourceType(10)
                 }
               end
             end
-            conn = newhdd.doc.css('rasd|Connection').first
+            conn = newnic.doc.css('rasd|Connection').first
             conn['xmlns:vcloud'] = 'http://www.vmware.com/vcloud/v1.5'
             if nic[:ip_mode].upcase == 'DHCP'
               conn['vcloud:ipAddressingMode'] = 'DHCP'
@@ -2041,11 +2041,83 @@ module VagrantPlugins
               conn['vcloud:ipAddress'] = nic[:ip] if nic[:ip]
             end
             conn['vcloud:primaryNetworkConnection'] = nic[:primary]
-            hdd_list.last.add_next_sibling(newhdd.doc.css('Item'))
+            nic_list.last.add_next_sibling(newnic.doc.css('Item'))
           end
           params = {
             'method'  => :put,
             'command' => "/vApp/vm-#{vmid}/virtualHardwareSection/networkCards"
+          }
+
+          _response, headers = send_request(
+            params,
+            response.to_xml,
+            'application/vnd.vmware.vcloud.rasdItemsList+xml; charset=ISO-8859-1'
+          )
+
+          task_id = URI(headers['Location']).path.gsub('/api/task/', '')
+          task_id
+
+        end
+
+
+        ##
+        # Add hard drives to VM
+        def set_vm_hdds(vmid, cfg)
+          return nil if cfg.add_hdds.nil? || cfg.add_hdds.length == 0
+          params = {
+            'method'  => :get,
+            'command' => "/vApp/vm-#{vmid}/virtualHardwareSection/disks"
+          }
+
+          response, _headers = send_request(params)
+
+          address_on_parent = -1
+          instance_id = -1
+          parent_id = nil
+          bus_type = nil
+          bus_sub_type = nil
+          hdd_count = 0
+          response.css('Item').each do |item|
+            if item.css('rasd|ResourceType').first.text == '17'
+              hdd_count = hdd_count + 1
+              if parent_id.nil?
+                parent_id = item.css('rasd|Parent').first.text
+                bus_type = item.css('rasd|HostResource').first[:busType]
+                bus_sub_type = item.css('rasd|HostResource').first[:busSubType]
+              end
+              if parent_id == item.css('rasd|Parent').first.text
+                address_on_parent = [ address_on_parent,  item.css('rasd|AddressOnParent').first.text.to_i ].max
+              end
+            end
+            instance_id = [ instance_id, item.css('rasd|InstanceID').first.text.to_i ].max
+          end
+
+          cfg.add_hdds.each do |hdd|
+            address_on_parent = address_on_parent + 1
+            instance_id = instance_id + 1
+            newhdd = Nokogiri::XML::Builder.new do |xml|
+              xml.root('xmlns:rasd' => 'http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_ResourceAllocationSettingData') do
+                xml.Item {
+                  xml['rasd'].AddressOnParent(address_on_parent)
+                  xml['rasd'].Description("Hard disk")
+                  xml['rasd'].ElementName("Hard disk #{address_on_parent}")
+                  xml['rasd'].HostResource()
+                  xml['rasd'].InstanceID(instance_id)
+                  xml['rasd'].Parent(parent_id)
+                  xml['rasd'].ResourceType(17)
+                }
+              end
+            end
+            hr = newhdd.doc.css('rasd|HostResource').first
+            hr['xmlns:vcloud'] = 'http://www.vmware.com/vcloud/v1.5'
+            hr['vcloud:busSubType'] = bus_sub_type
+            hr['vcloud:busType'] = bus_type
+            hr['vcloud:capacity'] = hdd
+            response.css('Item').last.add_next_sibling(newhdd.doc.css('Item'))
+          end
+          params = {
+            'method'  => :put,
+            'command' => "/vApp/vm-#{vmid}/virtualHardwareSection/disks"
           }
 
           _response, headers = send_request(

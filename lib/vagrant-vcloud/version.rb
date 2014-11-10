@@ -1,5 +1,5 @@
 module VagrantPlugins
   module VCloud
-    VERSION = '0.4.5.57'
+    VERSION = '0.4.5.60'
   end
 end
