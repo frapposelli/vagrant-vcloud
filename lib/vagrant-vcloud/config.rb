@@ -110,6 +110,8 @@ module VagrantPlugins
       attr_accessor :ssh_enabled
       attr_accessor :sync_enabled
       attr_accessor :power_on
+      attr_accessor :metadata_vapp
+      attr_accessor :metadata_vm
 
       ##
       ## vCloud Director config runtime values

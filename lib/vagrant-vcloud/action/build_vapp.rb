@@ -252,9 +252,23 @@ module VagrantPlugins
             if new_vapp
               env[:ui].success("vApp #{new_vapp[:name]} successfully created.")
 
+              # add vapp metadata
+              if !cfg.metadata_vapp.nil?
+              	env[:ui].info('Setting vApp metadata...')
+              	set_metadata_vapp = cnx.set_vapp_metadata vapp_id, cfg.metadata_vapp
+              	cnx.wait_task_completion(set_metadata_vapp)
+              end
+
               # Add the vm id as machine.id
               new_vm_properties = new_vapp[:vms_hash].fetch(vm_name)
               env[:machine].id = new_vm_properties[:id]
+
+              # add vm metadata
+              if !cfg.metadata_vm.nil?
+              	env[:ui].info('Setting VM metadata...')
+              	set_metadata_vm = cnx.set_vm_metadata new_vm_properties[:id], cfg.metadata_vm
+              	cnx.wait_task_completion(set_metadata_vm)
+              end
 
               ### SET GUEST CONFIG
               @logger.info(
@@ -298,6 +312,13 @@ module VagrantPlugins
             if new_vapp
               new_vm_properties = new_vapp[:vms_hash].fetch(vm_name)
               env[:machine].id = new_vm_properties[:id]
+
+              # add vm metadata
+              if !cfg.metadata_vm.nil?
+              	env[:ui].info('Setting VM metadata...')
+              	set_metadata_vm = cnx.set_vm_metadata new_vm_properties[:id], cfg.metadata_vm
+              	cnx.wait_task_completion(set_metadata_vm)
+              end
 
               ### SET GUEST CONFIG
               @logger.info(
