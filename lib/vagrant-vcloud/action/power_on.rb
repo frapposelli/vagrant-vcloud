@@ -27,6 +27,14 @@ module VagrantPlugins
             end
           end
 
+          if !cfg.add_hdds.nil? && cfg.add_hdds.length > 0
+            env[:ui].info('Adding VM hard disks...')
+            set_vm_hdds = cnx.set_vm_hdds(env[:machine].id, cfg)
+            if set_vm_hdds
+              cnx.wait_task_completion(set_vm_hdds)
+            end
+          end
+
           if !cfg.nested_hypervisor.nil? && cfg.nested_hypervisor == true
             env[:ui].info('Enabling nested hypervisor...')
             set_vm_nested_hypervisor = cnx.set_vm_nested_hypervisor(env[:machine].id, cfg.nested_hypervisor)
