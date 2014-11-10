@@ -108,6 +108,7 @@ module VagrantPlugins
       attr_accessor :power_on
       attr_accessor :metadata_vapp
       attr_accessor :metadata_vm
+      attr_accessor :auto_yes_for_upload
 
       ##
       ## vCloud Director config runtime values
