@@ -748,121 +748,128 @@ module VagrantPlugins
         # - vapp_description: description of the target vapp
         # - vm_list: hash with IDs of the VMs used in the composing process
         # - network_config: hash of the network configuration for the vapp
-        def compose_vapp_from_vm(vdc, vapp_name, vapp_description, vm_list = {}, network_config = {})
+        def compose_vapp_from_vm(vdc, vapp_name, vapp_description, vm_list = {}, network_config = {}, _cfg)
           builder = Nokogiri::XML::Builder.new do |xml|
-          xml.ComposeVAppParams(
-            'xmlns' => 'http://www.vmware.com/vcloud/v1.5',
-            'xmlns:ovf' => 'http://schemas.dmtf.org/ovf/envelope/1',
-            'name' => vapp_name,
-            'deploy' => 'false',
-            'powerOn' => 'false') {
-            xml.Description vapp_description
-            xml.InstantiationParams {
-              xml.NetworkConfigSection {
-                xml['ovf'].Info 'Configuration parameters for logical networks'
-                if network_config.kind_of?(Array)
-                  network_config.each do |single_net|
-                    xml.NetworkConfig('networkName' => single_net[:name]) {
+            xml.ComposeVAppParams(
+              'xmlns' => 'http://www.vmware.com/vcloud/v1.5',
+              'xmlns:ovf' => 'http://schemas.dmtf.org/ovf/envelope/1',
+              'name' => vapp_name,
+              'deploy' => 'false',
+              'powerOn' => 'false') {
+              xml.Description vapp_description
+              xml.InstantiationParams {
+                xml.NetworkConfigSection {
+                  xml['ovf'].Info 'Configuration parameters for logical networks'
+                  if network_config.kind_of?(Array)
+                    network_config.each do |single_net|
+                      xml.NetworkConfig('networkName' => single_net[:name]) {
+                        xml.Configuration {
+                          if single_net[:fence_mode] != 'bridged'
+                            xml.IpScopes {
+                            xml.IpScope {
+                              xml.IsInherited(single_net[:is_inherited] || 'false')
+                              xml.Gateway single_net[:gateway]
+                              xml.Netmask single_net[:netmask]
+                              xml.Dns1 single_net[:dns1] if single_net[:dns1]
+                              xml.Dns2 single_net[:dns2] if single_net[:dns2]
+                              xml.DnsSuffix single_net[:dns_suffix] if single_net[:dns_suffix]
+                              xml.IpRanges {
+                                xml.IpRange {
+                                  xml.StartAddress single_net[:start_address]
+                                  xml.EndAddress single_net[:end_address]
+                                  }
+                                }
+                              }
+                            }
+                          end
+                          xml.ParentNetwork("href" => "#{@api_url}/network/#{single_net[:parent_network]}") if single_net[:parent_network]
+                          xml.FenceMode single_net[:fence_mode]
+                          if single_net[:fence_mode] != 'bridged'
+                            xml.Features {
+                              xml.FirewallService {
+                                xml.IsEnabled(single_net[:enable_firewall] || "false")
+                              }
+                              xml.NatService {
+                                xml.IsEnabled "true"
+                                xml.NatType "portForwarding"
+                                xml.Policy(single_net[:nat_policy_type] || "allowTraffic")
+                              }
+                            }
+                          end
+                        }
+                      }
+                    end
+                  else # network_config not an array
+                    xml.NetworkConfig('networkName' => network_config[:name]) {
                       xml.Configuration {
-                        if single_net[:fence_mode] != 'bridged'
+                        if network_config[:fence_mode] != 'bridged'
                           xml.IpScopes {
                           xml.IpScope {
-                            xml.IsInherited(single_net[:is_inherited] || 'false')
-                            xml.Gateway single_net[:gateway]
-                            xml.Netmask single_net[:netmask]
-                            xml.Dns1 single_net[:dns1] if single_net[:dns1]
-                            xml.Dns2 single_net[:dns2] if single_net[:dns2]
-                            xml.DnsSuffix single_net[:dns_suffix] if single_net[:dns_suffix]
+                            xml.IsInherited(network_config[:is_inherited] || 'false')
+                            xml.Gateway network_config[:gateway]
+                            xml.Netmask network_config[:netmask]
+                            xml.Dns1 network_config[:dns1] if network_config[:dns1]
+                            xml.Dns2 network_config[:dns2] if network_config[:dns2]
+                            xml.DnsSuffix network_config[:dns_suffix] if network_config[:dns_suffix]
                             xml.IpRanges {
                               xml.IpRange {
-                                xml.StartAddress single_net[:start_address]
-                                xml.EndAddress single_net[:end_address]
+                                xml.StartAddress network_config[:start_address]
+                                xml.EndAddress network_config[:end_address]
                                 }
                               }
                             }
                           }
                         end
-                        xml.ParentNetwork("href" => "#{@api_url}/network/#{single_net[:parent_network]}") if single_net[:parent_network]
-                        xml.FenceMode single_net[:fence_mode]
-                        if single_net[:fence_mode] != 'bridged'
+                        xml.ParentNetwork("href" => "#{@api_url}/network/#{network_config[:parent_network]}")
+                        xml.FenceMode network_config[:fence_mode]
+                        if network_config[:fence_mode] != 'bridged'
                           xml.Features {
                             xml.FirewallService {
-                              xml.IsEnabled(single_net[:enable_firewall] || "false")
+                              xml.IsEnabled(network_config[:enable_firewall] || "false")
                             }
                             xml.NatService {
                               xml.IsEnabled "true"
                               xml.NatType "portForwarding"
-                              xml.Policy(single_net[:nat_policy_type] || "allowTraffic")
+                              xml.Policy(network_config[:nat_policy_type] || "allowTraffic")
                             }
                           }
                         end
                       }
                     }
-                  end
-                else # network_config not an array
-                  xml.NetworkConfig('networkName' => network_config[:name]) {
-                    xml.Configuration {
-                      if network_config[:fence_mode] != 'bridged'
-                        xml.IpScopes {
-                        xml.IpScope {
-                          xml.IsInherited(network_config[:is_inherited] || 'false')
-                          xml.Gateway network_config[:gateway]
-                          xml.Netmask network_config[:netmask]
-                          xml.Dns1 network_config[:dns1] if network_config[:dns1]
-                          xml.Dns2 network_config[:dns2] if network_config[:dns2]
-                          xml.DnsSuffix network_config[:dns_suffix] if network_config[:dns_suffix]
-                          xml.IpRanges {
-                            xml.IpRange {
-                              xml.StartAddress network_config[:start_address]
-                              xml.EndAddress network_config[:end_address]
-                              }
-                            }
-                          }
-                        }
-                      end
-                      xml.ParentNetwork("href" => "#{@api_url}/network/#{network_config[:parent_network]}")
-                      xml.FenceMode network_config[:fence_mode]
-                      if network_config[:fence_mode] != 'bridged'
-                        xml.Features {
-                          xml.FirewallService {
-                            xml.IsEnabled(network_config[:enable_firewall] || "false")
-                          }
-                          xml.NatService {
-                            xml.IsEnabled "true"
-                            xml.NatType "portForwarding"
-                            xml.Policy(network_config[:nat_policy_type] || "allowTraffic")
-                          }
-                        }
-                      end
-                    }
-                  }
-              end #networks
-              }
-            }
-            vm_list.each do |vm_name, vm_id|
-              xml.SourcedItem {
-                xml.Source('href' => "#{@api_url}/vAppTemplate/vm-#{vm_id}", 'name' => vm_name)
-                xml.InstantiationParams {
-                  xml.NetworkConnectionSection(
-                    'xmlns:ovf' => 'http://schemas.dmtf.org/ovf/envelope/1',
-                    'type' => 'application/vnd.vmware.vcloud.networkConnectionSection+xml',
-                    'href' => "#{@api_url}/vAppTemplate/vm-#{vm_id}/networkConnectionSection/") {
-                      xml['ovf'].Info 'Network config for sourced item'
-                      xml.PrimaryNetworkConnectionIndex '0'
-                      xml.NetworkConnection('network' => 'TA-Build') {#network_config[:name]) {
-                        xml.NetworkConnectionIndex '0'
-                        xml.IsConnected 'true'
-                        xml.IpAddressAllocationMode('POOL')# network_config[:ip_allocation_mode] || 'POOL')
-                    }
-                  }
-                  xml.NetworkAssignment('containerNetwork' => network_config[:name], 'innerNetwork' => network_config[:name])
+                end #networks
                 }
-                #xml.NetworkAssignment('containerNetwork' => network_config[:name], 'innerNetwork' => network_config[:name])
-                xml.NetworkAssignment('containerNetwork' => 'TA-Build', 'innerNetwork' => 'TA-Build')
               }
-            end
-            xml.AllEULAsAccepted 'true'
-          }
+              vm_list.each do |vm_name, vm_id|
+                xml.SourcedItem {
+                  xml.Source('href' => "#{@api_url}/vAppTemplate/vm-#{vm_id}", 'name' => vm_name)
+                  xml.InstantiationParams {
+                    xml.GuestCustomizationSection(
+                      'xmlns' => 'http://www.vmware.com/vcloud/v1.5',
+                      'xmlns:ovf' => 'http://schemas.dmtf.org/ovf/envelope/1') {
+                        xml['ovf'].Info 'VM Guest Customization configuration'
+                        xml.Enabled true
+                        xml.AdminPasswordEnabled false
+                        xml.ComputerName vm_name
+                    }
+                    xml.NetworkConnectionSection(
+                      'xmlns:ovf' => 'http://schemas.dmtf.org/ovf/envelope/1',
+                      'type' => 'application/vnd.vmware.vcloud.networkConnectionSection+xml',
+                      'href' => "#{@api_url}/vAppTemplate/vm-#{vm_id}/networkConnectionSection/") {
+                        xml['ovf'].Info 'Network config for sourced item'
+                        xml.PrimaryNetworkConnectionIndex '0'
+                        xml.NetworkConnection('network' => 'TA-Build') {#network_config[:name]) {
+                          xml.NetworkConnectionIndex '0'
+                          xml.IsConnected 'true'
+                          xml.IpAddressAllocationMode('POOL')# network_config[:ip_allocation_mode] || 'POOL')
+                      }
+                    }
+                  }
+                  #xml.NetworkAssignment('containerNetwork' => network_config[:name], 'innerNetwork' => network_config[:name])
+                  xml.NetworkAssignment('containerNetwork' => 'TA-Build', 'innerNetwork' => 'TA-Build')
+                }
+              end
+              xml.AllEULAsAccepted 'true'
+            }
           end
 
           params = {
@@ -894,7 +901,7 @@ module VagrantPlugins
         # - vm_list: hash with IDs of the VMs to be used in the composing process
         # - network_config: hash of the network configuration for the vapp
 
-        def recompose_vapp_from_vm(vapp_id, vm_list = {}, network_config = {})
+        def recompose_vapp_from_vm(vapp_id, vm_list = {}, network_config = {}, _cfg)
           original_vapp = get_vapp(vapp_id)
 
           builder = Nokogiri::XML::Builder.new do |xml|
@@ -908,6 +915,14 @@ module VagrantPlugins
               xml.SourcedItem {
                 xml.Source('href' => "#{@api_url}/vAppTemplate/vm-#{vm_id}", 'name' => vm_name)
                 xml.InstantiationParams {
+                  xml.GuestCustomizationSection(
+                    'xmlns' => 'http://www.vmware.com/vcloud/v1.5',
+                    'xmlns:ovf' => 'http://schemas.dmtf.org/ovf/envelope/1') {
+                      xml['ovf'].Info 'VM Guest Customization configuration'
+                      xml.Enabled true
+                      xml.AdminPasswordEnabled false
+                      xml.ComputerName vm_name
+                  }
                   xml.NetworkConnectionSection(
                     'xmlns:ovf' => 'http://schemas.dmtf.org/ovf/envelope/1',
                     'type' => 'application/vnd.vmware.vcloud.networkConnectionSection+xml',
@@ -1913,6 +1928,13 @@ module VagrantPlugins
 
         # Enable VM Nested Hardware-Assisted Virtualization
         def set_vm_nested_hypervisor(vm_id, enable)
+          vm = get_vm(vm_id)
+          if enable && vm[:hypervisor_enabled] == 'true'
+            return nil
+          elsif !enable && vm[:hypervisor_enabled] == 'false'
+            return nil
+          end
+
           action = enable ? "enable" : "disable"
           params = {
             'method'  => :post,
@@ -2101,8 +2123,8 @@ module VagrantPlugins
               xml.root('xmlns:rasd' => 'http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_ResourceAllocationSettingData') do
                 xml.Item {
                   xml['rasd'].AddressOnParent(address_on_parent)
-                  xml['rasd'].Description("Hard disk")
-                  xml['rasd'].ElementName("Hard disk #{address_on_parent}")
+                  xml['rasd'].Description("Vagrant Hard disk")
+                  xml['rasd'].ElementName("Vagrant Hard disk #{address_on_parent}")
                   xml['rasd'].HostResource()
                   xml['rasd'].InstanceID(instance_id)
                   xml['rasd'].Parent(parent_id)
@@ -2201,6 +2223,7 @@ module VagrantPlugins
 
           response, _headers = send_request(params)
 
+          hypervisor_enabled = response[:nestedHypervisorEnabled]
           os_desc = response.css('ovf|OperatingSystemSection ovf|Description').first.text
 
           networks = {}
@@ -2238,7 +2261,8 @@ module VagrantPlugins
           {
             :os_desc              => os_desc,
             :networks             => networks,
-            :guest_customizations => guest_customizations
+            :guest_customizations => guest_customizations,
+            :hypervisor_enabled   => hypervisor_enabled
           }
         end
       end # Class Version 5.1

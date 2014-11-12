@@ -229,7 +229,8 @@ module VagrantPlugins
               {
                 vm_name => cfg.catalog_item[:vms_hash].first.last[:id]
               },
-              network_options
+              network_options,
+              cfg
             )
             @logger.debug('Launch Compose vApp...')
             # Wait for the task to finish.
@@ -251,41 +252,12 @@ module VagrantPlugins
             # FIXME: Add a lot of error handling for each step here !
             if new_vapp
               env[:ui].success("vApp #{new_vapp[:name]} successfully created.")
-
               # add vapp metadata
               if !cfg.metadata_vapp.nil?
-              	env[:ui].info('Setting vApp metadata...')
-              	set_metadata_vapp = cnx.set_vapp_metadata vapp_id, cfg.metadata_vapp
-              	cnx.wait_task_completion(set_metadata_vapp)
+                env[:ui].info('Setting vApp metadata...')
+                set_metadata_vapp = cnx.set_vapp_metadata vapp_id, cfg.metadata_vapp
+                cnx.wait_task_completion(set_metadata_vapp)
               end
-
-              # Add the vm id as machine.id
-              new_vm_properties = new_vapp[:vms_hash].fetch(vm_name)
-              env[:machine].id = new_vm_properties[:id]
-
-              # add vm metadata
-              if !cfg.metadata_vm.nil?
-              	env[:ui].info('Setting VM metadata...')
-              	set_metadata_vm = cnx.set_vm_metadata new_vm_properties[:id], cfg.metadata_vm
-              	cnx.wait_task_completion(set_metadata_vm)
-              end
-
-              ### SET GUEST CONFIG
-              @logger.info(
-                "Setting Guest Customization on ID: [#{vm_name}] " +
-                "of vApp [#{new_vapp[:name]}]"
-              )
-              env[:ui].info('Setting VM guest customization...')
-              set_custom = cnx.set_vm_guest_customization(
-                new_vm_properties[:id],
-                vm_name,
-                {
-                  :enabled              => true,
-                  :admin_passwd_enabled => false
-                }
-              )
-              cnx.wait_task_completion(set_custom)
-
             else
               env[:ui].error("vApp #{new_vapp[:name]} creation failed!")
               raise # FIXME: error handling missing.
@@ -299,7 +271,8 @@ module VagrantPlugins
               {
                 vm_name => cfg.catalog_item[:vms_hash].first.last[:id]
               },
-              network_options
+              network_options,
+              cfg
             )
 
             @logger.info('Waiting for the recompose task to complete ...')
@@ -309,36 +282,49 @@ module VagrantPlugins
 
             new_vapp = cnx.get_vapp(env[:machine].get_vapp_id)
             # FIXME: Add a lot of error handling for each step here !
-            if new_vapp
-              new_vm_properties = new_vapp[:vms_hash].fetch(vm_name)
-              env[:machine].id = new_vm_properties[:id]
-
-              # add vm metadata
-              if !cfg.metadata_vm.nil?
-              	env[:ui].info('Setting VM metadata...')
-              	set_metadata_vm = cnx.set_vm_metadata new_vm_properties[:id], cfg.metadata_vm
-              	cnx.wait_task_completion(set_metadata_vm)
-              end
-
-              ### SET GUEST CONFIG
-              @logger.info(
-                "Setting Guest Customization on ID: [#{vm_name}] " +
-                "of vApp [#{new_vapp[:name]}]"
-              )
-              env[:ui].info('Setting VM guest customization...')
-              set_custom = cnx.set_vm_guest_customization(
-                new_vm_properties[:id],
-                vm_name,
-                {
-                  :enabled              => true,
-                  :admin_passwd_enabled => false
-                }
-              )
-              cnx.wait_task_completion(set_custom)
-
-            else
+            if !new_vapp
               env[:ui].error("VM #{vm_name} add to #{new_vapp[:name]} failed!")
               raise
+            end
+          end
+          # Add the vm id as machine.id
+          new_vm_properties = new_vapp[:vms_hash].fetch(vm_name)
+          env[:machine].id = new_vm_properties[:id]
+
+          # add vm metadata
+          if !cfg.metadata_vm.nil?
+            env[:ui].info('Setting VM metadata...')
+            set_metadata_vm = cnx.set_vm_metadata env[:machine].id, cfg.metadata_vm
+            cnx.wait_task_completion(set_metadata_vm)
+          end
+          # add/update hardware
+          env[:ui].info('Setting VM hardware...')
+          set_vm_hardware = cnx.set_vm_hardware(env[:machine].id, cfg)
+          if set_vm_hardware
+            cnx.wait_task_completion(set_vm_hardware)
+          end
+          # add nics
+          if !cfg.nics.nil? && cfg.nics.length > 0
+            env[:ui].info('Setting VM network cards...')
+            set_vm_nics = cnx.set_vm_nics(env[:machine].id, cfg)
+            if set_vm_nics
+              cnx.wait_task_completion(set_vm_nics)
+            end
+          end
+          # add hard drives
+          if !cfg.add_hdds.nil? && cfg.add_hdds.length > 0
+            env[:ui].info('Adding VM hard disks...')
+            set_vm_hdds = cnx.set_vm_hdds(env[:machine].id, cfg)
+            if set_vm_hdds
+              cnx.wait_task_completion(set_vm_hdds)
+            end
+          end
+          # enable nested hypervisor
+          if !cfg.nested_hypervisor.nil? && cfg.nested_hypervisor == true
+            env[:ui].info('Enabling nested hypervisor...')
+            set_vm_nested_hypervisor = cnx.set_vm_nested_hypervisor(env[:machine].id, true)
+            if set_vm_nested_hypervisor
+              cnx.wait_task_completion(set_vm_nested_hypervisor)
             end
           end
 
