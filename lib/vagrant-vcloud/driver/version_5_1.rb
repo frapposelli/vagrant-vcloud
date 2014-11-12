@@ -1993,6 +1993,7 @@ module VagrantPlugins
           response.css('Item').each do |item|
             break if i_nic == cfg.nics.length
             nic = cfg.nics[i_nic]
+            item.css('rasd|Address').first.content = nic[:mac] if !nic[:mac].nil?
             conn = item.css('rasd|Connection').first
             conn.content = nic[:network]
             if nic[:ip_mode].upcase == 'DHCP'
@@ -2002,7 +2003,7 @@ module VagrantPlugins
               conn['vcloud:ipAddress'] = nic[:ip]
             elsif nic[:ip_mode].upcase == 'POOL'
               conn['vcloud:ipAddressingMode'] = 'POOL'
-              conn['vcloud:ipAddress'] = nic[:ip] if nic[:ip]
+              conn['vcloud:ipAddress'] = nic[:ip] if !nic[:ip].nil?
             end
             conn['vcloud:primaryNetworkConnection'] = nic[:primary]
             # item.css('rasd|Description').first.content = "#{nic[:type] || :vmxnet3} ethernet adapter"
@@ -2017,6 +2018,7 @@ module VagrantPlugins
             newnic = Nokogiri::XML::Builder.new do |xml|
               xml.root('xmlns:rasd' => 'http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_ResourceAllocationSettingData') do
                 xml.Item {
+                  xml['rasd'].Address(nic[:mac]) if !nic[:mac].nil?
                   xml['rasd'].AddressOnParent(nic_count)
                   xml['rasd'].AutomaticAllocation(true)
                   xml['rasd'].Connection(nic[:network])
