@@ -851,21 +851,22 @@ module VagrantPlugins
                         xml.AdminPasswordEnabled false
                         xml.ComputerName vm_name
                     }
-                    xml.NetworkConnectionSection(
-                      'xmlns:ovf' => 'http://schemas.dmtf.org/ovf/envelope/1',
-                      'type' => 'application/vnd.vmware.vcloud.networkConnectionSection+xml',
-                      'href' => "#{@api_url}/vAppTemplate/vm-#{vm_id}/networkConnectionSection/") {
-                        xml['ovf'].Info 'Network config for sourced item'
-                        xml.PrimaryNetworkConnectionIndex '0'
-                        xml.NetworkConnection('network' => 'TA-Build') {#network_config[:name]) {
-                          xml.NetworkConnectionIndex '0'
-                          xml.IsConnected 'true'
-                          xml.IpAddressAllocationMode('POOL')# network_config[:ip_allocation_mode] || 'POOL')
+                    if !_cfg.advanced_network
+                      xml.NetworkConnectionSection(
+                        'xmlns:ovf' => 'http://schemas.dmtf.org/ovf/envelope/1',
+                        'type' => 'application/vnd.vmware.vcloud.networkConnectionSection+xml',
+                        'href' => "#{@api_url}/vAppTemplate/vm-#{vm_id}/networkConnectionSection/") {
+                          xml['ovf'].Info 'Network config for sourced item'
+                          xml.PrimaryNetworkConnectionIndex '0'
+                          xml.NetworkConnection('network' => network_config[:name]) {
+                            xml.NetworkConnectionIndex '0'
+                            xml.IsConnected 'true'
+                            xml.IpAddressAllocationMode( network_config[:ip_allocation_mode] || 'POOL')
+                        }
                       }
-                    }
+                    end
                   }
-                  #xml.NetworkAssignment('containerNetwork' => network_config[:name], 'innerNetwork' => network_config[:name])
-                  xml.NetworkAssignment('containerNetwork' => 'TA-Build', 'innerNetwork' => 'TA-Build')
+                  xml.NetworkAssignment('containerNetwork' => network_config[:name], 'innerNetwork' => network_config[:name]) if !_cfg.advanced_network
                 }
               end
               xml.AllEULAsAccepted 'true'
@@ -1962,10 +1963,13 @@ module VagrantPlugins
           hdd_bus_type = nil
           hdd_bus_sub_type = nil
           hdd_count = 0
+          nic_count = 0
+          nic_address_on_parent = -1
           response, _headers = send_request(params)
 
           response.css('ovf|Item').each do |item|
             type = item.css('rasd|ResourceType').first
+            instance_id = [ instance_id, item.css('rasd|InstanceID').first.text.to_i ].max
             if type.content == '3'
               # cpus
               if cfg.cpus
@@ -1984,6 +1988,44 @@ module VagrantPlugins
                   changed = true
                 end
               end
+            elsif type.content == '10'
+              # network card
+              nic_address_on_parent = [ nic_address_on_parent, item.css('rasd|AddressOnParent').first.text.to_i ].max
+              next if !cfg.nics || nic_count == cfg.nics.length
+              nic = cfg.nics[nic_count]
+
+              orig_mac = item.css('rasd|Address').first.text
+              orig_ip = item.css('rasd|Connection').first['vcloud:ipAddress']
+              orig_address_mode = item.css('rasd|Connection').first['vcloud:ipAddressingMode']
+              orig_primary = item.css('rasd|Connection').first['vcloud:primaryNetworkConnection']
+              orig_network = item.css('rasd|Connection').first.text
+
+              if !nic[:mac].nil?
+                changed = true if nic[:mac] != orig_mac
+              end
+              if !nic[:ip].nil?
+                changed = true if nic[:ip] != orig_ip
+              end
+              changed = true if nic[:ip_mode] != orig_address_mode
+              changed = true if nic[:primary] != orig_primary
+              changed = true if nic[:network] != orig_network
+
+              if changed
+                item.css('rasd|Address').first.content = nic[:mac] if !nic[:mac].nil?
+                conn = item.css('rasd|Connection').first
+                conn.content = nic[:network]
+                if nic[:ip_mode].upcase == 'DHCP'
+                  conn['vcloud:ipAddressingMode'] = 'DHCP'
+                elsif nic[:ip_mode].upcase == 'STATIC'
+                  conn['vcloud:ipAddressingMode'] = 'MANUAL'
+                  conn['vcloud:ipAddress'] = nic[:ip]
+                elsif nic[:ip_mode].upcase == 'POOL'
+                  conn['vcloud:ipAddressingMode'] = 'POOL'
+                  conn['vcloud:ipAddress'] = nic[:ip] if !nic[:ip].nil?
+                end
+                conn['vcloud:primaryNetworkConnection'] = nic[:primary]
+              end
+              nic_count = nic_count + 1
             elsif type.content == '17'
               # hard disk
               hdd_count = hdd_count + 1
@@ -1996,7 +2038,6 @@ module VagrantPlugins
                 hdd_address_on_parent = [ hdd_address_on_parent,  item.css('rasd|AddressOnParent').first.text.to_i ].max
               end
             end
-            instance_id = [ instance_id, item.css('rasd|InstanceID').first.text.to_i ].max
           end
 
           if cfg.add_hdds
@@ -2027,6 +2068,44 @@ module VagrantPlugins
             end
           end
 
+          if cfg.nics
+            cfg.nics.each_with_index do |nic, i|
+              next if i < nic_count
+              changed = true
+              nic_address_on_parent = nic_address_on_parent + 1
+              instance_id = instance_id + 1
+              newnic = Nokogiri::XML::Builder.new do |xml|
+                xml.root('xmlns:rasd' => 'http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_ResourceAllocationSettingData',
+                         'xmlns:ovf' => 'http://schemas.dmtf.org/ovf/envelope/1') do
+                  xml['ovf'].Item {
+                    xml['rasd'].Address(nic[:mac]) if !nic[:mac].nil?
+                    xml['rasd'].AddressOnParent(nic_address_on_parent)
+                    xml['rasd'].AutomaticAllocation(true)
+                    xml['rasd'].Connection(nic[:network])
+                    xml['rasd'].Description("#{nic[:type] || :vmxnet3} ethernet adapter")
+                    xml['rasd'].ElementName("Network adapter #{nic_count}")
+                    xml['rasd'].InstanceID(instance_id)
+                    xml['rasd'].ResourceSubType(nic[:type] || :vmxnet3)
+                    xml['rasd'].ResourceType(10)
+                  }
+                end
+              end
+              conn = newnic.doc.css('rasd|Connection').first
+              conn['xmlns:vcloud'] = 'http://www.vmware.com/vcloud/v1.5'
+              if nic[:ip_mode].upcase == 'DHCP'
+                conn['vcloud:ipAddressingMode'] = 'DHCP'
+              elsif nic[:ip_mode].upcase == 'STATIC'
+                conn['vcloud:ipAddressingMode'] = 'MANUAL'
+                conn['vcloud:ipAddress'] = nic[:ip]
+              elsif nic[:ip_mode].upcase == 'POOL'
+                conn['vcloud:ipAddressingMode'] = 'POOL'
+                conn['vcloud:ipAddress'] = nic[:ip] if !nic[:ip].nil?
+              end
+              conn['vcloud:primaryNetworkConnection'] = nic[:primary]
+              response.css('ovf|Item').last.add_next_sibling(newnic.doc.css('ovf|Item'))
+            end
+          end
+
           if changed
             params = {
               'method'  => :put,
@@ -2044,89 +2123,6 @@ module VagrantPlugins
           else
             return nil
           end
-        end
-
-
-        ##
-        # set_vm_nics
-        def set_vm_nics(vmid, cfg)
-          return nil if cfg.nics.nil? || cfg.nics.length == 0
-          params = {
-            'method'  => :get,
-            'command' => "/vApp/vm-#{vmid}/virtualHardwareSection/networkCards"
-          }
-
-          response, _headers = send_request(params)
-
-          i_nic = 0
-          response.css('Item').each do |item|
-            break if i_nic == cfg.nics.length
-            nic = cfg.nics[i_nic]
-            item.css('rasd|Address').first.content = nic[:mac] if !nic[:mac].nil?
-            conn = item.css('rasd|Connection').first
-            conn.content = nic[:network]
-            if nic[:ip_mode].upcase == 'DHCP'
-              conn['vcloud:ipAddressingMode'] = 'DHCP'
-            elsif nic[:ip_mode].upcase == 'STATIC'
-              conn['vcloud:ipAddressingMode'] = 'MANUAL'
-              conn['vcloud:ipAddress'] = nic[:ip]
-            elsif nic[:ip_mode].upcase == 'POOL'
-              conn['vcloud:ipAddressingMode'] = 'POOL'
-              conn['vcloud:ipAddress'] = nic[:ip] if !nic[:ip].nil?
-            end
-            conn['vcloud:primaryNetworkConnection'] = nic[:primary]
-            # item.css('rasd|Description').first.content = "#{nic[:type] || :vmxnet3} ethernet adapter"
-            # item.css('rasd|ResourceSubType').first.content = nic[:type] || :vmxnet3
-            i_nic = i_nic + 1
-          end
-
-          cfg.nics.each_with_index do |nic, i|
-            next if i < i_nic
-            nic_list = response.css('Item')
-            nic_count = nic_list.length
-            newnic = Nokogiri::XML::Builder.new do |xml|
-              xml.root('xmlns:rasd' => 'http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_ResourceAllocationSettingData') do
-                xml.Item {
-                  xml['rasd'].Address(nic[:mac]) if !nic[:mac].nil?
-                  xml['rasd'].AddressOnParent(nic_count)
-                  xml['rasd'].AutomaticAllocation(true)
-                  xml['rasd'].Connection(nic[:network])
-                  xml['rasd'].Description("#{nic[:type] || :vmxnet3} ethernet adapter")
-                  xml['rasd'].ElementName("Network adapter #{nic_count}")
-                  xml['rasd'].InstanceID(nic_count)
-                  xml['rasd'].ResourceSubType(nic[:type] || :vmxnet3)
-                  xml['rasd'].ResourceType(10)
-                }
-              end
-            end
-            conn = newnic.doc.css('rasd|Connection').first
-            conn['xmlns:vcloud'] = 'http://www.vmware.com/vcloud/v1.5'
-            if nic[:ip_mode].upcase == 'DHCP'
-              conn['vcloud:ipAddressingMode'] = 'DHCP'
-            elsif nic[:ip_mode].upcase == 'STATIC'
-              conn['vcloud:ipAddressingMode'] = 'MANUAL'
-              conn['vcloud:ipAddress'] = nic[:ip]
-            elsif nic[:ip_mode].upcase == 'POOL'
-              conn['vcloud:ipAddressingMode'] = 'POOL'
-              conn['vcloud:ipAddress'] = nic[:ip] if nic[:ip]
-            end
-            conn['vcloud:primaryNetworkConnection'] = nic[:primary]
-            nic_list.last.add_next_sibling(newnic.doc.css('Item'))
-          end
-          params = {
-            'method'  => :put,
-            'command' => "/vApp/vm-#{vmid}/virtualHardwareSection/networkCards"
-          }
-
-          _response, headers = send_request(
-            params,
-            response.to_xml,
-            'application/vnd.vmware.vcloud.rasdItemsList+xml; charset=ISO-8859-1'
-          )
-
-          task_id = URI(headers['Location']).path.gsub('/api/task/', '')
-          task_id
-
         end
 
 

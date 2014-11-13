@@ -297,20 +297,14 @@ module VagrantPlugins
             set_metadata_vm = cnx.set_vm_metadata env[:machine].id, cfg.metadata_vm
             cnx.wait_task_completion(set_metadata_vm)
           end
+
           # add/update hardware
           env[:ui].info('Setting VM hardware...')
           set_vm_hardware = cnx.set_vm_hardware(env[:machine].id, cfg)
           if set_vm_hardware
             cnx.wait_task_completion(set_vm_hardware)
           end
-          # add nics
-          if !cfg.nics.nil? && cfg.nics.length > 0
-            env[:ui].info('Setting VM network cards...')
-            set_vm_nics = cnx.set_vm_nics(env[:machine].id, cfg)
-            if set_vm_nics
-              cnx.wait_task_completion(set_vm_nics)
-            end
-          end
+
           # enable nested hypervisor
           if !cfg.nested_hypervisor.nil? && cfg.nested_hypervisor == true
             env[:ui].info('Enabling nested hypervisor...')
