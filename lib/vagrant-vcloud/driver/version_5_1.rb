@@ -1999,7 +1999,7 @@ module VagrantPlugins
               orig_address_mode = item.css('rasd|Connection').first['vcloud:ipAddressingMode']
               orig_primary = item.css('rasd|Connection').first['vcloud:primaryNetworkConnection']
               orig_network = item.css('rasd|Connection').first.text
-              orig_type = item.css('rasd|ResourceSubType').first.text
+              # resourceSubType cannot be changed for an existing network card
 
               if !nic[:mac].nil?
                 changed = true if nic[:mac].upcase != orig_mac.upcase
@@ -2007,16 +2007,12 @@ module VagrantPlugins
               if !nic[:ip].nil?
                 changed = true if orig_ip.nil? || nic[:ip].upcase != orig_ip.upcase
               end
-              if !nic[:type].nil?
-                changed = true if nic[:type].upcase != orig_type.upcase
-              end
               changed = true if nic[:ip_mode].upcase != orig_address_mode.upcase
               changed = true if nic[:primary] != orig_primary
               changed = true if nic[:network].upcase != orig_network.upcase
 
               if changed
                 item.css('rasd|Address').first.content = nic[:mac] if !nic[:mac].nil?
-                item.css('rasd|ResourceSubType').first.content = nic[:type] if !nic[:type].nil?
                 conn = item.css('rasd|Connection').first
                 conn.content = nic[:network]
                 if nic[:ip_mode].upcase == 'DHCP'
