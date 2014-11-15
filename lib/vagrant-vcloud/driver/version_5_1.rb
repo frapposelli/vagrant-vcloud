@@ -930,15 +930,14 @@ module VagrantPlugins
                     'href' => "#{@api_url}/vAppTemplate/vm-#{vm_id}/networkConnectionSection/") {
                       xml['ovf'].Info 'Network config for sourced item'
                       xml.PrimaryNetworkConnectionIndex '0'
-                      xml.NetworkConnection('network' => 'TA-Build') {#network_config[:name]) {
+                      xml.NetworkConnection('network' => network_config[:name]) {
                         xml.NetworkConnectionIndex '0'
                         xml.IsConnected 'true'
-                        xml.IpAddressAllocationMode('POOL')# network_config[:ip_allocation_mode] || 'POOL')
+                        xml.IpAddressAllocationMode(network_config[:ip_allocation_mode] || 'POOL')
                     }
                   }
                 }
-                # xml.NetworkAssignment('containerNetwork' => network_config[:name], 'innerNetwork' => network_config[:name])
-                xml.NetworkAssignment('containerNetwork' => 'TA-Build', 'innerNetwork' => 'TA-Build')
+                xml.NetworkAssignment('containerNetwork' => network_config[:name], 'innerNetwork' => network_config[:name])
               }
             end
             xml.AllEULAsAccepted 'true'
