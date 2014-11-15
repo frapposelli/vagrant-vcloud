@@ -102,17 +102,6 @@ module VagrantPlugins
       #
       # @return [String]
       attr_accessor :name
-      attr_accessor :vapp_name
-      attr_accessor :networks
-      attr_accessor :advanced_network
-      attr_accessor :add_hdds
-      attr_accessor :nics
-      attr_accessor :ssh_enabled
-      attr_accessor :sync_enabled
-      attr_accessor :power_on
-      attr_accessor :metadata_vapp
-      attr_accessor :metadata_vm
-      attr_accessor :auto_yes_for_upload
 
       ##
       ## vCloud Director config runtime values
@@ -156,6 +145,68 @@ module VagrantPlugins
 
       # NestedHypervisor (Bool)
       attr_accessor :nested_hypervisor
+
+      # Specify a vApp name (String)
+      attr_accessor :vapp_name
+
+      # Use advanced networking settings (Bool = false)
+      attr_accessor :advanced_network
+
+      # Specify networks to add to the vApp (Hash)
+      #   networks: {
+      #     org: [ 'Organization VDC network' ],
+      #     vapp: [ {
+      #               name: 'vApp network',
+      #               ip_subnet: '172.16.4.0/255.255.255.0'
+      #           } ]
+      #   }
+      #
+      attr_accessor :networks
+
+      # Add hard disks to the VM (Array)
+      #   add_hdds: [ 20480 ]
+      #
+      attr_accessor :add_hdds
+
+      # Update / add network cards to the VM (Array)
+      # type is not updated for existing network cards
+      #   nics: [ {
+      #     type: :vmxnet3,
+      #     connected: true,
+      #     network: "vApp network",
+      #     primary: true,
+      #     ip_mode: "static",
+      #     ip: "10.10.10.1",
+      #     mac: "00:50:56:00:00:01"
+      #   } ]
+      #
+      attr_accessor :nics
+
+      # Power on the VM once created (Bool = true)
+      attr_accessor :power_on
+
+      # Attempt to connect via SSH to the VM (Bool = true)
+      attr_accessor :ssh_enabled
+
+      # Attempt to sync files to the VM (Bool = true)
+      attr_accessor :sync_enabled
+
+      # Add metadata to the vApp (Array)
+      #   metadata_vapp: [
+      #     [ 'key', 'value' ]
+      #   ]
+      #
+      attr_accessor :metadata_vapp
+
+      # Add metadata to the VM (Array)
+      #   metadata_vapp: [
+      #     [ 'key', 'value' ]
+      #   ]
+      #
+      attr_accessor :metadata_vm
+
+      # Auto answer "Yes" to upload the box to vCloud (Bool = false)
+      attr_accessor :auto_yes_for_upload
 
       def validate(machine)
         errors = _detected_errors
