@@ -46,7 +46,7 @@ vapp = {
   orgvdc_name: 'vDC_Name',
   orgvdccatalog_name: 'Vagrant',
   metadata: [ [ 'key', 'value' ] ],
-  advanced_networking: ture,
+  advanced_networking: true,
   networks: {
     org: [ 'Org_VDC_Network' ],
     vapp: [
