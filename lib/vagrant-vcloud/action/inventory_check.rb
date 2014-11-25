@@ -132,7 +132,7 @@ module VagrantPlugins
           )
           cfg.catalog_item = cnx.get_catalog_item_by_name(
             cfg.catalog_id,
-            box_name
+            cfg.catalog_item_name
           )
 
           @logger.debug("Catalog item is now #{cfg.catalog_item}")

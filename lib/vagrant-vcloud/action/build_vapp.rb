@@ -18,6 +18,7 @@ module VagrantPlugins
           cfg = env[:machine].provider_config
           cnx = cfg.vcloud_cnx.driver
           vm_name = env[:machine].name
+          box_base_name = env[:machine].box.name
 
           if cfg.ip_dns.nil?
             dns_address1 = '8.8.8.8'
@@ -113,16 +114,15 @@ module VagrantPlugins
 
             vapp_prefix = cfg.vapp_prefix
             vapp_prefix = 'Vagrant' if vapp_prefix.nil?
-
+            vapp_name = cfg.vAppName ? cfg.vAppName : "#{vapp_prefix}-#{Etc.getlogin}-#{Socket.gethostname.downcase}-" + "#{SecureRandom.hex(4)}"
             compose = cnx.compose_vapp_from_vm(
               cfg.vdc_id,
-              "#{vapp_prefix}-#{Etc.getlogin}-#{Socket.gethostname.downcase}-" +
-              "#{SecureRandom.hex(4)}",
+              vapp_name,
               "vApp created by #{Etc.getlogin} running on " +
               "#{Socket.gethostname.downcase} using vagrant-vcloud on " +
               "#{Time.now.strftime("%B %d, %Y")}",
               {
-                vm_name => cfg.catalog_item[:vms_hash].first.last[:id]
+                vm_name => cfg.catalog_item[:vms_hash][box_base_name][:id]
               },
               network_options
             )
@@ -178,7 +178,7 @@ module VagrantPlugins
             recompose = cnx.recompose_vapp_from_vm(
               env[:machine].get_vapp_id,
               {
-                vm_name => cfg.catalog_item[:vms_hash].first.last[:id]
+                vm_name => cfg.catalog_item[:vms_hash][box_base_name][:id]
               },
               network_options
             )
