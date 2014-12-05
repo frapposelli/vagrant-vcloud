@@ -843,14 +843,16 @@ module VagrantPlugins
                 xml.SourcedItem {
                   xml.Source('href' => "#{@api_url}/vAppTemplate/vm-#{vm_id}", 'name' => vm_name)
                   xml.InstantiationParams {
-                    xml.GuestCustomizationSection(
-                      'xmlns' => 'http://www.vmware.com/vcloud/v1.5',
-                      'xmlns:ovf' => 'http://schemas.dmtf.org/ovf/envelope/1') {
-                        xml['ovf'].Info 'VM Guest Customization configuration'
-                        xml.Enabled true
-                        xml.AdminPasswordEnabled false
-                        xml.ComputerName vm_name
-                    }
+                  	if !_cfg.enable_guest_customization || _cfg.enable_guest_customization
+	                    xml.GuestCustomizationSection(
+	                      'xmlns' => 'http://www.vmware.com/vcloud/v1.5',
+	                      'xmlns:ovf' => 'http://schemas.dmtf.org/ovf/envelope/1') {
+	                        xml['ovf'].Info 'VM Guest Customization configuration'
+	                        xml.Enabled true
+	                        xml.AdminPasswordEnabled false
+	                        xml.ComputerName vm_name
+	                    }
+	                end
                     if !_cfg.advanced_network
                       xml.NetworkConnectionSection(
                         'xmlns:ovf' => 'http://schemas.dmtf.org/ovf/envelope/1',
