@@ -203,6 +203,8 @@ module VagrantPlugins
       # Auto answer "Yes" to upload the box to vCloud (Bool = false)
       attr_accessor :auto_yes_for_upload
 
+      attr_accessor :enable_guest_customization
+
       def validate(machine)
         errors = _detected_errors
 
