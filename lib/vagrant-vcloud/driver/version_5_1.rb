@@ -843,16 +843,17 @@ module VagrantPlugins
                 xml.SourcedItem {
                   xml.Source('href' => "#{@api_url}/vAppTemplate/vm-#{vm_id}", 'name' => vm_name)
                   xml.InstantiationParams {
-                  	if !_cfg.enable_guest_customization || _cfg.enable_guest_customization
-	                    xml.GuestCustomizationSection(
-	                      'xmlns' => 'http://www.vmware.com/vcloud/v1.5',
-	                      'xmlns:ovf' => 'http://schemas.dmtf.org/ovf/envelope/1') {
-	                        xml['ovf'].Info 'VM Guest Customization configuration'
-	                        xml.Enabled true
-	                        xml.AdminPasswordEnabled false
-	                        xml.ComputerName vm_name
-	                    }
-	                end
+                    if _cfg.enable_guest_customization.nil? || _cfg.enable_guest_customization
+                      xml.GuestCustomizationSection(
+                        'xmlns' => 'http://www.vmware.com/vcloud/v1.5',
+                        'xmlns:ovf' => 'http://schemas.dmtf.org/ovf/envelope/1') {
+                          xml['ovf'].Info 'VM Guest Customization configuration'
+                          xml.Enabled true
+                          xml.AdminPasswordEnabled false
+                          xml.CustomizationScript{ xml.cdata(_cfg.guest_customization_script) } if !_cfg.guest_customization_script.nil?
+                          xml.ComputerName vm_name
+                      }
+                    end
                     if !_cfg.advanced_network
                       xml.NetworkConnectionSection(
                         'xmlns:ovf' => 'http://schemas.dmtf.org/ovf/envelope/1',
@@ -863,7 +864,7 @@ module VagrantPlugins
                           xml.NetworkConnection('network' => network_config[:name]) {
                             xml.NetworkConnectionIndex '0'
                             xml.IsConnected 'true'
-                            xml.IpAddressAllocationMode( network_config[:ip_allocation_mode] || 'POOL')
+                            xml.IpAddressAllocationMode(network_config[:ip_allocation_mode] || 'POOL')
                         }
                       }
                     end
@@ -915,31 +916,36 @@ module VagrantPlugins
             xml.Description original_vapp[:description]
             xml.InstantiationParams {}
             vm_list.each do |vm_name, vm_id|
-              xml.SourcedItem {
-                xml.Source('href' => "#{@api_url}/vAppTemplate/vm-#{vm_id}", 'name' => vm_name)
-                xml.InstantiationParams {
-                  xml.GuestCustomizationSection(
-                    'xmlns' => 'http://www.vmware.com/vcloud/v1.5',
-                    'xmlns:ovf' => 'http://schemas.dmtf.org/ovf/envelope/1') {
-                      xml['ovf'].Info 'VM Guest Customization configuration'
-                      xml.Enabled true
-                      xml.AdminPasswordEnabled false
-                      xml.ComputerName vm_name
+                xml.SourcedItem {
+                  xml.Source('href' => "#{@api_url}/vAppTemplate/vm-#{vm_id}", 'name' => vm_name)
+                  xml.InstantiationParams {
+                    if _cfg.enable_guest_customization.nil? || _cfg.enable_guest_customization
+                      xml.GuestCustomizationSection(
+                        'xmlns' => 'http://www.vmware.com/vcloud/v1.5',
+                        'xmlns:ovf' => 'http://schemas.dmtf.org/ovf/envelope/1') {
+                          xml['ovf'].Info 'VM Guest Customization configuration'
+                          xml.Enabled true
+                          xml.AdminPasswordEnabled false
+                          xml.CustomizationScript{ xml.cdata(_cfg.guest_customization_script) } if !_cfg.guest_customization_script.nil?
+                          xml.ComputerName vm_name
+                      }
+                    end
+                    if !_cfg.advanced_network
+                      xml.NetworkConnectionSection(
+                        'xmlns:ovf' => 'http://schemas.dmtf.org/ovf/envelope/1',
+                        'type' => 'application/vnd.vmware.vcloud.networkConnectionSection+xml',
+                        'href' => "#{@api_url}/vAppTemplate/vm-#{vm_id}/networkConnectionSection/") {
+                          xml['ovf'].Info 'Network config for sourced item'
+                          xml.PrimaryNetworkConnectionIndex '0'
+                          xml.NetworkConnection('network' => network_config[:name]) {
+                            xml.NetworkConnectionIndex '0'
+                            xml.IsConnected 'true'
+                            xml.IpAddressAllocationMode(network_config[:ip_allocation_mode] || 'POOL')
+                        }
+                      }
+                    end
                   }
-                  xml.NetworkConnectionSection(
-                    'xmlns:ovf' => 'http://schemas.dmtf.org/ovf/envelope/1',
-                    'type' => 'application/vnd.vmware.vcloud.networkConnectionSection+xml',
-                    'href' => "#{@api_url}/vAppTemplate/vm-#{vm_id}/networkConnectionSection/") {
-                      xml['ovf'].Info 'Network config for sourced item'
-                      xml.PrimaryNetworkConnectionIndex '0'
-                      xml.NetworkConnection('network' => network_config[:name]) {
-                        xml.NetworkConnectionIndex '0'
-                        xml.IsConnected 'true'
-                        xml.IpAddressAllocationMode(network_config[:ip_allocation_mode] || 'POOL')
-                    }
-                  }
-                }
-                xml.NetworkAssignment('containerNetwork' => network_config[:name], 'innerNetwork' => network_config[:name])
+                  xml.NetworkAssignment('containerNetwork' => network_config[:name], 'innerNetwork' => network_config[:name]) if !_cfg.advanced_network
               }
             end
             xml.AllEULAsAccepted 'true'

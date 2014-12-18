@@ -208,7 +208,14 @@ module VagrantPlugins
       # Auto answer "Yes" to upload the box to vCloud (Bool = false)
       attr_accessor :auto_yes_for_upload
 
+      # ability to disable gc for vms without tools installed
       attr_accessor :enable_guest_customization
+
+      # scripts to run on machine boot
+      attr_reader :guest_customization_script
+      def guest_customization_script=(script)
+        @guest_customization_script = script.encode(universal_newline: true)
+      end
 
       def validate(machine)
         errors = _detected_errors

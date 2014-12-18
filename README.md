@@ -77,7 +77,9 @@ nodes = [
       ip_mode: "static",
       ip: "10.10.10.1",
       mac: "00:50:56:00:00:01"
-    ]
+    ],
+    enable_guest_customization: true,
+    guest_customization_script: 'touch /sample.file'
   },
   { hostname: 'ssh-vm', box: 'gosddc/precise32' },
   { hostname: 'sql-vm', box: 'gosddc/precise32' },
@@ -130,6 +132,8 @@ Vagrant.configure('2') do |config|
           pro.power_on = node[:power_on]
           pro.metadata_vm = node[:metadata]
           pro.nested_hypervisor = node[:nested_hypervisor]
+          pro.enable_guest_customization = node[:enable_guest_customization]
+          pro.guest_customization_script = node[:guest_customization_script]
         end
         node_config.vm.network :public_network
       else
