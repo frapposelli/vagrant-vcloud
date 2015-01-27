@@ -120,6 +120,7 @@ module VagrantPlugins
                     b4.use DestroyVM
                   end
                 end
+                b3.use ProvisionerCleanup
               end
             else
               b2.use MessageWillNotDestroy
