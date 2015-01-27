@@ -1,8 +1,5 @@
-[Vagrant](http://www.vagrantup.com) provider for VMware vCloud Director®
+[Vagrant](http://www.vagrantup.com) provider for VMware vCloud Director® [![Gem Version](https://badge.fury.io/rb/vagrant-vcloud.svg)](http://badge.fury.io/rb/vagrant-vcloud) [![Code Climate](https://codeclimate.com/github/frapposelli/vagrant-vcloud/badges/gpa.svg)](https://codeclimate.com/github/frapposelli/vagrant-vcloud)
 =============
-
-[Version 0.4.3](../../releases/tag/v0.4.3) has been released!
--------------
 
 Please note that this software is still Alpha/Beta quality and is not recommended for production usage.
 
