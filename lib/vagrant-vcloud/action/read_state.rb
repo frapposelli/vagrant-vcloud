@@ -19,7 +19,7 @@ module VagrantPlugins
             cfg = env[:machine].provider_config
             cnx = cfg.vcloud_cnx.driver
             vapp_id = env[:machine].get_vapp_id
-            vm_name = env[:machine].name
+            vm_name = cfg.name ? cfg.name.to_sym : env[:machine].name
 
             if env[:machine].id.nil?
               @logger.info("VM [#{vm_name}] is not created yet")

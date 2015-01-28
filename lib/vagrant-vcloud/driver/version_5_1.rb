@@ -734,7 +734,7 @@ module VagrantPlugins
             "VApp Task[operationName='vdcInstantiateVapp']"
           ).first
 
-          task_id = URI(task['href']).path.gsub("/api/task/", '')
+          task_id = URI(task['href']).path.gsub('/api/task/', '')
 
           { :vapp_id => vapp_id, :task_id => task_id }
         end
@@ -750,76 +750,76 @@ module VagrantPlugins
         # - network_config: hash of the network configuration for the vapp
         def compose_vapp_from_vm(vdc, vapp_name, vapp_description, vm_list = {}, network_config = {})
           builder = Nokogiri::XML::Builder.new do |xml|
-          xml.ComposeVAppParams(
-            'xmlns' => 'http://www.vmware.com/vcloud/v1.5',
-            'xmlns:ovf' => 'http://schemas.dmtf.org/ovf/envelope/1',
-            'name' => vapp_name,
-            'deploy' => 'false',
-            'powerOn' => 'false') {
-            xml.Description vapp_description
-            xml.InstantiationParams {
-              xml.NetworkConfigSection {
-                xml['ovf'].Info 'Configuration parameters for logical networks'
-                xml.NetworkConfig('networkName' => network_config[:name]) {
-                  xml.Configuration {
-                    if network_config[:fence_mode] != 'bridged'
-                      xml.IpScopes {
-                      xml.IpScope {
-                        xml.IsInherited(network_config[:is_inherited] || 'false')
-                        xml.Gateway network_config[:gateway]
-                        xml.Netmask network_config[:netmask]
-                        xml.Dns1 network_config[:dns1] if network_config[:dns1]
-                        xml.Dns2 network_config[:dns2] if network_config[:dns2]
-                        xml.DnsSuffix network_config[:dns_suffix] if network_config[:dns_suffix]
-                        xml.IpRanges {
-                          xml.IpRange {
-                            xml.StartAddress network_config[:start_address]
-                            xml.EndAddress network_config[:end_address]
+            xml.ComposeVAppParams(
+              'xmlns' => 'http://www.vmware.com/vcloud/v1.5',
+              'xmlns:ovf' => 'http://schemas.dmtf.org/ovf/envelope/1',
+              'name' => vapp_name,
+              'deploy' => 'false',
+              'powerOn' => 'false') {
+              xml.Description vapp_description
+              xml.InstantiationParams {
+                xml.NetworkConfigSection {
+                  xml['ovf'].Info 'Configuration parameters for logical networks'
+                  xml.NetworkConfig('networkName' => network_config[:name]) {
+                    xml.Configuration {
+                      if network_config[:fence_mode] != 'bridged'
+                        xml.IpScopes {
+                        xml.IpScope {
+                          xml.IsInherited(network_config[:is_inherited] || 'false')
+                          xml.Gateway network_config[:gateway]
+                          xml.Netmask network_config[:netmask]
+                          xml.Dns1 network_config[:dns1] if network_config[:dns1]
+                          xml.Dns2 network_config[:dns2] if network_config[:dns2]
+                          xml.DnsSuffix network_config[:dns_suffix] if network_config[:dns_suffix]
+                          xml.IpRanges {
+                            xml.IpRange {
+                              xml.StartAddress network_config[:start_address]
+                              xml.EndAddress network_config[:end_address]
+                              }
                             }
                           }
                         }
-                      }
-                    end
-                    xml.ParentNetwork("href" => "#{@api_url}/network/#{network_config[:parent_network]}")
-                    xml.FenceMode network_config[:fence_mode]
-                    if network_config[:fence_mode] != 'bridged'
-                      xml.Features {
-                        xml.FirewallService {
-                          xml.IsEnabled(network_config[:enable_firewall] || "false")
+                      end
+                      xml.ParentNetwork("href" => "#{@api_url}/network/#{network_config[:parent_network]}")
+                      xml.FenceMode network_config[:fence_mode]
+                      if network_config[:fence_mode] != 'bridged'
+                        xml.Features {
+                          xml.FirewallService {
+                            xml.IsEnabled(network_config[:enable_firewall] || "false")
+                          }
+                          xml.NatService {
+                            xml.IsEnabled "true"
+                            xml.NatType "portForwarding"
+                            xml.Policy(network_config[:nat_policy_type] || "allowTraffic")
+                          }
                         }
-                        xml.NatService {
-                          xml.IsEnabled "true"
-                          xml.NatType "portForwarding"
-                          xml.Policy(network_config[:nat_policy_type] || "allowTraffic")
-                        }
-                      }
-                    end
-                  }
-                }
-              }
-            }
-            vm_list.each do |vm_name, vm_id|
-              xml.SourcedItem {
-                xml.Source('href' => "#{@api_url}/vAppTemplate/vm-#{vm_id}", 'name' => vm_name)
-                xml.InstantiationParams {
-                  xml.NetworkConnectionSection(
-                    'xmlns:ovf' => 'http://schemas.dmtf.org/ovf/envelope/1',
-                    'type' => 'application/vnd.vmware.vcloud.networkConnectionSection+xml',
-                    'href' => "#{@api_url}/vAppTemplate/vm-#{vm_id}/networkConnectionSection/") {
-                      xml['ovf'].Info 'Network config for sourced item'
-                      xml.PrimaryNetworkConnectionIndex '0'
-                      xml.NetworkConnection('network' => network_config[:name]) {
-                        xml.NetworkConnectionIndex '0'
-                        xml.IsConnected 'true'
-                        xml.IpAddressAllocationMode(network_config[:ip_allocation_mode] || 'POOL')
+                      end
                     }
                   }
                 }
-                xml.NetworkAssignment('containerNetwork' => network_config[:name], 'innerNetwork' => network_config[:name])
               }
-            end
-            xml.AllEULAsAccepted 'true'
-          }
+              vm_list.each do |vm_name, vm_id|
+                xml.SourcedItem {
+                  xml.Source('href' => "#{@api_url}/vAppTemplate/vm-#{vm_id}", 'name' => vm_name)
+                  xml.InstantiationParams {
+                    xml.NetworkConnectionSection(
+                      'xmlns:ovf' => 'http://schemas.dmtf.org/ovf/envelope/1',
+                      'type' => 'application/vnd.vmware.vcloud.networkConnectionSection+xml',
+                      'href' => "#{@api_url}/vAppTemplate/vm-#{vm_id}/networkConnectionSection/") {
+                        xml['ovf'].Info 'Network config for sourced item'
+                        xml.PrimaryNetworkConnectionIndex '0'
+                        xml.NetworkConnection('network' => network_config[:name]) {
+                          xml.NetworkConnectionIndex '0'
+                          xml.IsConnected 'true'
+                          xml.IpAddressAllocationMode(network_config[:ip_allocation_mode] || 'POOL')
+                      }
+                    }
+                  }
+                  xml.NetworkAssignment('containerNetwork' => network_config[:name], 'innerNetwork' => network_config[:name])
+                }
+              end
+              xml.AllEULAsAccepted 'true'
+            }
           end
 
           params = {
