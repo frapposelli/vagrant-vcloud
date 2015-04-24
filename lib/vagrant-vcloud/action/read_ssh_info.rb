@@ -17,6 +17,7 @@ module VagrantPlugins
         # Small method to check the tcp connection to an ip:port works.
         # Return false if anything fails, and true if it succeeded.
         def check_for_port(ip, port, port_name)
+          @logger.debug("Checking #{port_name} (#{ip}:#{port})...")
           begin
             Timeout::timeout(1) do
               begin
@@ -57,26 +58,7 @@ module VagrantPlugins
             return nil
           end
 
-          if !cfg.advanced_network.nil?
-            @logger.debug(
-              'We\'re running in advanced network mode, ' \
-              'fetching the IP directly from the primary NIC on the VM'
-            )
-            vm_info = cnx.get_vm(env[:machine].id)
-            # get primary network
-            primary_network = nil
-            vm_info[:networks].each do |net|
-              next if net[1][:primary] == false
-              primary_network = net[0]
-              break
-            end
-            @logger.debug(
-              "IP address for #{vm_name}: #{vm_info[:networks][primary_network][:ip]}"
-            )
-
-            @external_ip = vm_info[:networks][primary_network][:ip]
-            @external_port = "#{@port}"
-          elsif !cfg.network_bridge.nil?
+          if !cfg.network_bridge.nil?
             @logger.debug(
               'We\'re running in bridged mode, ' \
               'fetching the IP directly from the VM'
@@ -90,9 +72,22 @@ module VagrantPlugins
             @external_ip = vm_info[:networks]['Vagrant-vApp-Net'][:ip]
             @external_port = "#{@port}"
           else
+            network_name = nil
+            if cfg.nics
+              cfg.nics.each do |nic|
+                next if nic[:forwarded_port].nil?
+                if !cfg.networks.nil? && !cfg.networks[:vapp].nil?
+                  cfg.networks[:vapp].each do |net|
+                    next if net[:name] != nic[:network]
+                    network_name = net[:vdc_network_name]
+                    break
+                  end
+                end
+              end
+            end
 
             @logger.debug('Getting port forwarding rules...')
-            rules = cnx.get_vapp_port_forwarding_rules(vapp_id)
+            rules = cnx.get_vapp_port_forwarding_rules(vapp_id, network_name)
 
             rules.each do |rule|
               if rule[:vapp_scoped_local_id] == myhash[:vapp_scoped_local_id] && rule[:nat_internal_port] == "#{@port}"

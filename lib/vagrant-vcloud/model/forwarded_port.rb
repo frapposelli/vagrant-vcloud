@@ -39,10 +39,33 @@ module VagrantPlugins
         # @return [Integer]
         attr_reader :host_port
 
-        def initialize(id, host_port, guest_port, options)
-          @id         = id
-          @guest_port = guest_port
-          @host_port  = host_port
+        # The network name to forward from.
+        #
+        # @return [String]
+        attr_reader :network_name
+
+        # The network name to forward to.
+        #
+        # @return [String]
+        attr_reader :edge_network_name
+
+        # The id of the parent network.
+        #
+        # @return [String]
+        attr_reader :edge_network_id
+
+        # The id of the vm nic.
+        #
+        # @return [Integer]
+        attr_reader :vmnic_id
+
+        def initialize(id, host_port, guest_port, network_name, edge_network_id, edge_network_name, options)
+          @id                = id
+          @guest_port        = guest_port
+          @host_port         = host_port
+          @network_name      = network_name
+          @edge_network_id    = edge_network_id
+          @edge_network_name = edge_network_name
 
           options ||= {}
           @auto_correct = false
@@ -52,6 +75,7 @@ module VagrantPlugins
           @guest_ip = options[:guest_ip] || nil
           @host_ip = options[:host_ip] || nil
           @protocol = options[:protocol] || 'tcp'
+          @vmnic_id = options[:vmnic_id] || 0
         end
 
         # This corrects the host port and changes it to the given new port.

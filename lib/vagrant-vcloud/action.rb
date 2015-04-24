@@ -16,7 +16,7 @@ module VagrantPlugins
           b.use ConfigValidate
           b.use PowerOn
           b.use Call, IsCreated do |env, b2|
-            unless env[:bridged_network] || env[:advanced_network]
+            unless env[:bridged_network]
               b2.use HandleNATPortCollisions
               b2.use ForwardPorts
             end
@@ -121,10 +121,10 @@ module VagrantPlugins
                 b3.use Call, IsLastVM do |env3, b4|
                   if env3[:result]
                     # Check if the network is bridged
-                    b4.use Call, IsBridged do |env4, b5|
-                      # if it's not, delete port forwardings.
-                      b5.use UnmapPortForwardings unless env4[:bridged_network] || env4[:advanced_network]
-                    end
+                    # b4.use Call, IsBridged do |env4, b5|
+                    #   # if it's not, delete port forwardings.
+                    #   b5.use UnmapPortForwardings unless env4[:bridged_network] || env4[:advanced_network]
+                    # end
                     b4.use PowerOffVApp
                     b4.use DestroyVApp
                   else

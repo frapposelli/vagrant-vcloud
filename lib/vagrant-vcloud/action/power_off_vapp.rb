@@ -21,7 +21,9 @@ module VagrantPlugins
 
           # this is a helper to get vapp_edge_ip into cache for later destroy
           # of edge gateway rules
-          vapp_edge_ip = cnx.get_vapp_edge_public_ip(vapp_id) if cfg.network_bridge.nil?
+          if cfg.network_bridge.nil? && cfg.networks.nil?
+            vapp_edge_ip = cnx.get_vapp_edge_public_ip(vapp_id)
+          end
 
           # Poweroff vApp
           env[:ui].info('Single VM left in the vApp, Powering off vApp...')
