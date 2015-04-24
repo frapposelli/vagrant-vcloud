@@ -47,7 +47,9 @@ module VagrantPlugins
           vm = cnx.get_vapp(vapp_id)
           vm_info = vm[:vms_hash][vm_name.to_sym]
 
-          vapp_edge_ip = cnx.get_vapp_edge_public_ip(vapp_id)
+          network_name = get_edge_network_name(env)
+
+          vapp_edge_ip = cnx.get_vapp_edge_public_ip(vapp_id, network_name)
 
           @logger.debug('Getting edge gateway port forwarding rules...')
           edge_gateway_rules = cnx.get_edge_gateway_rules(cfg.vdc_edge_gateway,
@@ -56,7 +58,7 @@ module VagrantPlugins
           edge_ports_in_use = edge_dnat_rules.map{|r| r[:original_port].to_i}.to_set
 
           @logger.debug('Getting port forwarding rules...')
-          vapp_nat_rules = cnx.get_vapp_port_forwarding_rules(vapp_id)
+          vapp_nat_rules = cnx.get_vapp_port_forwarding_rules(vapp_id, network_name)
           ports_in_use = vapp_nat_rules.map{|r| r[:nat_external_port].to_i}.to_set
 
           # merge the vapp ports and the edge gateway ports together, all are in use
@@ -143,9 +145,33 @@ module VagrantPlugins
           env[:machine].config.vm.networks.each do |type, options|
             # Ignore anything but forwarded ports
             next if type != :forwarded_port
+            next if !options[:disabled].nil? && options[:disabled] == true
 
             yield options
           end
+          # advanced networking check
+          if !env[:machine].provider_config.nics.nil?
+            env[:machine].provider_config.nics.each do |nic|
+              next if nic[:forwarded_port].nil?
+              nic[:forwarded_port].each do |fp|
+                next if !fp[:disabled].nil? && fp[:disabled] == true
+                yield fp
+              end
+            end
+          end
+        end
+
+        def get_edge_network_name(env)
+          # advanced networking check
+          if !env[:machine].provider_config.networks.nil?
+            env[:machine].provider_config.networks[:vapp].each do |net|
+              # Ignore anything but forwarded ports
+              next if net[:vdc_network_name].nil?
+
+              return net[:vdc_network_name]
+            end
+          end
+          return env[:machine].provider_config.vdc_network_name
         end
       end
     end

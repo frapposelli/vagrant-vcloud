@@ -748,95 +748,66 @@ module VagrantPlugins
         # - vapp_description: description of the target vapp
         # - vm_list: hash with IDs of the VMs used in the composing process
         # - network_config: hash of the network configuration for the vapp
-        def compose_vapp_from_vm(vdc, vapp_name, vapp_description, vm_list = {}, network_config = {}, _cfg)
+        def compose_vapp_from_vm(vdc, vapp_name, vapp_description, vm_list = {}, network_config = [], _cfg)
           builder = Nokogiri::XML::Builder.new do |xml|
-            xml.ComposeVAppParams(
-              'xmlns' => 'http://www.vmware.com/vcloud/v1.5',
-              'xmlns:ovf' => 'http://schemas.dmtf.org/ovf/envelope/1',
-              'name' => vapp_name,
-              'deploy' => 'false',
-              'powerOn' => 'false') {
+            xml.ComposeVAppParams('xmlns' => 'http://www.vmware.com/vcloud/v1.5',
+                                  'xmlns:ovf' => 'http://schemas.dmtf.org/ovf/envelope/1',
+                                  'deploy' => 'false',
+                                  'powerOn' => 'false',
+                                  'name' => vapp_name) {
               xml.Description vapp_description
               xml.InstantiationParams {
                 xml.NetworkConfigSection {
                   xml['ovf'].Info 'Configuration parameters for logical networks'
-                  if network_config.kind_of?(Array)
-                    network_config.each do |single_net|
-                      xml.NetworkConfig('networkName' => single_net[:name]) {
-                        xml.Configuration {
-                          if single_net[:fence_mode] != 'bridged'
-                            xml.IpScopes {
-                            xml.IpScope {
-                              xml.IsInherited(single_net[:is_inherited] || 'false')
-                              xml.Gateway single_net[:gateway]
-                              xml.Netmask single_net[:netmask]
-                              xml.Dns1 single_net[:dns1] if single_net[:dns1]
-                              xml.Dns2 single_net[:dns2] if single_net[:dns2]
-                              xml.DnsSuffix single_net[:dns_suffix] if single_net[:dns_suffix]
-                              xml.IpRanges {
-                                xml.IpRange {
-                                  xml.StartAddress single_net[:start_address]
-                                  xml.EndAddress single_net[:end_address]
-                                  }
-                                }
-                              }
-                            }
-                          end
-                          xml.ParentNetwork("href" => "#{@api_url}/network/#{single_net[:parent_network]}") if single_net[:parent_network]
-                          xml.FenceMode single_net[:fence_mode]
-                          if single_net[:fence_mode] != 'bridged'
-                            xml.Features {
-                              xml.FirewallService {
-                                xml.IsEnabled(single_net[:enable_firewall] || "false")
-                              }
-                              xml.NatService {
-                                xml.IsEnabled "true"
-                                xml.NatType "portForwarding"
-                                xml.Policy(single_net[:nat_policy_type] || "allowTraffic")
-                              }
-                            }
-                          end
-                        }
-                      }
-                    end
-                  else # network_config not an array
-                    xml.NetworkConfig('networkName' => network_config[:name]) {
+                  network_config.each do |network|
+                    xml.NetworkConfig('networkName' => network[:name]) {
                       xml.Configuration {
-                        if network_config[:fence_mode] != 'bridged'
+                        if network[:fence_mode] != 'bridged'
                           xml.IpScopes {
                           xml.IpScope {
-                            xml.IsInherited(network_config[:is_inherited] || 'false')
-                            xml.Gateway network_config[:gateway]
-                            xml.Netmask network_config[:netmask]
-                            xml.Dns1 network_config[:dns1] if network_config[:dns1]
-                            xml.Dns2 network_config[:dns2] if network_config[:dns2]
-                            xml.DnsSuffix network_config[:dns_suffix] if network_config[:dns_suffix]
+                            xml.IsInherited(network[:is_inherited] || 'false')
+                            xml.Gateway network[:gateway]
+                            xml.Netmask network[:netmask]
+                            xml.Dns1 network[:dns1] if network[:dns1]
+                            xml.Dns2 network[:dns2] if network[:dns2]
+                            xml.DnsSuffix network[:dns_suffix] if network[:dns_suffix]
                             xml.IpRanges {
                               xml.IpRange {
-                                xml.StartAddress network_config[:start_address]
-                                xml.EndAddress network_config[:end_address]
+                                xml.StartAddress network[:start_address]
+                                xml.EndAddress network[:end_address]
                                 }
                               }
                             }
                           }
                         end
-                        xml.ParentNetwork("href" => "#{@api_url}/network/#{network_config[:parent_network]}")
-                        xml.FenceMode network_config[:fence_mode]
-                        if network_config[:fence_mode] != 'bridged'
+                        xml.ParentNetwork("href" => "#{@api_url}/network/#{network[:parent_network]}") if network[:parent_network]
+                        xml.FenceMode network[:fence_mode]
+                        if network[:fence_mode] != 'bridged'
                           xml.Features {
+                            if network[:dhcp_enabled] == 'true'
+                              xml.DhcpService {
+                                xml.IsEnabled "true"
+                                xml.DefaultLeaseTime "3600"
+                                xml.MaxLeaseTime "7200"
+                                xml.IpRange {
+                                  xml.StartAddress network[:dhcp_start]
+                                  xml.EndAddress network[:dhcp_end]
+                                }
+                              }
+                            end
                             xml.FirewallService {
-                              xml.IsEnabled(network_config[:enable_firewall] || "false")
+                              xml.IsEnabled(network[:enable_firewall] || "false")
                             }
                             xml.NatService {
                               xml.IsEnabled "true"
                               xml.NatType "portForwarding"
-                              xml.Policy(network_config[:nat_policy_type] || "allowTraffic")
+                              xml.Policy(network[:nat_policy_type] || "allowTraffic")
                             }
                           }
                         end
                       }
                     }
-                end #networks
+                  end #networks
                 }
               }
               vm_list.each do |vm_name, vm_id|
@@ -854,22 +825,22 @@ module VagrantPlugins
                           xml.ComputerName vm_name
                       }
                     end
-                    if !_cfg.advanced_network
+                    if _cfg.nics.nil? && network_config.length == 1
                       xml.NetworkConnectionSection(
                         'xmlns:ovf' => 'http://schemas.dmtf.org/ovf/envelope/1',
                         'type' => 'application/vnd.vmware.vcloud.networkConnectionSection+xml',
                         'href' => "#{@api_url}/vAppTemplate/vm-#{vm_id}/networkConnectionSection/") {
                           xml['ovf'].Info 'Network config for sourced item'
                           xml.PrimaryNetworkConnectionIndex '0'
-                          xml.NetworkConnection('network' => network_config[:name]) {
+                          xml.NetworkConnection('network' => network_config[0][:name]) {
                             xml.NetworkConnectionIndex '0'
                             xml.IsConnected 'true'
-                            xml.IpAddressAllocationMode(network_config[:ip_allocation_mode] || 'POOL')
+                            xml.IpAddressAllocationMode(network_config[0][:ip_allocation_mode] || 'POOL')
                         }
                       }
                     end
                   }
-                  xml.NetworkAssignment('containerNetwork' => network_config[:name], 'innerNetwork' => network_config[:name]) if !_cfg.advanced_network
+                  xml.NetworkAssignment('containerNetwork' => network_config[0][:name], 'innerNetwork' => network_config[0][:name]) if _cfg.nics.nil? && network_config.length == 1
                 }
               end
               xml.AllEULAsAccepted 'true'
@@ -905,7 +876,7 @@ module VagrantPlugins
         # - vm_list: hash with IDs of the VMs to be used in the composing process
         # - network_config: hash of the network configuration for the vapp
 
-        def recompose_vapp_from_vm(vapp_id, vm_list = {}, network_config = {}, _cfg)
+        def recompose_vapp_from_vm(vapp_id, vm_list = {}, network_config = [], _cfg)
           original_vapp = get_vapp(vapp_id)
 
           builder = Nokogiri::XML::Builder.new do |xml|
@@ -930,22 +901,22 @@ module VagrantPlugins
                           xml.ComputerName vm_name
                       }
                     end
-                    if !_cfg.advanced_network
+                    if _cfg.nics.nil? && network_config.length == 1
                       xml.NetworkConnectionSection(
                         'xmlns:ovf' => 'http://schemas.dmtf.org/ovf/envelope/1',
                         'type' => 'application/vnd.vmware.vcloud.networkConnectionSection+xml',
                         'href' => "#{@api_url}/vAppTemplate/vm-#{vm_id}/networkConnectionSection/") {
                           xml['ovf'].Info 'Network config for sourced item'
                           xml.PrimaryNetworkConnectionIndex '0'
-                          xml.NetworkConnection('network' => network_config[:name]) {
+                          xml.NetworkConnection('network' => network_config[0][:name]) {
                             xml.NetworkConnectionIndex '0'
                             xml.IsConnected 'true'
-                            xml.IpAddressAllocationMode(network_config[:ip_allocation_mode] || 'POOL')
+                            xml.IpAddressAllocationMode(network_config[0][:ip_allocation_mode] || 'POOL')
                         }
                       }
                     end
                   }
-                  xml.NetworkAssignment('containerNetwork' => network_config[:name], 'innerNetwork' => network_config[:name]) if !_cfg.advanced_network
+                  xml.NetworkAssignment('containerNetwork' => network_config[0][:name], 'innerNetwork' => network_config[0][:name]) if _cfg.nics.nil? && network_config.length == 1
               }
             end
             xml.AllEULAsAccepted 'true'
@@ -1078,42 +1049,27 @@ module VagrantPlugins
         #     :vm_scoped_local_id   => value[:vapp_scoped_local_id]
         #   }
 
-        def add_vapp_port_forwarding_rules(vapp_id, network_name, config = {})
-          builder = Nokogiri::XML::Builder.new do |xml|
-            xml.NetworkConfigSection(
-              'xmlns' => 'http://www.vmware.com/vcloud/v1.5',
-              'xmlns:ovf' => 'http://schemas.dmtf.org/ovf/envelope/1') {
-              xml['ovf'].Info 'Network configuration'
-              xml.NetworkConfig('networkName' => network_name) {
-                xml.Configuration {
-                  xml.ParentNetwork('href' => "#{@api_url}/network/#{config[:parent_network]}")
-                  xml.FenceMode(config[:fence_mode] || 'isolated')
-                  xml.Features {
-                    xml.NatService {
-                      xml.IsEnabled 'true'
-                      xml.NatType 'portForwarding'
-                      xml.Policy(config[:nat_policy_type] || 'allowTraffic')
+        def add_vapp_port_forwarding_rules(vapp_id, network_name, edge_network_name, config = {})
+          params = {
+            'method'  => :get,
+            'command' => "/vApp/vapp-#{vapp_id}/networkConfigSection"
+          }
+          response, _headers = send_request(params)
 
-                      pre_existing = get_vapp_port_forwarding_rules(vapp_id)
+          nat_svc = response.css("/NetworkConfigSection/NetworkConfig[networkName='#{network_name}']/Configuration/Features/NatService").first
 
-                      config[:nat_rules].concat(pre_existing)
-
-                      config[:nat_rules].each do |nat_rule|
-                        xml.NatRule {
-                          xml.VmRule {
-                            xml.ExternalPort nat_rule[:nat_external_port]
-                            xml.VAppScopedVmId nat_rule[:vapp_scoped_local_id]
-                            xml.VmNicId(nat_rule[:nat_vmnic_id] || '0')
-                            xml.InternalPort nat_rule[:nat_internal_port]
-                            xml.Protocol(nat_rule[:nat_protocol] || 'TCP')
-                          }
-                        }
-                      end
-                    }
-                  }
-                }
-              }
-            }
+          config[:nat_rules].each do |nr|
+            nat_svc << (
+              "<NatRule>" +
+                "<VmRule>" +
+                  "<ExternalPort>#{nr[:nat_external_port]}</ExternalPort>" +
+                  "<VAppScopedVmId>#{nr[:vapp_scoped_local_id]}</VAppScopedVmId>" +
+                  "<VmNicId>#{nr[:nat_vmnic_id]}</VmNicId>" +
+                  "<InternalPort>#{nr[:nat_internal_port]}</InternalPort>" +
+                  "<Protocol>#{nr[:nat_protocol]}</Protocol>" +
+                "</VmRule>" +
+              "</NatRule>"
+            )
           end
 
           params = {
@@ -1123,7 +1079,7 @@ module VagrantPlugins
 
           _response, headers = send_request(
             params,
-            builder.to_xml,
+            response.to_xml,
             'application/vnd.vmware.vcloud.networkConfigSection+xml'
           )
 
@@ -1134,7 +1090,7 @@ module VagrantPlugins
         # Get vApp port forwarding rules
         #
         # - vapp_id: id of the vApp
-        def get_vapp_port_forwarding_rules(vapp_id)
+        def get_vapp_port_forwarding_rules(vapp_id, network_name=nil)
           params = {
             'method'  => :get,
             'command' => "/vApp/vapp-#{vapp_id}/networkConfigSection"
@@ -1144,9 +1100,22 @@ module VagrantPlugins
 
           # FIXME: this will return nil if the vApp uses multiple vApp Networks
           # with Edge devices in natRouted/portForwarding mode.
-          config = response.css(
-            'NetworkConfigSection/NetworkConfig/Configuration'
+          nconfig = response.css(
+            'NetworkConfigSection/NetworkConfig'
           )
+          config = nil
+          if nconfig.size > 1
+            nconfig.each {|c|
+              pn = c.css('/Configuration/ParentNetwork')
+              next if pn.size == 0
+              if pn.first['name'] == network_name
+                config = c.css('/Configuration')
+                break
+              end
+            }
+          else
+            config = nconfig.css('/Configuration')
+          end
           fence_mode = config.css('/FenceMode').text
           nat_type = config.css('/Features/NatService/NatType').text
 
@@ -1561,8 +1530,8 @@ module VagrantPlugins
         # - NatType" is set to "portForwarding
         # This will be required to know how to connect to VMs behind the Edge
         # device.
-        def get_vapp_edge_public_ip(vapp_id)
-          return @cached_vapp_edge_public_ips[vapp_id] unless @cached_vapp_edge_public_ips[vapp_id].nil?
+        def get_vapp_edge_public_ip(vapp_id, network_name=nil)
+          return @cached_vapp_edge_public_ips["#{vapp_id}#{network_name}"] unless @cached_vapp_edge_public_ips["#{vapp_id}#{network_name}"].nil?
 
           # Check the network configuration section
           params = {
@@ -1574,9 +1543,22 @@ module VagrantPlugins
 
           # FIXME: this will return nil if the vApp uses multiple vApp Networks
           # with Edge devices in natRouted/portForwarding mode.
-          config = response.css(
-            'NetworkConfigSection/NetworkConfig/Configuration'
+          nconfig = response.css(
+            'NetworkConfigSection/NetworkConfig'
           )
+          config = nil
+          if nconfig.size > 1
+            nconfig.each {|c|
+              pn = c.css('/Configuration/ParentNetwork')
+              next if pn.size == 0
+              if pn.first['name'] == network_name
+                config = c.css('/Configuration')
+                break
+              end
+            }
+          else
+            config = nconfig.css('/Configuration')
+          end
 
           fence_mode = config.css('/FenceMode').text
           nat_type = config.css('/Features/NatService/NatType').text
@@ -1597,7 +1579,7 @@ module VagrantPlugins
           if edge_ip == ''
             return nil
           else
-            @cached_vapp_edge_public_ips[vapp_id] = edge_ip
+            @cached_vapp_edge_public_ips["#{vapp_id}#{network_name}"] = edge_ip
             return edge_ip
           end
         end
@@ -1902,6 +1884,41 @@ module VagrantPlugins
           )
 
           task_id = URI(headers['Location']).path.gsub('/api/task/', '')
+          task_id
+        end
+
+        ##
+        # Set VM Network Connection state
+        def set_vm_network_connected(vm_id)
+          params = {
+            'method'  => :get,
+            'command' => "/vApp/vm-#{vm_id}/networkConnectionSection"
+          }
+          response, _headers = send_request(params)
+
+          changed = false
+          response.css('NetworkConnection').each do |net|
+            ic = net.css('IsConnected')
+            if ic.text != 'true'
+              ic.first.content = 'true'
+              changed = true
+            end
+          end
+
+          if changed
+            params = {
+              'method'  => :put,
+              'command' => "/vApp/vm-#{vm_id}/networkConnectionSection"
+            }
+
+            _response, headers = send_request(
+              params,
+              response.to_xml,
+              'application/vnd.vmware.vcloud.networkConnectionSection+xml'
+            )
+
+            task_id = URI(headers['Location']).path.gsub('/api/task/', '')
+          end
           task_id
         end
 

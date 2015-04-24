@@ -55,6 +55,14 @@ module VagrantPlugins
             # Reverse back the array.
             range_addresses.reverse!
 
+            dhcp_enabled = 'false'
+            if !cfg.dhcp_enabled.nil? and cfg.dhcp_enabled == true
+              dhcp_enabled = 'true'
+              range_addresses = cfg.pool_range
+              dhcp_start = cfg.dhcp_range.shift
+              dhcp_end = cfg.dhcp_range.shift
+            end
+
             @logger.debug("Gateway IP: #{gateway_ip.to_s}")
             @logger.debug("Netmask: #{cidr.wildcard_mask}")
             @logger.debug(
@@ -72,6 +80,9 @@ module VagrantPlugins
               :ip_allocation_mode => 'POOL',
               :parent_network     => cfg.vdc_network_id,
               :enable_firewall    => 'false',
+              :dhcp_enabled       => dhcp_enabled,
+              :dhcp_start         => dhcp_start,
+              :dhcp_end           => dhcp_end,
               :dns1               => dns_address1,
               :dns2               => dns_address2
             }
@@ -87,7 +98,7 @@ module VagrantPlugins
 
             env[:bridged_network] = true
 
-          elsif !cfg.advanced_network.nil?
+          elsif !cfg.networks.nil?
             # Advanced network definition
             env[:advanced_network] = true
             network_options = []
@@ -106,6 +117,7 @@ module VagrantPlugins
                 network_options.push({
                   :name               => net,
                   :fence_mode         => 'bridged',
+                  :ip_allocation_mode => 'POOL',
                   :parent_network     => net_id
                 })
               end
@@ -139,13 +151,27 @@ module VagrantPlugins
                 # Delete the "network" address from the range.
                 range_addresses.shift
                 # Retrieve the first usable IP, to be used as a gateway.
-                gateway_ip = range_addresses.shift
+                if cfg.networks[:gateway]
+                  gateway_ip = cfg.networks[:gateway]
+                else
+                  gateway_ip = range_addresses.shift
+                end
                 # Reverse the array in place.
                 range_addresses.reverse!
                 # Delete the "broadcast" address from the range.
                 range_addresses.shift
                 # Reverse back the array.
                 range_addresses.reverse!
+
+                dhcp_enabled = 'false'
+                dhcp_start = nil
+                dhcp_end = nil
+                if !net[:dhcp_enabled].nil? and net[:dhcp_enabled] == true
+                  dhcp_enabled = 'true'
+                  range_addresses = net[:pool_range]
+                  dhcp_start = net[:dhcp_range].shift
+                  dhcp_end = net[:dhcp_range].shift
+                end
 
                 @logger.debug("Gateway IP[#{i}]: #{gateway_ip.to_s}")
                 @logger.debug("Netmask[#{i}]: #{cidr.wildcard_mask}")
@@ -160,21 +186,25 @@ module VagrantPlugins
                   :fence_mode         => 'natRouted',
                   :ip_allocation_mode => 'POOL',
                   :enable_firewall    => 'false',
+                  :dhcp_enabled       => dhcp_enabled,
+                  :dhcp_start         => dhcp_start,
+                  :dhcp_end           => dhcp_end,
                   :dns1               => dns_address1,
                   :dns2               => dns_address2
                 }
-                if net[:connection]
-                  net_id = cfg.org[:networks][net[:connection]]
+                if net[:vdc_network_name]
+                  net_id = cfg.org[:networks][net[:vdc_network_name]]
                   if !net_id
                     # TEMP FIX: permissions issues at the Org Level for vApp authors
                     #           to "view" Org vDC Networks but they can see them at the
                     #           Organization vDC level (tsugliani)
-                    net_id = cfg.vdc[:networks][net[:connection]]
+                    net_id = cfg.vdc[:networks][net[:vdc_network_name]]
                     if !net_id
                       raise 'vCloud User credentials has insufficient privileges'
                     end
                   end
-                  n[:parent_network] = net[:connection]
+                  n[:parent_network] = net_id
+                  net[:parent_network] = net_id
                 end
 
                 network_options.push(n)
@@ -207,6 +237,8 @@ module VagrantPlugins
             }
 
           end
+
+          network_options = [network_options] if !network_options.kind_of?(Array)
 
           if env[:machine].get_vapp_id.nil?
             env[:ui].info('Building vApp...')

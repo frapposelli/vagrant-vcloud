@@ -26,6 +26,11 @@ module VagrantPlugins
           if set_vm_hardware
             cnx.wait_task_completion(set_vm_hardware)
           end
+          set_vm_network_connected = cnx.set_vm_network_connected(env[:machine].id)
+          if set_vm_network_connected
+            env[:ui].info('Connecting all NICs...')
+            cnx.wait_task_completion(set_vm_network_connected)
+          end
 
           # enable nested hypervisor
           if !cfg.nested_hypervisor.nil? && cfg.nested_hypervisor == true

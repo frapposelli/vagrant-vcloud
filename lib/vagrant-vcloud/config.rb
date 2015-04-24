@@ -186,6 +186,15 @@ module VagrantPlugins
       # Attempt to sync files to the VM (Bool = true)
       attr_accessor :sync_enabled
 
+      # Turn DHCP on for this network (Bool = false)
+      attr_accessor :dhcp_enabled
+
+      # POOL ip range if dhcp is enabled (Array)
+      attr_accessor :pool_range
+
+      # DHCP ip range if enabled (Array)
+      attr_accessor :dhcp_range
+
       # Add metadata to the vApp (Array)
       #   metadata_vapp: [
       #     [ 'key', 'value' ]
