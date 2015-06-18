@@ -290,7 +290,8 @@ module VagrantPlugins
         end
 
         # guest customization
-        if enable_guest_customization.nil || enable_guest_customization == false
+        if enable_guest_customization.nil ||
+           enable_guest_customization == false
           if guest_customization_change_sid == true
             errors << I18n.t('vagrant_vcloud.gc.change_sid')
           end
@@ -304,7 +305,8 @@ module VagrantPlugins
             errors << I18n.t('vagrant_vcloud.gc.script')
           end
         else
-          if guest_customization_change_sid.nil? || guest_customization_change_sid == false
+          if guest_customization_change_sid.nil? ||
+             guest_customization_change_sid == false
             if guest_customization_join_domain == true
               errors << I18n.t('vagrant_vcloud.gc.domain')
             end
@@ -314,23 +316,28 @@ module VagrantPlugins
                  guest_customization_domain_user_name.nil? ||
                  guest_customization_domain_user_password.nil?
                 errors << I18n.t('vagrant_vcloud.gc.domain_join')
+              end
             end
           end
-          if guest_customization_admin_password_enabled.nil? || guest_customization_admin_password_enabled == false
+          if guest_customization_admin_password_enabled.nil? ||
+             guest_customization_admin_password_enabled == false
             if guest_customization_admin_auto_login == true
               errors << I18n.t('vagrant_vcloud.gc.auto_login')
             end
           else
             if guest_customization_admin_auto_login == true
-              if guest_customization_admin_password_auto.nil? || guest_customization_admin_password_auto == false
-                if guest_customization_admin_password.nil? || guest_customization_admin_password.empty?
+              if guest_customization_admin_password_auto.nil? ||
+                 guest_customization_admin_password_auto == false
+                if guest_customization_admin_password.nil? ||
+                   guest_customization_admin_password.empty?
                   errors << I18n.t('vagrant_vcloud.gc.admin_password_gs')
                 end
               end
               if guest_customization_admin_auto_login_count.nil?
                 guest_customization_admin_auto_login_count = 1
               end
-              if !( guest_customization_admin_auto_login_count >= 1 && guest_customization_admin_auto_login_count <= 100 )
+              if !( guest_customization_admin_auto_login_count >= 1 &&
+                    guest_customization_admin_auto_login_count <= 100 )
                 errors << I18n.t('vagrant_vcloud.gc.auto_login_count')
               end
             end
