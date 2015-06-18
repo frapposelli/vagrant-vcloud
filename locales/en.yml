@@ -60,7 +60,16 @@ en:
 
         Host path: %{hostpath}
         Error: %{err}
-
+    gc:
+      admin_password: "Guest customization must be enabled to generate/specify password"
+      admin_password_gs: "Admin assword must be auto generated or secified"
+      admin_password_reset: "Guest customization must be enabled to require password reset"
+      auto_login: "Allow admin password is required to enable auto login"
+      auto_login_count: "Auto login count must be between 1 and 100"
+      change_sid: "Guest customization must be enabled to change the SID"
+      domain: "Change SID mst be enabled to join to a domain"
+      domain_join: "Joining a domain requires domain name, domain user, and domain password"
+      script: "Guest customization must be enabled to run a script"
     states:
       not_created: |-
         The environment has not yet been created. Run `vagrant up` to
