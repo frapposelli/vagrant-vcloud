@@ -37,7 +37,7 @@ module VagrantPlugins
           @username = username
           @password = password
           @org_name = org_name
-          @api_version = '5.1'
+          @api_version = '5.5'
           @id = nil
 
           @cached_vapp_edge_public_ips = {}
@@ -820,7 +820,28 @@ module VagrantPlugins
                         'xmlns:ovf' => 'http://schemas.dmtf.org/ovf/envelope/1') {
                           xml['ovf'].Info 'VM Guest Customization configuration'
                           xml.Enabled true
-                          xml.AdminPasswordEnabled false
+                          if _cfg.guest_customization_change_sid == true
+                            xml.ChangeSid true
+                            if _cfg.guest_customization_join_domain == true
+                              xml.JoinDomainEnabled true
+                              xml.DomainName _cfg.guest_customization_domain_name
+                              xml.DomainUserName _cfg.guest_customization_domain_user_name
+                              xml.DomainUserPassword _cfg.guest_customization_domain_user_password
+                              xml.MachineObjectOU _cfg.guest_customization_domain_ou if !_cfg.guest_customization_domain_ou.nil?
+                            end
+                          end
+                          if _cfg.guest_customization_admin_password_enabled
+                            xml.AdminPasswordEnabled true
+                            xml.AdminPasswordAuto true if _cfg.guest_customization_admin_password_auto
+                            xml.AdminPassword _cfg.guest_customization_admin_password if !_cfg.guest_customization_admin_password.nil?
+                            if _cfg.guest_customization_admin_auto_login == true
+                              xml.AdminAutoLogonEnabled true
+                              xml.AdminAutoLogonCount _cfg.guest_customization_admin_auto_login_count
+                            end
+                          else
+                            xml.AdminPasswordEnabled false
+                          end
+                          xml.ResetPasswordRequired _cfg.guest_customization_admin_password_reset if !_cfg.guest_customization_admin_password_reset.nil?
                           xml.CustomizationScript{ xml.cdata(_cfg.guest_customization_script) } if !_cfg.guest_customization_script.nil?
                           xml.ComputerName vm_name
                       }
@@ -896,7 +917,28 @@ module VagrantPlugins
                         'xmlns:ovf' => 'http://schemas.dmtf.org/ovf/envelope/1') {
                           xml['ovf'].Info 'VM Guest Customization configuration'
                           xml.Enabled true
-                          xml.AdminPasswordEnabled false
+                          if _cfg.guest_customization_change_sid == true
+                            xml.ChangeSid true
+                            if _cfg.guest_customization_join_domain == true
+                              xml.JoinDomainEnabled true
+                              xml.DomainName _cfg.guest_customization_domain_name
+                              xml.DomainUserName _cfg.guest_customization_domain_user_name
+                              xml.DomainUserPassword _cfg.guest_customization_domain_user_password
+                              xml.MachineObjectOU _cfg.guest_customization_domain_ou if !_cfg.guest_customization_domain_ou.nil?
+                            end
+                          end
+                          if _cfg.guest_customization_admin_password_enabled
+                            xml.AdminPasswordEnabled true
+                            xml.AdminPasswordAuto true if _cfg.guest_customization_admin_password_auto
+                            xml.AdminPassword _cfg.guest_customization_admin_password if !_cfg.guest_customization_admin_password.nil?
+                            if _cfg.guest_customization_admin_auto_login == true
+                              xml.AdminAutoLogonEnabled true
+                              xml.AdminAutoLogonCount _cfg.guest_customization_admin_auto_login_count
+                            end
+                          else
+                            xml.AdminPasswordEnabled false
+                          end
+                          xml.ResetPasswordRequired _cfg.guest_customization_admin_password_reset if !_cfg.guest_customization_admin_password_reset.nil?
                           xml.CustomizationScript{ xml.cdata(_cfg.guest_customization_script) } if !_cfg.guest_customization_script.nil?
                           xml.ComputerName vm_name
                       }
@@ -2014,7 +2056,8 @@ module VagrantPlugins
               end
             elsif type.content == '10'
               # network card
-              nic_address_on_parent = [ nic_address_on_parent, item.css('rasd|AddressOnParent').first.text.to_i ].max
+              nic_address_on_parent = nic_address_on_parent + 1
+              # nic_address_on_parent = [ nic_address_on_parent, item.css('rasd|AddressOnParent').first.text.to_i ].max
               next if !cfg.nics || nic_count == cfg.nics.length
               nic = cfg.nics[nic_count]
 
@@ -2023,6 +2066,7 @@ module VagrantPlugins
               orig_address_mode = item.css('rasd|Connection').first['vcloud:ipAddressingMode']
               orig_primary = item.css('rasd|Connection').first['vcloud:primaryNetworkConnection']
               orig_network = item.css('rasd|Connection').first.text
+              orig_parent = item.css('rasd|AddressOnParent').first.text
               # resourceSubType cannot be changed for an existing network card
 
               if !nic[:mac].nil?
@@ -2034,9 +2078,11 @@ module VagrantPlugins
               changed = true if nic[:ip_mode].upcase != orig_address_mode.upcase
               changed = true if nic[:primary] != orig_primary
               changed = true if nic[:network].upcase != orig_network.upcase
+              changed = true if nic_address_on_parent != orig_parent
 
               if changed
                 item.css('rasd|Address').first.content = nic[:mac] if !nic[:mac].nil?
+                item.css('rasd|AddressOnParent').first.content = nic_address_on_parent if nic_address_on_parent != orig_parent
                 conn = item.css('rasd|Connection').first
                 conn.content = nic[:network]
                 if nic[:ip_mode].upcase == 'DHCP'
