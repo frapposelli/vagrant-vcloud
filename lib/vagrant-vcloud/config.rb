@@ -257,7 +257,10 @@ module VagrantPlugins
       attr_accessor :guest_customization_admin_auto_login
 
       # guest customization admin auto login count (Windows only) (Integer)
-      attr_accessor :guest_customization_admin_auto_login_count
+      attr_reader :guest_customization_admin_auto_login_count
+      def guest_customization_admin_auto_login_count=(count)
+        @guest_customization_admin_auto_login_count = count.to_i
+      end
 
       # guest customization admin require password reset (Bool = false)
       attr_accessor :guest_customization_admin_password_reset
@@ -290,7 +293,7 @@ module VagrantPlugins
         end
 
         # guest customization
-        if enable_guest_customization.nil ||
+        if enable_guest_customization.nil? ||
            enable_guest_customization == false
           if guest_customization_change_sid == true
             errors << I18n.t('vagrant_vcloud.gc.change_sid')
@@ -334,11 +337,12 @@ module VagrantPlugins
                 end
               end
               if guest_customization_admin_auto_login_count.nil?
-                guest_customization_admin_auto_login_count = 1
-              end
-              if !( guest_customization_admin_auto_login_count >= 1 &&
-                    guest_customization_admin_auto_login_count <= 100 )
-                errors << I18n.t('vagrant_vcloud.gc.auto_login_count')
+                errors << I18n.t('vagrant_vcloud.gc.auto_login_count_req')
+              else
+                if !( guest_customization_admin_auto_login_count >= 1 &&
+                      guest_customization_admin_auto_login_count <= 100 )
+                  errors << I18n.t('vagrant_vcloud.gc.auto_login_count')
+                end
               end
             end
           end
