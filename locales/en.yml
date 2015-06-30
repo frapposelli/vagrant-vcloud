@@ -66,6 +66,7 @@ en:
       admin_password_reset: "Guest customization must be enabled to require password reset"
       auto_login: "Allow admin password is required to enable auto login"
       auto_login_count: "Auto login count must be between 1 and 100"
+      auto_login_count_req: "Auto login count is required, if auto login is enabled"
       change_sid: "Guest customization must be enabled to change the SID"
       domain: "Change SID mst be enabled to join to a domain"
       domain_join: "Joining a domain requires domain name, domain user, and domain password"
