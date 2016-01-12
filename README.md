@@ -1,6 +1,8 @@
 [Vagrant](http://www.vagrantup.com) provider for VMware vCloud Director® [![Gem Version](https://badge.fury.io/rb/vagrant-vcloud.svg)](http://badge.fury.io/rb/vagrant-vcloud) [![Code Climate](https://codeclimate.com/github/frapposelli/vagrant-vcloud/badges/gpa.svg)](https://codeclimate.com/github/frapposelli/vagrant-vcloud)
 =============
 
+[![Join the chat at https://gitter.im/frapposelli/vagrant-vcloud](https://badges.gitter.im/frapposelli/vagrant-vcloud.svg)](https://gitter.im/frapposelli/vagrant-vcloud?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 Please note that this software is still Alpha/Beta quality and is not recommended for production usage.
 
 We have a wide array of boxes available at [Vagrant Cloud](https://vagrantcloud.com/gosddc) you can use them directly or you can roll your own as you please, make sure to install VMware tools in it.
