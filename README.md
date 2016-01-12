@@ -1,8 +1,7 @@
 [Vagrant](http://www.vagrantup.com) provider for VMware vCloud Director®
 =============
 
-[Version 0.4.3](../../releases/tag/v0.4.3) has been released!
--------------
+[![Join the chat at https://gitter.im/frapposelli/vagrant-vcloud](https://badges.gitter.im/frapposelli/vagrant-vcloud.svg)](https://gitter.im/frapposelli/vagrant-vcloud?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 Please note that this software is still Alpha/Beta quality and is not recommended for production usage.
 
