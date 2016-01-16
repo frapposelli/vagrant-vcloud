@@ -146,6 +146,122 @@ module VagrantPlugins
       # NestedHypervisor (Bool)
       attr_accessor :nested_hypervisor
 
+      # Specify a vApp name (String)
+      attr_accessor :vapp_name
+
+      # Use advanced networking settings (Bool = false)
+      attr_accessor :advanced_network
+
+      # Specify networks to add to the vApp (Hash)
+      #   networks: {
+      #     org: [ 'Organization VDC network' ],
+      #     vapp: [ {
+      #               name: 'vApp network',
+      #               ip_subnet: '172.16.4.0/255.255.255.0'
+      #           } ]
+      #   }
+      #
+      attr_accessor :networks
+
+      # Add hard disks to the VM (Array)
+      #   add_hdds: [ 20480 ]
+      #
+      attr_accessor :add_hdds
+
+      # Update / add network cards to the VM (Array)
+      # type is not updated for existing network cards
+      #   nics: [ {
+      #     type: :vmxnet3,
+      #     connected: true,
+      #     network: "vApp network",
+      #     primary: true,
+      #     ip_mode: "static",
+      #     ip: "10.10.10.1",
+      #     mac: "00:50:56:00:00:01"
+      #   } ]
+      #
+      attr_accessor :nics
+
+      # Power on the VM once created (Bool = true)
+      attr_accessor :power_on
+
+      # Attempt to connect via SSH to the VM (Bool = true)
+      attr_accessor :ssh_enabled
+
+      # Attempt to sync files to the VM (Bool = true)
+      attr_accessor :sync_enabled
+
+      # Turn DHCP on for this network (Bool = false)
+      attr_accessor :dhcp_enabled
+
+      # POOL ip range if dhcp is enabled (Array)
+      attr_accessor :pool_range
+
+      # DHCP ip range if enabled (Array)
+      attr_accessor :dhcp_range
+
+      # Add metadata to the vApp (Array)
+      #   metadata_vapp: [
+      #     [ 'key', 'value' ]
+      #   ]
+      #
+      attr_accessor :metadata_vapp
+
+      # Add metadata to the VM (Array)
+      #   metadata_vapp: [
+      #     [ 'key', 'value' ]
+      #   ]
+      #
+      attr_accessor :metadata_vm
+
+      # Auto answer "Yes" to upload the box to vCloud (Bool = false)
+      attr_accessor :auto_yes_for_upload
+
+      # ability to disable gc for vms without tools installed
+      attr_accessor :enable_guest_customization
+
+      # scripts to run on machine boot
+      attr_accessor :guest_customization_script
+
+      # guest customization change sid setting (Windows only) (Bool = false)
+      attr_accessor :guest_customization_change_sid
+
+      # guest customization join domain (Windows only) (Bool = false)
+      attr_accessor :guest_customization_join_domain
+
+      # guest customization domain name (Windows only) (String)
+      attr_accessor :guest_customization_domain_name
+
+      # guest customization domain user name (Windows only) (String)
+      attr_accessor :guest_customization_domain_user_name
+
+      # guest customization domain user password (Windows only) (String)
+      attr_accessor :guest_customization_domain_user_password
+
+      # guest customization domain machine ou (Windows only) (String)
+      attr_accessor :guest_customization_domain_ou
+
+      # guest customization local admin (Bool = false)
+      attr_accessor :guest_customization_admin_password_enabled
+
+      # guest customization auto generate admin password (Bool = false)
+      attr_accessor :guest_customization_admin_password_auto
+
+      # guest customization specify admin password (String)
+      attr_accessor :guest_customization_admin_password
+
+      # guest customization admin auto login (Windows only) (Bool = false)
+      attr_accessor :guest_customization_admin_auto_login
+
+      # guest customization admin auto login count (Windows only) (Integer)
+      attr_reader :guest_customization_admin_auto_login_count
+      def guest_customization_admin_auto_login_count=(count)
+        @guest_customization_admin_auto_login_count = count.to_i
+      end
+
+      # guest customization admin require password reset (Bool = false)
+      attr_accessor :guest_customization_admin_password_reset
+
       def validate(machine)
         errors = _detected_errors
 
@@ -169,8 +285,64 @@ module VagrantPlugins
           errors << I18n.t('vagrant_vcloud.config.vdc_name')
         end
 
-        if vdc_network_name.nil?
+        if networks.nil? && vdc_network_name.nil?
           errors << I18n.t('vagrant_vcloud.config.vdc_network_name')
+        end
+
+        # guest customization
+        if enable_guest_customization.nil? ||
+           enable_guest_customization == false
+          if guest_customization_change_sid == true
+            errors << I18n.t('vagrant_vcloud.gc.change_sid')
+          end
+          if !guest_customization_admin_password_enabled.nil?
+            errors << I18n.t('vagrant_vcloud.gc.admin_password')
+          end
+          if !guest_customization_admin_password_reset.nil?
+            errors << I18n.t('vagrant_vcloud.gc.admin_password_reset')
+          end
+          if !guest_customization_script.nil?
+            errors << I18n.t('vagrant_vcloud.gc.script')
+          end
+        else
+          if guest_customization_change_sid.nil? ||
+             guest_customization_change_sid == false
+            if guest_customization_join_domain == true
+              errors << I18n.t('vagrant_vcloud.gc.domain')
+            end
+          else
+            if guest_customization_join_domain == true
+              if guest_customization_domain_name.nil? ||
+                 guest_customization_domain_user_name.nil? ||
+                 guest_customization_domain_user_password.nil?
+                errors << I18n.t('vagrant_vcloud.gc.domain_join')
+              end
+            end
+          end
+          if guest_customization_admin_password_enabled.nil? ||
+             guest_customization_admin_password_enabled == false
+            if guest_customization_admin_auto_login == true
+              errors << I18n.t('vagrant_vcloud.gc.auto_login')
+            end
+          else
+            if guest_customization_admin_auto_login == true
+              if guest_customization_admin_password_auto.nil? ||
+                 guest_customization_admin_password_auto == false
+                if guest_customization_admin_password.nil? ||
+                   guest_customization_admin_password.empty?
+                  errors << I18n.t('vagrant_vcloud.gc.admin_password_gs')
+                end
+              end
+              if guest_customization_admin_auto_login_count.nil?
+                errors << I18n.t('vagrant_vcloud.gc.auto_login_count_req')
+              else
+                if !( guest_customization_admin_auto_login_count >= 1 &&
+                      guest_customization_admin_auto_login_count <= 100 )
+                  errors << I18n.t('vagrant_vcloud.gc.auto_login_count')
+                end
+              end
+            end
+          end
         end
 
         { 'vCloud Provider' => errors }

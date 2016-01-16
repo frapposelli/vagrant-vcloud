@@ -39,8 +39,48 @@ Configuration
 Here's a sample Multi-VM Vagrantfile, please note that ```vcloud.vdc_edge_gateway``` and ```vcloud.vdc_edge_gateway_ip``` are required only when you cannot access ```vcloud.vdc_network_name``` directly and there's an Organization Edge between your workstation and the vCloud Network.
 
 ```ruby
+vapp = {
+  name: 'My vApp name',
+  org_name: 'OrganizationName',
+  orgvdc_name: 'vDC_Name',
+  orgvdccatalog_name: 'Vagrant',
+  metadata: [ [ 'key', 'value' ] ],
+  advanced_networking: true,
+  networks: {
+    org: [ 'Org_VDC_Network' ],
+    vapp: [
+      {
+        name: 'MyNetwork',
+        ip_subnet: '10.10.10.10/255.255.255.0'
+      }
+    ]
+  }
+}
+
 nodes = [
-  { hostname: 'web-vm', box: 'gosddc/precise32' },
+  {
+    hostname: 'web-vm',
+    box: 'gosddc/precise32',
+    memory: 512,
+    cpus: 1,
+    nested_hypervisor: false,
+    add_hdds: [ 1024 ],
+    power_on: true,
+    ssh_enable: true,
+    sync_enable: true,
+    metadata: [ [ 'key', 'value' ] ],
+    nics: [
+      type: :vmxnet3,
+      connected: true,
+      network: "vApp netowrk",
+      primary: true,
+      ip_mode: "static",
+      ip: "10.10.10.1",
+      mac: "00:50:56:00:00:01"
+    ],
+    enable_guest_customization: true,
+    guest_customization_script: 'touch /sample.file'
+  },
   { hostname: 'ssh-vm', box: 'gosddc/precise32' },
   { hostname: 'sql-vm', box: 'gosddc/precise32' },
   { hostname: 'app-vm', box: 'gosddc/precise32' }
@@ -50,22 +90,30 @@ Vagrant.configure('2') do |config|
 
   # vCloud Director provider settings
   config.vm.provider :vcloud do |vcloud|
-    vcloud.vapp_prefix = 'multibox-sample'
 
     vcloud.hostname = 'https://my.cloudprovider.com'
     vcloud.username = 'MyUserName'
     vcloud.password = 'MySup3rS3cr3tPassw0rd!'
 
-    vcloud.org_name = 'OrganizationName'
-    vcloud.vdc_name = 'vDC_Name'
+    vcloud.vapp_prefix = 'multibox-sample'
 
-    vcloud.catalog_name = 'Vagrant'
-    vcloud.ip_subnet = '172.16.32.125/255.255.255.240'
+    vcloud.org_name = vapp[:org_name]
+    vcloud.vdc_name = vapp[:orgvdc_name]
+    vcloud.catalog_name = vapp[:orgvdccatalog_name]
 
-    vcloud.vdc_network_name = 'MyNetwork'
+    vcloud.vapp_name = vapp[:name]
+    vcloud.metadata_vapp = vapp[:metadata]
+    vcloud.auto_yes_for_upload = vapp[:auto_yes_for_upload]
 
-    vcloud.vdc_edge_gateway = 'MyOrgEdgeGateway'
-    vcloud.vdc_edge_gateway_ip = '10.10.10.10'
+    vcloud.advanced_network = vapp[:advanced_networking]
+    if vapp[:advanced_networking]
+      vcloud.networks = vapp[:networks]
+    else
+      vcloud.ip_subnet = '172.16.32.125/255.255.255.240'
+      vcloud.vdc_network_name = 'MyNetwork'
+      vcloud.vdc_edge_gateway = 'MyOrgEdgeGateway'
+      vcloud.vdc_edge_gateway_ip = '10.10.10.10'
+      end
   end
 
   nodes.each do |node|
@@ -73,10 +121,27 @@ Vagrant.configure('2') do |config|
       node_config.vm.box = node[:box]
       node_config.vm.hostname = node[:hostname]
       node_config.vm.box_url = node[:box_url]
-      node_config.vm.network :forwarded_port,
-                             guest: 80,
-                             host: 8080,
-                             auto_correct: true
+      if vapp[:advanced_networking]
+        node_config.vm.provider :vcloud do |pro|
+          pro.memory = node[:memory]
+          pro.cpus = node[:cpus]
+          pro.add_hdds = node[:add_hdds]
+          pro.nics = node[:nics]
+          pro.ssh_enabled = node[:ssh_enabled]
+          pro.sync_enabled = node[:sync_enabled]
+          pro.power_on = node[:power_on]
+          pro.metadata_vm = node[:metadata]
+          pro.nested_hypervisor = node[:nested_hypervisor]
+          pro.enable_guest_customization = node[:enable_guest_customization]
+          pro.guest_customization_script = node[:guest_customization_script]
+        end
+        node_config.vm.network :public_network
+      else
+        node_config.vm.network :forwarded_port,
+                               guest: 80,
+                               host: 8080,
+                               auto_correct: true
+      end
       # node_config.vm.provision :puppet do |puppet|
       #   puppet.manifests_path = 'puppet/manifests'
       #   puppet.manifest_file = 'site.pp'
