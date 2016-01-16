@@ -221,10 +221,7 @@ module VagrantPlugins
       attr_accessor :enable_guest_customization
 
       # scripts to run on machine boot
-      attr_reader :guest_customization_script
-      def guest_customization_script=(script)
-        @guest_customization_script = script.encode(universal_newline: true)
-      end
+      attr_accessor :guest_customization_script
 
       # guest customization change sid setting (Windows only) (Bool = false)
       attr_accessor :guest_customization_change_sid
@@ -298,10 +295,10 @@ module VagrantPlugins
           if guest_customization_change_sid == true
             errors << I18n.t('vagrant_vcloud.gc.change_sid')
           end
-          if guest_customization_admin_password_enabled.nil?
+          if !guest_customization_admin_password_enabled.nil?
             errors << I18n.t('vagrant_vcloud.gc.admin_password')
           end
-          if guest_customization_admin_password_reset.nil?
+          if !guest_customization_admin_password_reset.nil?
             errors << I18n.t('vagrant_vcloud.gc.admin_password_reset')
           end
           if !guest_customization_script.nil?
