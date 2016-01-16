@@ -24,12 +24,18 @@ module VagrantPlugins
           env[:ui].info('Setting VM hardware...')
           set_vm_hardware = cnx.set_vm_hardware(env[:machine].id, cfg)
           if set_vm_hardware
-            cnx.wait_task_completion(set_vm_hardware)
+            wait = cnx.wait_task_completion(set_vm_hardware)
+            unless wait[:errormsg].nil?
+              fail Errors::ModifyVAppError, :message => wait[:errormsg]
+            end
           end
           set_vm_network_connected = cnx.set_vm_network_connected(env[:machine].id)
           if set_vm_network_connected
             env[:ui].info('Connecting all NICs...')
-            cnx.wait_task_completion(set_vm_network_connected)
+            wait = cnx.wait_task_completion(set_vm_network_connected)
+            unless wait[:errormsg].nil?
+              fail Errors::ModifyVAppError, :message => wait[:errormsg]
+            end
           end
 
           # enable nested hypervisor
@@ -37,14 +43,20 @@ module VagrantPlugins
             env[:ui].info('Enabling nested hypervisor...')
             set_vm_nested_hypervisor = cnx.set_vm_nested_hypervisor(env[:machine].id, true)
             if set_vm_nested_hypervisor
-              cnx.wait_task_completion(set_vm_nested_hypervisor)
+              wait = cnx.wait_task_completion(set_vm_nested_hypervisor)
+              unless wait[:errormsg].nil?
+                fail Errors::ModifyVAppError, :message => wait[:errormsg]
+              end
             end
           end
 
           if cfg.power_on.nil? || cfg.power_on == true
             env[:ui].info('Powering on VM...')
             poweron_vm = cnx.poweron_vm(env[:machine].id)
-            cnx.wait_task_completion(poweron_vm)
+            wait = cnx.wait_task_completion(poweron_vm)
+            unless wait[:errormsg].nil?
+              fail Errors::PoweronVAppError, :message => wait[:errormsg]
+            end
           end
 
           @app.call(env)
