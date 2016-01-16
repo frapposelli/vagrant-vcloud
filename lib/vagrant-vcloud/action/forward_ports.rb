@@ -105,15 +105,17 @@ module VagrantPlugins
                                                                 r[:translated_ip] == vapp_edge_ip)}
               vapp_edge_ports_in_use = vapp_edge_dnat_rules.map{|r| r[:original_port].to_i}.to_set
 
-              ports.each do |port|
-                if port[:vapp_scoped_local_id] == vm_info[:vapp_scoped_local_id] &&
-                  !vapp_edge_ports_in_use.include?(port[:nat_external_port])
-                  @env[:ui].info(
-                    "Creating NAT rules on [#{cfg.vdc_edge_gateway}] " +
-                    "for IP [#{vapp_edge_ip}] port #{port[:nat_external_port]}."
-                  )
+              ports.values.each do |port|
+                port[:rules].each do |rule|
+                  if rule[:vapp_scoped_local_id] == vm_info[:vapp_scoped_local_id] &&
+                    !vapp_edge_ports_in_use.include?(rule[:nat_external_port])
+                    @env[:ui].info(
+                      "Creating NAT rules on [#{cfg.vdc_edge_gateway}] " +
+                      "for IP [#{vapp_edge_ip}] port #{rule[:nat_external_port]}."
+                    )
 
-                  edge_ports << port[:nat_external_port]
+                    edge_ports << rule[:nat_external_port]
+                  end
                 end
               end
 
