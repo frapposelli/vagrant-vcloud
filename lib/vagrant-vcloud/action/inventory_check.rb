@@ -138,14 +138,16 @@ module VagrantPlugins
           @logger.debug("Catalog item is now #{cfg.catalog_item}")
 
           # This only works with Org Admin role or higher
-          cfg.vdc_network_id = cfg.org[:networks][cfg.vdc_network_name]
-          if !cfg.vdc_network_id
-            # TEMP FIX: permissions issues at the Org Level for vApp authors
-            #           to "view" Org vDC Networks but they can see them at the
-            #           Organization vDC level (tsugliani)
-            cfg.vdc_network_id = cfg.vdc[:networks][cfg.vdc_network_name]
+          if cfg.vdc_network_name
+            cfg.vdc_network_id = cfg.org[:networks][cfg.vdc_network_name]
             if !cfg.vdc_network_id
-              raise 'vCloud User credentials has insufficient privileges'
+              # TEMP FIX: permissions issues at the Org Level for vApp authors
+              #           to "view" Org vDC Networks but they can see them at the
+              #           Organization vDC level (tsugliani)
+              cfg.vdc_network_id = cfg.vdc[:networks][cfg.vdc_network_name]
+              if !cfg.vdc_network_id
+                raise 'vCloud User credentials has insufficient privileges'
+              end
             end
           end
 
@@ -167,13 +169,17 @@ module VagrantPlugins
               "in Catalog [#{cfg.catalog_name}] does not exist!"
             )
 
-            user_input = env[:ui].ask(
-              "Would you like to upload the [#{box_name}] " +
-              "box to [#{cfg.catalog_name}] Catalog?\n" +
-              'Choice (yes/no): '
-            )
+            if cfg.auto_yes_for_upload.nil? || cfg.auto_yes_for_upload == false
+	            user_input = env[:ui].ask(
+	              "Would you like to upload the [#{box_name}] " +
+	              "box to [#{cfg.catalog_name}] Catalog?\n" +
+	              'Choice (yes/no): '
+	            )
+	        else
+	        	auto_upload = cfg.auto_yes_for_upload
+	        end
 
-            if user_input.downcase == 'yes' || user_input.downcase == 'y'
+            if !auto_upload.nil? || user_input.downcase == 'yes' || user_input.downcase == 'y'
               env[:ui].info("Uploading [#{box_name}]...")
               vcloud_upload_box(env)
             else

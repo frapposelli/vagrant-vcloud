@@ -14,7 +14,7 @@ module VagrantPlugins
 
           # Get the ports we are forwarding
           env[:forwarded_ports] ||= compile_forwarded_ports(
-            env[:machine].config
+            env[:machine]
           )
 
           forward_ports
@@ -23,7 +23,7 @@ module VagrantPlugins
         end
 
         def forward_ports
-          ports = []
+          ports = {}
           edge_ports = []
 
           cfg = @env[:machine].provider_config
@@ -41,6 +41,7 @@ module VagrantPlugins
           @logger.debug('Getting VM info...')
           vm = cnx.get_vapp(vapp_id)
           vm_info = vm[:vms_hash][vm_name.to_sym]
+          network_name = ''
 
           @env[:forwarded_ports].each do |fp|
 
@@ -50,12 +51,17 @@ module VagrantPlugins
             )
 
             # Add the options to the ports array to send to the driver later
-            ports << {
+            ports["#{fp.network_name}#{fp.edge_network_name}"] = { rules: [] } if !ports["#{fp.network_name}#{fp.edge_network_name}"]
+            ports["#{fp.network_name}#{fp.edge_network_name}"][:network_name]      = fp.network_name
+            ports["#{fp.network_name}#{fp.edge_network_name}"][:parent_network]    = fp.edge_network_id
+            ports["#{fp.network_name}#{fp.edge_network_name}"][:edge_network_name] = fp.edge_network_name
+            ports["#{fp.network_name}#{fp.edge_network_name}"][:rules] << {
               :guestip                => fp.guest_ip,
               :nat_internal_port      => fp.guest_port,
               :hostip                 => fp.host_ip,
               :nat_external_port      => fp.host_port,
               :name                   => fp.id,
+              :nat_vmnic_id           => fp.vmnic_id,
               :nat_protocol           => fp.protocol.upcase,
               :vapp_scoped_local_id   => vm_info[:vapp_scoped_local_id]
             }
@@ -64,24 +70,26 @@ module VagrantPlugins
           if !ports.empty?
             # We only need to forward ports if there are any to forward
             @logger.debug("Port object to be passed: #{ports.inspect}")
-            @logger.debug("Current network id #{cfg.vdc_network_id}")
 
             ### Here we apply the nat_rules to the vApp we just built
-            add_ports = cnx.add_vapp_port_forwarding_rules(
-              vapp_id,
-              'Vagrant-vApp-Net',
-              {
-                :fence_mode       => 'natRouted',
-                :parent_network   => cfg.vdc_network_id,
-                :nat_policy_type  => 'allowTraffic',
-                :nat_rules        => ports
-              }
-            )
+            ports.values.each do |port|
+              add_ports = cnx.add_vapp_port_forwarding_rules(
+                vapp_id,
+                port[:network_name],
+                port[:edge_network_name],
+                {
+                  :fence_mode       => 'natRouted',
+                  :parent_network   => port[:parent_network],
+                  :nat_policy_type  => 'allowTraffic',
+                  :nat_rules        => port[:rules]
+                }
+              )
 
-            wait = cnx.wait_task_completion(add_ports)
+              wait = cnx.wait_task_completion(add_ports)
 
-            if !wait[:errormsg].nil?
-              raise Errors::ComposeVAppError, :message => wait[:errormsg]
+              if !wait[:errormsg].nil?
+                raise Errors::ComposeVAppError, :message => wait[:errormsg]
+              end
             end
 
 
@@ -97,15 +105,17 @@ module VagrantPlugins
                                                                 r[:translated_ip] == vapp_edge_ip)}
               vapp_edge_ports_in_use = vapp_edge_dnat_rules.map{|r| r[:original_port].to_i}.to_set
 
-              ports.each do |port|
-                if port[:vapp_scoped_local_id] == vm_info[:vapp_scoped_local_id] &&
-                  !vapp_edge_ports_in_use.include?(port[:nat_external_port])
-                  @env[:ui].info(
-                    "Creating NAT rules on [#{cfg.vdc_edge_gateway}] " +
-                    "for IP [#{vapp_edge_ip}] port #{port[:nat_external_port]}."
-                  )
+              ports.values.each do |port|
+                port[:rules].each do |rule|
+                  if rule[:vapp_scoped_local_id] == vm_info[:vapp_scoped_local_id] &&
+                    !vapp_edge_ports_in_use.include?(rule[:nat_external_port])
+                    @env[:ui].info(
+                      "Creating NAT rules on [#{cfg.vdc_edge_gateway}] " +
+                      "for IP [#{vapp_edge_ip}] port #{rule[:nat_external_port]}."
+                    )
 
-                  edge_ports << port[:nat_external_port]
+                    edge_ports << rule[:nat_external_port]
+                  end
                 end
               end
 
