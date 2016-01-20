@@ -1,42 +1,40 @@
-[Vagrant](http://www.vagrantup.com) provider for VMware vCloud Director® [![Gem Version](https://badge.fury.io/rb/vagrant-vcloud.svg)](http://badge.fury.io/rb/vagrant-vcloud) [![Code Climate](https://codeclimate.com/github/frapposelli/vagrant-vcloud/badges/gpa.svg)](https://codeclimate.com/github/frapposelli/vagrant-vcloud)
-=============
-
-[![Join the chat at https://gitter.im/frapposelli/vagrant-vcloud](https://badges.gitter.im/frapposelli/vagrant-vcloud.svg)](https://gitter.im/frapposelli/vagrant-vcloud?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[Vagrant](http://www.vagrantup.com) provider for VMware vCloud Director® [![Gem Version](https://badge.fury.io/rb/vagrant-vcloud.svg)](http://badge.fury.io/rb/vagrant-vcloud) [![Code Climate](https://codeclimate.com/github/frapposelli/vagrant-vcloud/badges/gpa.svg)](https://codeclimate.com/github/frapposelli/vagrant-vcloud) [![Join the chat at https://gitter.im/frapposelli/vagrant-vcloud](https://badges.gitter.im/frapposelli/vagrant-vcloud.svg)](https://gitter.im/frapposelli/vagrant-vcloud?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+=========================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================
 
 Please note that this software is still Alpha/Beta quality and is not recommended for production usage.
 
 We have a wide array of boxes available at [Vagrant Cloud](https://vagrantcloud.com/gosddc) you can use them directly or you can roll your own as you please, make sure to install VMware tools in it.
 
-Starting from [version 0.4.2](../../releases/tag/v0.4.2), this plugin supports the universal [```vmware_ovf``` box format](https://github.com/gosddc/packer-post-processor-vagrant-vmware-ovf/wiki/vmware_ovf-Box-Format), that is 100% portable between [vagrant-vcloud](https://github.com/frapposelli/vagrant-vcloud), [vagrant-vcenter](https://github.com/gosddc/vagrant-vcenter) and [vagrant-vcloudair](https://github.com/gosddc/vagrant-vcloudair), no more double boxes!.
+Starting from [version 0.4.2](../../releases/tag/v0.4.2), this plugin supports the universal [`vmware_ovf` box format](https://github.com/gosddc/packer-post-processor-vagrant-vmware-ovf/wiki/vmware_ovf-Box-Format), that is 100% portable between [vagrant-vcloud](https://github.com/frapposelli/vagrant-vcloud), [vagrant-vcenter](https://github.com/gosddc/vagrant-vcenter) and [vagrant-vcloudair](https://github.com/gosddc/vagrant-vcloudair), no more double boxes!.
 
 If you're unsure about what are the correct network settings for your Vagrantfile make sure to check out the [Network Deployment Options](https://github.com/frapposelli/vagrant-vcloud/wiki/Network-Deployment-Options) wiki page.
 
 Check the full releases changelog [here](../../releases)
 
 Install
--------------
+-------
 
-Latest version can be easily installed by running the following command:
+Latest version can be installed by running the following command:
 
-```vagrant plugin install vagrant-vcloud```
+`vagrant plugin install vagrant-vcloud`
 
 Vagrant will download all the required gems during the installation process.
 
-After the install has completed a ```vagrant up --provider=vcloud``` will trigger the newly installed provider.
+After the install has completed a `vagrant up --provider=vcloud` will trigger the newly installed provider.
 
 Upgrade
--------------
+-------
 
 If you already have vagrant-vcloud installed you can update to the latest version available by issuing:
 
-```vagrant plugin update vagrant-vcloud```
+`vagrant plugin update vagrant-vcloud`
 
 Vagrant will take care of the upgrade process.
 
 Configuration
 -------------
 
-Here's a sample Multi-VM Vagrantfile, please note that ```vcloud.vdc_edge_gateway``` and ```vcloud.vdc_edge_gateway_ip``` are required only when you cannot access ```vcloud.vdc_network_name``` directly and there's an Organization Edge between your workstation and the vCloud Network.
+Here's a sample Multi-VM Vagrantfile, please note that `vcloud.vdc_edge_gateway` and `vcloud.vdc_edge_gateway_ip` are required when you cannot access `vcloud.vdc_network_name` directly and there's an Organization Edge between your workstation and the vCloud Network.
 
 ```ruby
 vapp = {
@@ -152,22 +150,19 @@ Vagrant.configure('2') do |config|
 end
 ```
 
-For additional documentation on different network setups with vCloud Director, check the [Network Deployment Options](../../wiki/Network-Deployment-Options) Wiki page
+For additional documentation on network setups with vCloud Director, check the [Network Deployment Options](../../wiki/Network-Deployment-Options) Wiki page
 
 Contribute
--------------
+----------
 
 What is still missing:
 
-- TEST SUITES! (working on that).
-- Speed, the code is definitely not optimized.
-- Permission checks, make sure you have at least Catalog Admin privileges if you want to upload boxes to vCloud.
-- Thorough testing.
-- Error checking is absymal.
-- Some spaghetti code here and there.
-- Bugs, bugs and BUGS!.
+-	TEST SUITES! (working on that).
+-	Speed, the code is definitely not optimized.
+-	Permission checks, make sure you have at least Catalog Admin privileges if you want to upload boxes to vCloud.
+-	Thorough testing.
+-	Error checking is absymal.
+-	Some spaghetti code here and there.
+-	Bugs, bugs and BUGS!.
 
-If you're a developer and want to lend us a hand, head over to our ```develop``` branch and send us PRs!
-
-
-[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/frapposelli/vagrant-vcloud/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
+If you're a developer and want to lend us a hand, head over to our `develop` branch and send us PRs!
