@@ -24,6 +24,7 @@ en:
       template: "Configuration must specify a template name"
       username: "Configuration must specify a vCloud Director username"
       vdc_name: "Configuration must specify a vCloud Director Virtual Datacenter (Target Organization VDC)"
+      vdc_network_name: "Configuration must specify a vCloud Director vDC network name"
     errors:
       missing_compute_resource: "Configured compute resource not found"
       missing_datacenter: "Configured data center not found"
@@ -35,6 +36,8 @@ en:
       invalid_network_specification: "Wrong Network specification in the Vagrantfile, make sure you have access to the specified network."
       stop_vapp_error: "Impossible to stop vApp, could be a transient error, please try again, error: %{message}"
       compose_vapp_error: "Impossible to compose a vApp, error: %{message}"
+      modify_vapp_error: "Unable to modify vApp, error: %{message}"
+      poweron_vapp_error: "Unable to power on vApp, error: %{message}"
       forward_port_collision: "Port collision detected, change it in the Vagrantfile or add auto_correct: true. %{guest_port} => %{host_port}"
       rest_errors:
         object_not_found: "Object not found in vCloud Director"
@@ -59,7 +62,17 @@ en:
 
         Host path: %{hostpath}
         Error: %{err}
-
+    gc:
+      admin_password: "Guest customization must be enabled to generate/specify password"
+      admin_password_gs: "Admin assword must be auto generated or secified"
+      admin_password_reset: "Guest customization must be enabled to require password reset"
+      auto_login: "Allow admin password is required to enable auto login"
+      auto_login_count: "Auto login count must be between 1 and 100"
+      auto_login_count_req: "Auto login count is required, if auto login is enabled"
+      change_sid: "Guest customization must be enabled to change the SID"
+      domain: "Change SID mst be enabled to join to a domain"
+      domain_join: "Joining a domain requires domain name, domain user, and domain password"
+      script: "Guest customization must be enabled to run a script"
     states:
       not_created: |-
         The environment has not yet been created. Run `vagrant up` to
