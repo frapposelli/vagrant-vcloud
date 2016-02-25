@@ -151,8 +151,8 @@ module VagrantPlugins
                 # Delete the "network" address from the range.
                 range_addresses.shift
                 # Retrieve the first usable IP, to be used as a gateway.
-                if cfg.networks[:gateway]
-                  gateway_ip = cfg.networks[:gateway]
+                if net[:gateway]
+                  gateway_ip = net[:gateway]
                 else
                   gateway_ip = range_addresses.shift
                 end
