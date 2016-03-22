@@ -688,7 +688,7 @@ module VagrantPlugins
             ).first[:href]).path.gsub('/api/task/', '')
 
           catalog_id = URI(response.css(
-              "AdminCatalog Link [type='application/vnd.vmware.vcloud.catalog+xml']"
+              "AdminCatalog Link[type='application/vnd.vmware.vcloud.catalog+xml']"
             ).first[:href]).path.gsub('/api/catalog/', '')
 
           { :task_id => task_id, :catalog_id => catalog_id }
