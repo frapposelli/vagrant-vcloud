@@ -688,7 +688,7 @@ module VagrantPlugins
             ).first[:href]).path.gsub('/api/task/', '')
 
           catalog_id = URI(response.css(
-              "AdminCatalog Link [type='application/vnd.vmware.vcloud.catalog+xml']"
+              "AdminCatalog Link[type='application/vnd.vmware.vcloud.catalog+xml']"
             ).first[:href]).path.gsub('/api/catalog/', '')
 
           { :task_id => task_id, :catalog_id => catalog_id }
@@ -1673,7 +1673,7 @@ module VagrantPlugins
 
           @logger.debug("Getting vAppTemplate ID: #{vapp_template}")
           descriptor_upload = URI(response.css(
-            "Files Link [rel='upload:default']"
+            "Files Link[rel='upload:default']"
           ).first[:href]).path.gsub('/transfer/', '')
           transfer_guid = descriptor_upload.gsub('/descriptor.ovf', '')
 
@@ -1714,7 +1714,7 @@ module VagrantPlugins
             while true
               response, _headers = send_request(params)
               @logger.debug('Request...')
-              break unless response.css("Files Link [rel='upload:default']").count == 1
+              break unless response.css("Files Link[rel='upload:default']").count == 1
               sleep 1
             end
 
@@ -1736,7 +1736,7 @@ module VagrantPlugins
             }
             response, _headers = send_request(params)
             response.css(
-              "Files File [bytesTransferred='0'] Link [rel='upload:default']"
+              "Files File[bytesTransferred='0'] Link[rel='upload:default']"
             ).each do |file|
               file_name = URI(file[:href]).path.gsub("/transfer/#{transfer_guid}/", '')
               upload_filename = "#{ovf_dir}/#{file_name}"
@@ -1791,7 +1791,7 @@ module VagrantPlugins
 
             # Cancel Task
             cancel_hook = URI(response.css(
-              "Tasks Task Link [rel='task:cancel']"
+              "Tasks Task Link[rel='task:cancel']"
             ).first[:href]).path.gsub('/api', '')
 
             params = {
