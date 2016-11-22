@@ -46,7 +46,7 @@ module VagrantPlugins
               b2.use MessageNotCreated
               next
             end
-            b2.use action_halt
+            b2.use action_shutdown
             b2.use action_start
             b2.use DisconnectVCloud
           end
@@ -70,7 +70,7 @@ module VagrantPlugins
         end
       end
 
-      def self.action_halt
+      def self.action_poweroff
         Vagrant::Action::Builder.new.tap do |b|
           b.use ConfigValidate
           b.use ConnectVCloud
@@ -78,6 +78,17 @@ module VagrantPlugins
             b2.use Resume if env[:result]
           end
           b.use PowerOff
+        end
+      end
+
+      def self.action_shutdown
+        Vagrant::Action::Builder.new.tap do |b|
+          b.use ConfigValidate
+          b.use ConnectVCloud
+          b.use Call, IsPaused do |env, b2|
+            b2.use Resume if env[:result]
+          end
+          b.use ShutDown
         end
       end
 
@@ -116,7 +127,7 @@ module VagrantPlugins
 
                 b3.use Call, IsRunning do |env3, b4|
                 # If the VM is running, must power off
-                  b4.use action_halt if env3[:result]
+                  b4.use action_poweroff if env3[:result]
                 end
                 b3.use Call, IsLastVM do |env3, b4|
                   if env3[:result]
@@ -297,6 +308,8 @@ module VagrantPlugins
                action_root.join('read_state')
       autoload :Resume,
                action_root.join('resume')
+      autoload :ShutDown,
+               action_root.join('shut_down')
       autoload :Suspend,
                action_root.join('suspend')
       autoload :SyncFolders,
