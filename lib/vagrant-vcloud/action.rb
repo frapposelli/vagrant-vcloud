@@ -46,7 +46,7 @@ module VagrantPlugins
               b2.use MessageNotCreated
               next
             end
-            b2.use action_shutdown
+            b2.use action_halt
             b2.use action_start
             b2.use DisconnectVCloud
           end
@@ -81,7 +81,7 @@ module VagrantPlugins
         end
       end
 
-      def self.action_shutdown
+      def self.action_halt
         Vagrant::Action::Builder.new.tap do |b|
           b.use ConfigValidate
           b.use ConnectVCloud
