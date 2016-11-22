@@ -616,7 +616,7 @@ module VagrantPlugins
             builder.to_xml,
             'application/vnd.vmware.vcloud.undeployVAppParams+xml'
           )
-          task_id = headers['Location'].gsub("#{@api_url}/task/", '')
+          task_id = URI(headers['Location']).path.gsub('/api/task/', '')
           task_id
         end
 
