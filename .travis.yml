@@ -14,8 +14,8 @@ script:
     docker login -u="$DOCKER_USER" -p="$DOCKER_PASS"
     VAGRANT_TAG=$(grep VAGRANT_VERSION= Dockerfile | sed "s/.*=//" | sed "s/ .*//")
     TAG=$(grep VERSION lib/vagrant-vcloud/version.rb | sed "s/.* '//" | sed "s/'.*//")
-    docker tag plossys/vagrant-vcloud:build plossys/vagrant-vcloud:${VAGRANT}-${TAG}
+    docker tag plossys/vagrant-vcloud:build plossys/vagrant-vcloud:${VAGRANT_TAG}-${TAG}
     docker tag plossys/vagrant-vcloud:build plossys/vagrant-vcloud:latest
-    docker push plossys/vagrant-vcloud:${VAGRANT}-${TAG}
+    docker push plossys/vagrant-vcloud:${VAGRANT_TAG}-${TAG}
     docker push plossys/vagrant-vcloud:latest
   fi
