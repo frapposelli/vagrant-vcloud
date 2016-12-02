@@ -1,38 +1,70 @@
-[Vagrant](http://www.vagrantup.com) provider for VMware vCloud Director® [![Gem Version](https://badge.fury.io/rb/vagrant-vcloud.svg)](http://badge.fury.io/rb/vagrant-vcloud) [![Code Climate](https://codeclimate.com/github/frapposelli/vagrant-vcloud/badges/gpa.svg)](https://codeclimate.com/github/frapposelli/vagrant-vcloud) [![Dependency Status](https://gemnasium.com/frapposelli/vagrant-vcloud.svg)](https://gemnasium.com/frapposelli/vagrant-vcloud) [![Join the chat at https://gitter.im/frapposelli/vagrant-vcloud](https://badges.gitter.im/frapposelli/vagrant-vcloud.svg)](https://gitter.im/frapposelli/vagrant-vcloud?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-========================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================
+# [Vagrant](http://www.vagrantup.com) provider for VMware vCloud Director®
+[![Build Status](https://travis-ci.org/plossys/vagrant-vcloud.svg?branch=my)](https://travis-ci.org/plossys/vagrant-vcloud) [![](https://badge.imagelayers.io/plossys/vagrant-vcloud:latest.svg)](https://imagelayers.io/?images=plossys/vagrant-vcloud:latest 'Get your own badge on imagelayers.io')
 
-Please note that this software is still Alpha/Beta quality and is not recommended for production usage.
-
-We have a wide array of boxes available at [Vagrant Cloud](https://vagrantcloud.com/gosddc) you can use them directly or you can roll your own as you please, make sure to install VMware tools in it.
-
-Starting from [version 0.4.2](../../releases/tag/v0.4.2), this plugin supports the universal [`vmware_ovf` box format](https://github.com/gosddc/packer-post-processor-vagrant-vmware-ovf/wiki/vmware_ovf-Box-Format), that is 100% portable between [vagrant-vcloud](https://github.com/frapposelli/vagrant-vcloud), [vagrant-vcenter](https://github.com/gosddc/vagrant-vcenter) and [vagrant-vcloudair](https://github.com/gosddc/vagrant-vcloudair), no more double boxes!.
-
-If you're unsure about what are the correct network settings for your Vagrantfile make sure to check out the [Network Deployment Options](https://github.com/frapposelli/vagrant-vcloud/wiki/Network-Deployment-Options) wiki page.
+This is a fork of [vagrant-vcloud](https://github.com/frapposelli/vagrant-vcloud) to adjust it for our purposes.
 
 Check the full releases changelog [here](../../releases)
 
-Install
--------
+## Install
 
-Latest version can be installed by running the following command:
+Use our Docker image [plossys/vagrant-vcloud](https://hub.docker.com/r/plossys/vagrant-vcloud/) to have Vagrant and the vagrant-vcloud plugin installed inside a Docker container.
 
-`vagrant plugin install vagrant-vcloud`
+So you don't have version conflicts with your local Vagrant installation if you
+prefer a newer Version of Vagrant.
 
-Vagrant will download all the required gems during the installation process.
+There is a helper script `vcloud` that should be installed on your local machine
+in addition to a Docker engine.
 
-After the install has completed a `vagrant up --provider=vcloud` will trigger the newly installed provider.
+### Linux
 
-Upgrade
--------
+Download the [helper/vcloud.sh](https://github.com/plossys/vagrant-vcloud/blob/my/helper/vcloud.sh) script and put it into a directory of your PATH.
 
-If you already have vagrant-vcloud installed you can update to the latest version available by issuing:
+```bash
+curl -o vcloud https://raw.githubusercontent.com/plossys/vagrant-vcloud/my/helper/vcloud.bat
+chmod +x vcloud
+```
 
-`vagrant plugin update vagrant-vcloud`
+### Windows
 
-Vagrant will take care of the upgrade process.
+Download the [helper/vcloud.bat](https://github.com/plossys/vagrant-vcloud/blob/my/helper/vcloud.bat) script and put it into
+a directory of your PATH.
 
-Configuration
--------------
+```powershell
+Invoke-WebRequest -Outfile vcloud.bat -Uri https://raw.githubusercontent.com/plossys/vagrant-vcloud/my/helper/vcloud.bat -UseBasicParsing
+```
+
+## Configuration
+
+You can use the `vcloud configure` command to retrieve your vCloud org settings that should be placed in your global Vagrantfile.
+
+```bash
+vcloud configure --hostname yourCloud --username yourAccount --orgname yourOrg
+```
+
+It should show you something like this:
+
+```
+http: password for yourAccount@yourAOrg@yourCloud:
+Put this lines to your global ~/.vagrant.d/Vagrantfile
+
+Vagrant.configure("2") do |config|
+  if Vagrant.has_plugin?("vagrant-vcloud")
+    vcloud.hostname            = "https://yourCloud"
+    vcloud.username            = "vagrant"
+    vcloud.password            = ENV['VCLOUD_PASSWORD'] || "vagrant"
+    vcloud.org_name            = "XX"
+    vcloud.vdc_name            = "XX-VDC"
+    vcloud.catalog_name        = "COM-BUILD-CATALOG"
+    vcloud.ip_subnet           = "172.16.32.1/255.255.255.0"]
+    vcloud.ip_dns              = ["1.2.3.4", "8.8.8.8"]
+    vcloud.vdc_network_name    = "SS-INTERNAL"
+    vcloud.vdc_edge_gateway    = "SS-EDGE"
+    vcloud.vdc_edge_gateway_ip = "2.3.4.5"
+  end
+end
+```
+
+## Examples
 
 Here's a sample Multi-VM Vagrantfile, please note that `vcloud.vdc_edge_gateway` and `vcloud.vdc_edge_gateway_ip` are required when you cannot access `vcloud.vdc_network_name` directly and there's an Organization Edge between your workstation and the vCloud Network.
 
@@ -150,10 +182,43 @@ Vagrant.configure('2') do |config|
 end
 ```
 
-For additional documentation on network setups with vCloud Director, check the [Network Deployment Options](../../wiki/Network-Deployment-Options) Wiki page
+## Networking
 
-Contribute
-----------
+For additional documentation on network setups with vCloud Director, check the [Network Deployment Options](https://github.com/frapposelli/vagrant-vcloud/wiki/Network-Deployment-Options) Wiki page
+
+## Issue working on Windows
+
+If you see the following error spinning up a Linux VM in vCloud from a Windows host
+
+```
+    p50: Vagrant insecure key detected. Vagrant will automatically replace
+    p50: this with a newly generated keypair for better security.
+    p50:
+    p50: Inserting generated public key within guest...
+    p50: Removing insecure key from the guest if it's present...
+    p50: Key inserted! Disconnecting and reconnecting using new SSH key...
+The private key to connect to this box via SSH has invalid permissions
+set on it. The permissions of the private key should be set to 0600, otherwise SS
+ignore the key. Vagrant tried to do this automatically for you but failed. Please
+permissions on the following file to 0600 and then try running this command again
+
+/work/.vagrant/machines/p50/vcloud/private_key
+
+Note that this error occurs after Vagrant automatically tries to
+do this for you. The likely cause of this error is a lack of filesystem
+permissions or even filesystem functionality. For example, if your
+Vagrant data is on a USB stick, a common case is that chmod is
+not supported. The key will need to be moved to a filesystem that
+supports chmod.
+```
+
+then you have to skip the SSH key by adding the following line into your `Vagrantfile`:
+
+```ruby
+    cfg.ssh.insert_key = false # to work with vcloud.bat from a Windows hostname
+```
+
+## Contribute
 
 What is still missing:
 
@@ -165,4 +230,4 @@ What is still missing:
 -	Some spaghetti code here and there.
 -	Bugs, bugs and BUGS!.
 
-If you're a developer and want to lend us a hand, head over to our `develop` branch and send us PRs!
+If you're a developer and want to lend us a hand, head over to our `my` branch and send us PRs!
