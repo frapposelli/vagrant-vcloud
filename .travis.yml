@@ -1,0 +1,21 @@
+sudo: required
+services:
+- docker
+language: bash
+script:
+# build image
+- docker build -t plossys/vagrant-vcloud:build .
+# test image
+- docker run plossys/vagrant-vcloud:build --version
+- docker run plossys/vagrant-vcloud:build plugin list
+# push image
+- >
+  if [ "$TRAVIS_BRANCH" == "my" ]; then
+    docker login -u="$DOCKER_USER" -p="$DOCKER_PASS"
+    VAGRANT_TAG=$(grep VAGRANT_VERSION= Dockerfile | sed "s/.*=//" | sed "s/ .*//")
+    TAG=$(grep VERSION lib/vagrant-vcloud/version.rb | sed "s/.* '//" | sed "s/'.*//")
+    docker tag plossys/vagrant-vcloud:build plossys/vagrant-vcloud:${VAGRANT}-${TAG}
+    docker tag plossys/vagrant-vcloud:build plossys/vagrant-vcloud:latest
+    docker push plossys/vagrant-vcloud:${VAGRANT}-${TAG}
+    docker push plossys/vagrant-vcloud:latest
+  fi
