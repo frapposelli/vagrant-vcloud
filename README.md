@@ -1,6 +1,6 @@
 [Vagrant](http://www.vagrantup.com) provider for VMware vCloud Director®
 ========
-[![Build Status](https://travis-ci.org/plossys/vagrant-vcloud.svg?branch=my)](https://travis-ci.org/plossys/vagrant-vcloud)
+[![Build Status](https://travis-ci.org/plossys/vagrant-vcloud.svg?branch=my)](https://travis-ci.org/plossys/vagrant-vcloud) [![](https://badge.imagelayers.io/plossys/vagrant-vcloud:latest.svg)](https://imagelayers.io/?images=plossys/vagrant-vcloud:latest 'Get your own badge on imagelayers.io')
 
 This is a fork of [vagrant-vcloud](https://github.com/frapposelli/vagrant-vcloud) to adjust it for our purposes.
 
@@ -19,7 +19,7 @@ in addition to a Docker engine.
 
 ### Linux
 
-Download the [helper/vcloud.sh](helper/vcloud.sh) script and put it into a directory of your PATH.
+Download the [helper/vcloud.sh](https://github.com/plossys/vagrant-vcloud/blob/my/helper/vcloud.sh) script and put it into a directory of your PATH.
 
 ```bash
 curl -o vcloud https://raw.githubusercontent.com/plossys/vagrant-vcloud/my/helper/vcloud.bat
@@ -28,7 +28,7 @@ chmod +x vcloud
 
 ### Windows
 
-Download the [helper/vcloud.bat](helper/vcloud.bat) script and put it into
+Download the [helper/vcloud.bat](https://github.com/plossys/vagrant-vcloud/blob/my/helper/vcloud.bat) script and put it into
 a directory of your PATH.
 
 ```powershell

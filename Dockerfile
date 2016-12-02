@@ -33,6 +33,7 @@ RUN apt-get update -y && \
     rm -rf /root/.vagrant.d/gems/gems/vagrant-vcloud-*
 
 COPY . /root/.vagrant.d/gems/gems/vagrant-vcloud-0.4.4
+COPY helper/retrieve-vagrant-vcloud-settings.sh /usr/local/bin/retrieve-vagrant-vcloud-settings.sh
 
 WORKDIR "/work"
 
