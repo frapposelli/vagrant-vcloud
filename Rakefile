@@ -11,7 +11,3 @@ $stderr.sync = true
 Dir.chdir(File.expand_path('../', __FILE__))
 
 Bundler::GemHelper.install_tasks
-
-RSpec::Core::RakeTask.new
-
-task :default => 'spec'
