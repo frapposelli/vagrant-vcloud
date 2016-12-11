@@ -1002,8 +1002,7 @@ module VagrantPlugins
           )
 
           vapp_id = URI(headers['Location']).path.gsub('/api/vApp/vapp-', '')
-
-          task = response.css("Task [operationName='vdcRecomposeVapp']").first
+          task = response.css("Task[operationName='vdcRecomposeVapp']").first
           task_id = URI(task['href']).path.gsub('/api/task/', '')
 
           { :vapp_id => vapp_id, :task_id => task_id }
