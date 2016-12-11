@@ -1,0 +1,33 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+$script=<<EOF
+echo "Hello from `hostname`"
+echo "Listing of /vagrant"
+ls -l /vagrant
+EOF
+
+Vagrant.configure("2") do |config|
+  if Vagrant.has_plugin?("vagrant-vcloud")
+    config.vm.provider :vcloud do |vcloud|
+      vcloud.vapp_prefix = "integrationtest"
+      vcloud.ip_subnet = "172.16.32.0/255.255.255.0"
+    end
+    config.vm.provider :vcloud do |cloud, override|
+      override.vm.usable_port_range = 2200..2999
+    end
+  end
+
+  config.vm.define :"tst" do |cfg|
+    cfg.vm.box = "ubuntu1404"
+    cfg.vm.hostname = "tst"
+    cfg.vm.provision "shell", inline: $script
+  end
+
+  config.vm.define :"tst2" do |cfg|
+    cfg.vm.box = "ubuntu1404"
+    cfg.vm.hostname = "tst2"
+    cfg.vm.provision "shell", inline: $script
+  end
+
+end
