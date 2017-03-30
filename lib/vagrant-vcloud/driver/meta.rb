@@ -50,7 +50,8 @@ module VagrantPlugins
             '5.1' => Version_5_1,
             '5.5' => Version_5_1, # Binding vCloud 5.5 API on our current 5.1 implementation
             '5.6' => Version_5_1, # Binding vCHS API on our current 5.1 implementation
-            '5.7' => Version_5_1  # Binding vCHS API on our current 5.1 implementation
+            '5.7' => Version_5_1, # Binding vCHS API on our current 5.1 implementation
+            '9.0' => Version_5_1  # Binding vCHS API on our current 5.1 implementation
           }
 
           if @version.start_with?('0.9') ||
