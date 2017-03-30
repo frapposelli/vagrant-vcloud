@@ -9,5 +9,3 @@ BOX package should contain:
 - `<boxname>.mf` -- OVF manifest file containing file hashes.
 - `<boxname>-disk-<#>.vmdk` -- Associated VMDK files.
 - `Vagrantfile`-- vagrant-vcloud default Vagrantfile
-
-A [task is open](https://github.com/frapposelli/vagrant-vcloud/issues/12) for creating a veewee plugin to facilitate Box creation

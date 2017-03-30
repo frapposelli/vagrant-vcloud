@@ -164,5 +164,3 @@ What is still missing:
 -	Error checking is absymal.
 -	Some spaghetti code here and there.
 -	Bugs, bugs and BUGS!.
-
-If you're a developer and want to lend us a hand, head over to our `develop` branch and send us PRs!
