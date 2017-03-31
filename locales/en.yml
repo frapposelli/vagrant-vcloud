@@ -62,6 +62,7 @@ en:
 
         Host path: %{hostpath}
         Error: %{err}
+      ovf_property_error: "Error setting OVF Properties: %{message}"
     gc:
       admin_password: "Guest customization must be enabled to generate/specify password"
       admin_password_gs: "Admin assword must be auto generated or secified"

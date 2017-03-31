@@ -52,6 +52,9 @@ vapp = {
         ip_subnet: '10.10.10.10/255.255.255.0'
       }
     ]
+  },
+  ovf_properties: {
+    'test-variable' => 'true'
   }
 }
 
@@ -132,6 +135,9 @@ Vagrant.configure('2') do |config|
           pro.nested_hypervisor = node[:nested_hypervisor]
           pro.enable_guest_customization = node[:enable_guest_customization]
           pro.guest_customization_script = node[:guest_customization_script]
+          if vapp[:ovf_properties]
+            pro.ovf_properties = vapp[:ovf_properties]
+          end
         end
         node_config.vm.network :public_network
       else

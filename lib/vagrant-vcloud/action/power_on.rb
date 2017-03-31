@@ -50,6 +50,18 @@ module VagrantPlugins
             end
           end
 
+          # set ovf properties
+          if !cfg.ovf_properties.nil?
+            env[:ui].info('Setting VM OVF Properties...')
+            set_ovf_properties = cnx.set_ovf_properties(env[:machine].id, cfg.ovf_properties)
+            if set_ovf_properties
+              wait = cnx.wait_task_completion(set_ovf_properties)
+              unless wait[:errormsg].nil?
+                fail Errors::SetOvfPropertyError, :message => wait[:errormsg]
+              end
+            end
+          end
+
           if cfg.power_on.nil? || cfg.power_on == true
             env[:ui].info('Powering on VM...')
             poweron_vm = cnx.poweron_vm(env[:machine].id)
