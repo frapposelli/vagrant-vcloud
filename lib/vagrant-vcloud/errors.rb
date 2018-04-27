@@ -72,6 +72,9 @@ module VagrantPlugins
       class SyncError < VCloudError
         error_key(:sync_error)
       end
+      class SetOvfPropertyError < VCloudError
+        error_key(:ovf_property_error)
+      end
     end
   end
 end

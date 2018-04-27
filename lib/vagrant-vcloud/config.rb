@@ -262,6 +262,9 @@ module VagrantPlugins
       # guest customization admin require password reset (Bool = false)
       attr_accessor :guest_customization_admin_password_reset
 
+      # ovf properties object (Hash)
+      attr_accessor :ovf_properties
+
       def validate(machine)
         errors = _detected_errors
 

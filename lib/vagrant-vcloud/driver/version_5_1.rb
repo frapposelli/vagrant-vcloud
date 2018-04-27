@@ -2279,6 +2279,43 @@ module VagrantPlugins
         end
 
         ##
+        # Set OVF data
+        def set_ovf_properties(vm_id, properties)
+          params = {
+            'method'  => :get,
+            'command' => "/vApp/vm-#{vm_id}/productSections"
+          }
+          response, _headers = send_request(params)
+
+          changed = false
+          response.css('ovf|Property').each do |prop|
+            next if prop['ovf:userConfigurable'] == 'false'
+            key = prop['ovf:key']
+            next if !properties[ key ]
+            if properties[ key ] != prop['ovf:value']
+              changed = true
+              prop['ovf:value'] = properties[ key ]
+            end
+          end
+
+          if changed
+            params = {
+              'method'  => :put,
+              'command' => "/vApp/vm-#{vm_id}/productSections"
+            }
+            _response, headers = send_request(
+              params,
+              response.to_xml,
+              'application/vnd.vmware.vcloud.productSections+xml'
+            )
+
+            task_id = URI(headers['Location']).path.gsub('/api/task/', '')
+            return task_id
+          end
+          return nil
+        end
+
+        ##
         # Fetch details about a given VM
         def get_vm(vm_id)
           params = {
