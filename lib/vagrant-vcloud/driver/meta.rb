@@ -46,13 +46,6 @@ module VagrantPlugins
 
           # Instantiate the proper version driver for vCloud
           @logger.debug("Finding driver for vCloud version: #{@version}")
-          driver_map   = {
-            '5.1' => Version_5_1,
-            '5.5' => Version_5_1, # Binding vCloud 5.5 API on our current 5.1 implementation
-            '5.6' => Version_5_1, # Binding vCHS API on our current 5.1 implementation
-            '5.7' => Version_5_1, # Binding vCHS API on our current 5.1 implementation
-            '9.0' => Version_5_1  # Binding vCHS API on our current 5.1 implementation
-          }
 
           if @version.start_with?('0.9') ||
              @version.start_with?('1.0') ||
@@ -61,19 +54,7 @@ module VagrantPlugins
             raise Errors::VCloudOldVersion, :version => @version
           end
 
-          driver_klass = nil
-          driver_map.each do |key, klass|
-            if @version.start_with?(key)
-              driver_klass = klass
-              break
-            end
-          end
-
-          if !driver_klass
-            supported_versions = driver_map.keys.sort.join(', ')
-            raise Errors::VCloudInvalidVersion,
-                  :supported_versions => supported_versions
-          end
+          driver_klass = Version_5_1 # Binding any vCloud API on our current 5.1 implementation
 
           @logger.info("Using vCloud driver: #{driver_klass}")
           @driver = driver_klass.new(@hostname, @username, @password, @org_name)
