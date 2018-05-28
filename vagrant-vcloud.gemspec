@@ -17,6 +17,7 @@ Gem::Specification.new do |s|
   # Adding awesome_print because it's just awesome to read XML
   s.add_runtime_dependency 'awesome_print', '~> 1.2'
   s.add_runtime_dependency 'terminal-table', '~> 1.4'
+  s.add_runtime_dependency 'nokogiri', '~> 1.8'
 
   s.add_development_dependency 'rake', '~> 12.0'
   s.add_development_dependency 'rspec-core', '~> 2.12'
